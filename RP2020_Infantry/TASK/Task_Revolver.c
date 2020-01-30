@@ -207,7 +207,11 @@ void REVOLVER_pidOut(Revolver_PID_t *pid)
 	uint8_t pidSn = ((REVOLVER_ID - 0x201) % 4);	// ((0x207-0x201)%4)
 	
 	/* CAN发送电流值 */
-	pidOut[pidSn] = (int16_t)pid->Out;
+	if(BitMask.Revolver.BM_rxReport & REVOLVER_BM_RX_REPORT) {
+		pidOut[pidSn] = (int16_t)pid->Out;
+	} else {
+		pidOut[pidSn] = 0;	// 失联后拨盘卸力
+	}
 	
 #if REVOLVER_ID > 0x204
 	CAN2_send(0x1FF, pidOut);

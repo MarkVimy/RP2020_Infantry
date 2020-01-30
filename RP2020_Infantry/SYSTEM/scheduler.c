@@ -6,17 +6,13 @@ Flag_t	Flag = {
 	.Remote.FLAG_rcLost = 0,
 	.Remote.FLAG_mode = RC,
 	/* Chassis */
-	.Chassis.FLAG_pidStart = 0,
 	.Chassis.FLAG_angleTurnOk = 0,
 	.Chassis.FLAG_goHome = 0,
 	/* Gimbal */
-	.Gimbal.FLAG_pidStart = 0,
 	.Gimbal.FLAG_pidMode = MECH,	// 默认是机械模式
 	.Gimbal.FLAG_resetOK = false,
 	.Gimbal.FLAG_angleRecordStart = 0,
 	.Gimbal.FLAG_angleTurnOk = 0,
-	/* Revolver */
-	.Revolver.FLAG_pidStart = 0,
 	/* Friction */
 	.Friction.FLAG_resetOK = false,
 };
@@ -199,7 +195,7 @@ void chassis_task(void *p_arg)
 		switch(System_State)
 		{												
 			case SYSTEM_STATE_NORMAL:					
-				if(Flag.Chassis.FLAG_pidStart == 1 && BM_ifReset(BitMask.System.BM_reset, BM_RESET_GIMBAL)) {
+				if(BM_ifReset(BitMask.System.BM_reset, BM_RESET_GIMBAL)) {
 					CHASSIS_control();
 				}
 				break;
@@ -226,9 +222,7 @@ void gimbal_task(void *p_arg)
 		switch(System_State)
 		{
 			case SYSTEM_STATE_NORMAL:
-				if(Flag.Gimbal.FLAG_pidStart == 1) {
-					GIMBAL_control();
-				}
+				GIMBAL_control();
 				break;
 			case SYSTEM_STATE_RCERR:
 			case SYSTEM_STATE_RCLOST:
@@ -251,9 +245,7 @@ void revolver_task(void *p_arg)
 		switch(System_State)
 		{
 			case SYSTEM_STATE_NORMAL:
-				if(Flag.Revolver.FLAG_pidStart == 1) {
-					REVOLVER_control();
-				}
+				REVOLVER_control();
 				break;
 			case SYSTEM_STATE_RCERR:
 			case SYSTEM_STATE_RCLOST:

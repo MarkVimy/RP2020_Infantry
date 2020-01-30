@@ -677,6 +677,8 @@ void CAN2_send(uint32_t stdID, int16_t *dat)
  */
 void CAN1_RX0_IRQHandler(void)
 {
+	static uint8_t bm = 0;
+	static uint8_t cnt = 0;
 	CanRxMsg	rxMsg;
 	
 	if(CAN_GetITStatus(CAN1, CAN_IT_FMP0) != RESET) {
@@ -690,9 +692,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[LEFT_FRON_201].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[LEFT_FRON_201].Speed.feedback = getMotorSpeed(&rxMsg);
 			
-			if(Flag.Chassis.FLAG_pidStart == 0) {	// 开始计算PID
-				BitMask.Chassis.BM_rxReport |= BM_RX_REPORT_201;
-			}			
+			bm |= BM_RX_REPORT_201;
 		}
 		
 		if(rxMsg.StdId == 0x202) {	// 右前
@@ -702,9 +702,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[RIGH_FRON_202].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[RIGH_FRON_202].Speed.feedback = getMotorSpeed(&rxMsg);
 			
-			if(Flag.Chassis.FLAG_pidStart == 0) {	// 开始计算PID
-				BitMask.Chassis.BM_rxReport |= BM_RX_REPORT_202;
-			}			
+			bm |= BM_RX_REPORT_202;
 		}
 		
 		if(rxMsg.StdId == 0x203) {	// 左后
@@ -714,9 +712,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[LEFT_BACK_203].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[LEFT_BACK_203].Speed.feedback = getMotorSpeed(&rxMsg);
 			
-			if(Flag.Chassis.FLAG_pidStart == 0) {
-				BitMask.Chassis.BM_rxReport |= BM_RX_REPORT_203;
-			}
+			bm |= BM_RX_REPORT_203;
 		}
 		
 		if(rxMsg.StdId == 0x204) {	// 右后
@@ -725,10 +721,8 @@ void CAN1_RX0_IRQHandler(void)
 			/* 速度环实时速度记录 */
 			g_Chassis_Motor_Info[RIGH_BACK_204].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[RIGH_BACK_204].Speed.feedback = getMotorSpeed(&rxMsg);
-			
-			if(Flag.Chassis.FLAG_pidStart == 0) {	// 开始计算PID
-				BitMask.Chassis.BM_rxReport |= BM_RX_REPORT_204;
-			}		
+
+			bm |= BM_RX_REPORT_204;
 		}
 		
 		if(rxMsg.StdId == 0x205) {	// Yaw轴云台电机
@@ -743,12 +737,8 @@ void CAN1_RX0_IRQHandler(void)
 			g_Gimbal_Motor_Info[YAW_205].angle = getMotorAngle(&rxMsg);			
 			Gimbal_PID[MECH][YAW_205].Angle.feedback = getMotorAngle(&rxMsg);	// 机械模式 YAW 
 			Chassis_Z_PID.Angle.feedback = getMotorAngle(&rxMsg);
-//			calMotorAngleSum(g_Gimbal_Motor_Info[YAW_205].angle, z_angle_pre, (int32_t *)&Chassis_Z_PID.Angle.feedback);//getMotorAngle(&rxMsg);	// 陀螺仪模式 YAW Z_Speed
-//			z_angle_pre = g_Gimbal_Motor_Info[YAW_205].angle;
 			
-			if(Flag.Gimbal.FLAG_pidStart == 0) {
-				BitMask.Gimbal.BM_rxReport |= BM_RX_REPORT_205;
-			}
+			bm|= BM_RX_REPORT_205;
 		}
 		
 		if(rxMsg.StdId == 0x206) {	// Pitch轴云台电机
@@ -763,17 +753,16 @@ void CAN1_RX0_IRQHandler(void)
 			g_Gimbal_Motor_Info[PITCH_206].angle = getMotorAngle(&rxMsg);
 			Gimbal_PID[MECH][PITCH_206].Angle.feedback = getMotorAngle(&rxMsg);			
 			
-			if(Flag.Gimbal.FLAG_pidStart == 0) {
-				BitMask.Gimbal.BM_rxReport |= BM_RX_REPORT_206;
-			}
+			bm |= BM_RX_REPORT_206;
 		}
-		
-		/* PID开始计算判断 */
-		if(BitMask.Chassis.BM_rxReport == (BM_RX_REPORT_201 | BM_RX_REPORT_202 | BM_RX_REPORT_203 | BM_RX_REPORT_204)) {
-			Flag.Chassis.FLAG_pidStart = 1;
-		}
-		if(BitMask.Gimbal.BM_rxReport == (BM_RX_REPORT_205 | BM_RX_REPORT_206)) {
-			Flag.Gimbal.FLAG_pidStart = 1;
+
+		/* 每产生100次中断判断1次是否CAN失联 */
+		cnt++;
+		if(cnt > 100) {
+			cnt = 0;
+			BitMask.Chassis.BM_rxReport = bm & (BM_RX_REPORT_201 | BM_RX_REPORT_202 | BM_RX_REPORT_203 | BM_RX_REPORT_204);
+			BitMask.Gimbal.BM_rxReport  = bm & (BM_RX_REPORT_205 | BM_RX_REPORT_206);
+			bm = 0;
 		}
 	}
 }
@@ -783,6 +772,8 @@ void CAN1_RX0_IRQHandler(void)
  */
 void CAN2_RX0_IRQHandler(void)
 {
+	static uint8_t bm = 0;
+	static uint8_t cnt = 0;	
 	CanRxMsg	rxMsg;
 	
 	if(CAN_GetITStatus(CAN2, CAN_IT_FMP0) != RESET) {
@@ -801,14 +792,14 @@ void CAN2_RX0_IRQHandler(void)
 			g_Revolver_Motor_Info.angle_prev = g_Revolver_Motor_Info.angle;
 			Revolver_PID.Angle.feedback = g_Revolver_Motor_Info.angle_sum;
 			
-			if(Flag.Revolver.FLAG_pidStart == 0) {
-				BitMask.Revolver.BM_rxReport |= REVOLVER_BM_RX_REPORT;
-			}
+			bm |= REVOLVER_BM_RX_REPORT;
 		}
 		
-		/* PID开始计算判断 */
-		if(BitMask.Revolver.BM_rxReport == REVOLVER_BM_RX_REPORT) {
-				Flag.Revolver.FLAG_pidStart = 1;
+		cnt++;
+		if(cnt > 100) {
+			cnt = 0;
+			BitMask.Revolver.BM_rxReport = bm & REVOLVER_BM_RX_REPORT;
+			bm = 0;
 		}
 	}		
 }

@@ -547,10 +547,29 @@ void CHASSIS_PID_out(Chassis_PID_t *pid)
 {
 	int16_t pidOut[4];
 	
-	pidOut[LEFT_FRON_201] = (int16_t)pid[LEFT_FRON_201].Out;
-	pidOut[RIGH_FRON_202] = (int16_t)pid[RIGH_FRON_202].Out;
-	pidOut[LEFT_BACK_203] = (int16_t)pid[LEFT_BACK_203].Out;
-	pidOut[RIGH_BACK_204] = (int16_t)pid[RIGH_BACK_204].Out;
+	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_201) {
+		pidOut[LEFT_FRON_201] = (int16_t)pid[LEFT_FRON_201].Out;
+	} else {
+		pidOut[LEFT_FRON_201] = 0;	// 失联后卸力
+	}
+	
+	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_202) {
+		pidOut[RIGH_FRON_202] = (int16_t)pid[RIGH_FRON_202].Out;
+	} else {
+		pidOut[LEFT_FRON_201] = 0;	// 失联后卸力
+	}
+	
+	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_203) {
+		pidOut[LEFT_BACK_203] = (int16_t)pid[LEFT_BACK_203].Out;
+	} else {
+		pidOut[LEFT_BACK_203] = 0;	// 失联后卸力
+	}
+	
+	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_204) {
+		pidOut[RIGH_BACK_204] = (int16_t)pid[RIGH_BACK_204].Out;
+	} else {
+		pidOut[RIGH_BACK_204] = 0;	// 失联后卸力
+	}
 	
 	CAN1_send(0x200, pidOut);
 }

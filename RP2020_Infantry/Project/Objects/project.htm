@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\project.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Jan 29 21:53:52 2020
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Thu Jan 30 23:26:53 2020
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -619,7 +619,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[bd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_control
 </UL>
 
-<P><STRONG><a name="[b8]"></a>REMOTE_rcCorrectProcess</STRONG> (Thumb, 346 bytes, Stack size 8 bytes, remote.o(.text))
+<P><STRONG><a name="[b8]"></a>REMOTE_rcCorrectProcess</STRONG> (Thumb, 328 bytes, Stack size 8 bytes, remote.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = REMOTE_rcCorrectProcess
 </UL>
 <BR>[Calls]<UL><LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_rcMech_To_rcGyro
@@ -997,7 +997,7 @@ Global Symbols
 <LI><a href="#[278]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_stop
 </UL>
 
-<P><STRONG><a name="[21]"></a>CAN1_RX0_IRQHandler</STRONG> (Thumb, 562 bytes, Stack size 24 bytes, can.o(.text))
+<P><STRONG><a name="[21]"></a>CAN1_RX0_IRQHandler</STRONG> (Thumb, 550 bytes, Stack size 24 bytes, can.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = CAN1_RX0_IRQHandler &rArr; CAN_GetITStatus
 </UL>
 <BR>[Calls]<UL><LI><a href="#[107]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_Receive
@@ -1009,7 +1009,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f40xx.o(RESET)
 </UL>
-<P><STRONG><a name="[4d]"></a>CAN2_RX0_IRQHandler</STRONG> (Thumb, 160 bytes, Stack size 24 bytes, can.o(.text))
+<P><STRONG><a name="[4d]"></a>CAN2_RX0_IRQHandler</STRONG> (Thumb, 180 bytes, Stack size 24 bytes, can.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = CAN2_RX0_IRQHandler &rArr; CAN_GetITStatus
 </UL>
 <BR>[Calls]<UL><LI><a href="#[107]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_Receive
@@ -2206,7 +2206,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> scheduler.o(.text)
 </UL>
-<P><STRONG><a name="[13f]"></a>revolver_task</STRONG> (Thumb, 60 bytes, Stack size 8 bytes, scheduler.o(.text))
+<P><STRONG><a name="[13f]"></a>revolver_task</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, scheduler.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 88<LI>Call Chain = revolver_task &rArr; REVOLVER_control &rArr; REVOLVER_pidControlTask &rArr; REVOLVER_pidOut &rArr; CAN2_send &rArr; CAN_Transmit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
@@ -2216,7 +2216,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> scheduler.o(.text)
 </UL>
-<P><STRONG><a name="[143]"></a>gimbal_task</STRONG> (Thumb, 64 bytes, Stack size 8 bytes, scheduler.o(.text))
+<P><STRONG><a name="[143]"></a>gimbal_task</STRONG> (Thumb, 56 bytes, Stack size 8 bytes, scheduler.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 360<LI>Call Chain = gimbal_task &rArr; GIMBAL_init &rArr; GIMBAL_GYRO_calAverageOffset &rArr; mpu_dmp_get_data &rArr; dmp_read_fifo &rArr; mpu_read_fifo_stream &rArr; mpu_reset_fifo &rArr; delay_ms &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
@@ -2227,7 +2227,7 @@ Global Symbols
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> scheduler.o(.text)
 </UL>
-<P><STRONG><a name="[147]"></a>chassis_task</STRONG> (Thumb, 78 bytes, Stack size 8 bytes, scheduler.o(.text))
+<P><STRONG><a name="[147]"></a>chassis_task</STRONG> (Thumb, 70 bytes, Stack size 8 bytes, scheduler.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 296<LI>Call Chain = chassis_task &rArr; CHASSIS_control &rArr; CHASSIS_keyControlTask &rArr; CHASSIS_normalControl &rArr; KEY_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
@@ -4067,7 +4067,7 @@ Global Symbols
 <LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
 </UL>
 
-<P><STRONG><a name="[226]"></a>CHASSIS_PID_out</STRONG> (Thumb, 88 bytes, Stack size 16 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[226]"></a>CHASSIS_PID_out</STRONG> (Thumb, 160 bytes, Stack size 16 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = CHASSIS_PID_out &rArr; CAN1_send &rArr; CAN_Transmit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_send
@@ -4081,7 +4081,7 @@ Global Symbols
 <LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
 </UL>
 
-<P><STRONG><a name="[227]"></a>CHASSIS_getInfo</STRONG> (Thumb, 274 bytes, Stack size 16 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[227]"></a>CHASSIS_getInfo</STRONG> (Thumb, 278 bytes, Stack size 16 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = CHASSIS_getInfo
 </UL>
 <BR>[Calls]<UL><LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifMechMode
@@ -4128,13 +4128,13 @@ Global Symbols
 <LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
 </UL>
 
-<P><STRONG><a name="[22b]"></a>REMOTE_setChassisSpeed</STRONG> (Thumb, 1020 bytes, Stack size 16 bytes, task_chassis.o(.text), UNUSED)
+<P><STRONG><a name="[22b]"></a>REMOTE_setChassisSpeed</STRONG> (Thumb, 1026 bytes, Stack size 16 bytes, task_chassis.o(.text), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
 <LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_pidCalculate
 <LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getMiddleAngle
 </UL>
 
-<P><STRONG><a name="[22d]"></a>REMOTE_TOP_setChassisSpeed</STRONG> (Thumb, 1644 bytes, Stack size 72 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[22d]"></a>REMOTE_TOP_setChassisSpeed</STRONG> (Thumb, 1646 bytes, Stack size 72 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 256<LI>Call Chain = REMOTE_TOP_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[230]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
@@ -4318,7 +4318,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[272]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_pidControlTask
 </UL>
 
-<P><STRONG><a name="[247]"></a>GIMBAL_pidOut</STRONG> (Thumb, 58 bytes, Stack size 16 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[247]"></a>GIMBAL_pidOut</STRONG> (Thumb, 94 bytes, Stack size 16 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = GIMBAL_pidOut &rArr; CAN1_send &rArr; CAN_Transmit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_send
@@ -4338,7 +4338,7 @@ Global Symbols
 
 <P><STRONG><a name="[3c6]"></a>GIMBAL_setMode</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, task_gimbal.o(.text), UNUSED)
 
-<P><STRONG><a name="[249]"></a>GIMBAL_getMiddleAngle</STRONG> (Thumb, 34 bytes, Stack size 8 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[249]"></a>GIMBAL_getMiddleAngle</STRONG> (Thumb, 124 bytes, Stack size 8 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = GIMBAL_getMiddleAngle
 </UL>
 <BR>[Calls]<UL><LI><a href="#[24a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getLogic
@@ -4353,7 +4353,7 @@ Global Symbols
 <LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
 </UL>
 
-<P><STRONG><a name="[22a]"></a>GIMBAL_ifGyroMode</STRONG> (Thumb, 98 bytes, Stack size 0 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[22a]"></a>GIMBAL_ifGyroMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_gimbal.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setGimbalAngle
 <LI><a href="#[24b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifTopGyroOpen
 <LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
@@ -4439,7 +4439,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_control
 </UL>
 
-<P><STRONG><a name="[252]"></a>REMOTE_setGimbalAngle</STRONG> (Thumb, 424 bytes, Stack size 16 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[252]"></a>REMOTE_setGimbalAngle</STRONG> (Thumb, 428 bytes, Stack size 16 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = REMOTE_setGimbalAngle &rArr; GIMBAL_getMiddleAngle
 </UL>
 <BR>[Calls]<UL><LI><a href="#[249]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_getMiddleAngle
@@ -4469,7 +4469,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[26e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_normalControl
 </UL>
 
-<P><STRONG><a name="[26f]"></a>KEY_setQuickPickUp</STRONG> (Thumb, 114 bytes, Stack size 0 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[26f]"></a>KEY_setQuickPickUp</STRONG> (Thumb, 112 bytes, Stack size 0 bytes, task_gimbal.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[26e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_normalControl
 </UL>
 
@@ -4485,7 +4485,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[256]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setGimbalMode
 </UL>
 
-<P><STRONG><a name="[256]"></a>KEY_setGimbalMode</STRONG> (Thumb, 560 bytes, Stack size 8 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[256]"></a>KEY_setGimbalMode</STRONG> (Thumb, 564 bytes, Stack size 8 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = KEY_setGimbalMode &rArr; GIMBAL_keyGyro_To_keyMech &rArr; GIMBAL_getMiddleAngle
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifBuffMode
@@ -4534,7 +4534,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[25c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_reset
 </UL>
 
-<P><STRONG><a name="[25c]"></a>GIMBAL_reset</STRONG> (Thumb, 806 bytes, Stack size 16 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[25c]"></a>GIMBAL_reset</STRONG> (Thumb, 770 bytes, Stack size 16 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = GIMBAL_reset &rArr; GIMBAL_getMiddleAngle
 </UL>
 <BR>[Calls]<UL><LI><a href="#[bc]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_rcMech_To_rcGyro
@@ -4721,7 +4721,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[27d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_pidControlTask
 </UL>
 
-<P><STRONG><a name="[279]"></a>REVOLVER_pidOut</STRONG> (Thumb, 42 bytes, Stack size 24 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[279]"></a>REVOLVER_pidOut</STRONG> (Thumb, 60 bytes, Stack size 24 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = REVOLVER_pidOut &rArr; CAN2_send &rArr; CAN_Transmit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[104]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN2_send
@@ -4733,11 +4733,11 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[27d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_pidControlTask
 </UL>
 
-<P><STRONG><a name="[280]"></a>REVOLVER_Angle_bulletStuck</STRONG> (Thumb, 162 bytes, Stack size 0 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[280]"></a>REVOLVER_Angle_bulletStuck</STRONG> (Thumb, 234 bytes, Stack size 0 bytes, task_revolver.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[27d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_pidControlTask
 </UL>
 
-<P><STRONG><a name="[84]"></a>REVOLVER_getRealShootTime</STRONG> (Thumb, 78 bytes, Stack size 0 bytes, task_revolver.o(.text), UNUSED)
+<P><STRONG><a name="[84]"></a>REVOLVER_getRealShootTime</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, task_revolver.o(.text), UNUSED)
 <BR><BR>[Called By]<UL><LI><a href="#[81]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;JUDGE_shootNumCount
 </UL>
 
@@ -4808,7 +4808,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[28a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_keyControlTask
 </UL>
 
-<P><STRONG><a name="[28b]"></a>REVOLVER_tripleShootControl</STRONG> (Thumb, 78 bytes, Stack size 0 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[28b]"></a>REVOLVER_tripleShootControl</STRONG> (Thumb, 80 bytes, Stack size 0 bytes, task_revolver.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[28a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_keyControlTask
 </UL>
 

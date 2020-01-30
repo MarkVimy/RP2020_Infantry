@@ -6,6 +6,7 @@
  * @brief       This file includes the Gimbal(云台) external functions 
  *
  * @Verison			V1.1 (1-October-2019)
+ *							V1.2 (30-Jan-2020)		-	优化云台复位就近算法
  */
 
 /**
@@ -607,8 +608,19 @@ void GIMBAL_pidOut(Gimbal_PID_t *pid)
 	int16_t pidOut[4] = {0, 0, 0, 0};
 	
 	/* CAN发送电压值 */
-	pidOut[YAW_205] = (int16_t)pid[YAW_205].Out;		// 0x205
-	pidOut[PITCH_206] = (int16_t)pid[PITCH_206].Out;	// 0x206
+	if(BitMask.Gimbal.BM_rxReport & BM_RX_REPORT_205) {
+		pidOut[YAW_205] = (int16_t)pid[YAW_205].Out;		// 0x205
+	}
+	else {
+		pidOut[YAW_205] = 0;	// 失联后卸力
+	}
+	
+	if(BitMask.Gimbal.BM_rxReport & BM_RX_REPORT_206) {
+		pidOut[PITCH_206] = (int16_t)pid[PITCH_206].Out;	// 0x206
+	} 
+	else {
+		pidOut[PITCH_206] = 0;	// 失联后卸力
+	}
 	
 	CAN1_send(0x1FF, pidOut);
 }
@@ -1254,7 +1266,6 @@ void GIMBAL_reset(void)
 	static portTickType tickTime_prev = 0;
 	static portTickType tickTime_now = 0;
 	
-	int8_t reset_dir;
 	float delta_angle;
 	float target_angle;
 	
@@ -1279,55 +1290,44 @@ void GIMBAL_reset(void)
 		resetTime++;	// 复位计时
 		if(reset_start) {	// 刚进入复位
 			reset_start = 0;
-			delta_angle = target_angle - g_Gimbal_Motor_Info[YAW_205].angle;
 			/* 就近移动算法 */
-			/* 中值在[4096,8191] */
-			if(target_angle > 4095) {	
-				if(delta_angle >= 0 && delta_angle < 4096) {
-					reset_dir = +1;
-					Gimbal_PID[MECH][YAW_205].AngleRampTarget = reset_dir*delta_angle;
-				} 
-				else if(delta_angle >= 4096) {
-					reset_dir = -1;
-					Gimbal_PID[MECH][YAW_205].AngleRampTarget = reset_dir*(8192 - delta_angle);
-				} 
-				else if(delta_angle < 0){	// 误差为0
-					reset_dir = -1;
-					Gimbal_PID[MECH][YAW_205].AngleRampTarget = delta_angle;
-				}
+			delta_angle = target_angle - g_Gimbal_Motor_Info[YAW_205].angle;
+			/* 没有越界取最近 */
+			if(abs(delta_angle) < 4096) {
+				Gimbal_PID[MECH][YAW_205].AngleRampTarget = delta_angle;
 			} 
-			/* 中值在[0,4095] */
-//			else {
-//				if(delta_angle > -4096) 
-//					reset_dir = 1;
-//				else
-//					reset_dir = -1;
-//			}			
+			/* 越界后作边界处理 */
+			else {
+				if(delta_angle >= 4096) {
+					Gimbal_PID[MECH][YAW_205].AngleRampTarget = -8192 + delta_angle;
+				} 
+				else if(delta_angle <= -4096) {
+					Gimbal_PID[MECH][YAW_205].AngleRampTarget = 8192 + delta_angle;
+				}
+			}
 		}
 		
-		if(Flag.Gimbal.FLAG_pidStart == 1) {
-			Flag.Gimbal.FLAG_pidMode = MECH;
+		Flag.Gimbal.FLAG_pidMode = MECH;
 
-			/* 平缓地让云台移动到中间，防止上电狂甩 */
-			/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
-			if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback < Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 正向累加
-			{
-				Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], GIMBAL_RAMP_BEGIN_YAW);
-			} 
-			else if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback > Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 反向累加
-			{
-				Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], -GIMBAL_RAMP_BEGIN_YAW);
-			} 
-			else // 缓冲池清零
-			{
-				Gimbal_PID[MECH][YAW_205].AngleRampTarget = 0;
-				Gimbal_PID[MECH][YAW_205].AngleRampFeedback = 0;
-			}
-			Gimbal_PID[MECH][YAW_205].AngleRampFeedback = RAMP_float(Gimbal_PID[MECH][YAW_205].AngleRampTarget, Gimbal_PID[MECH][YAW_205].AngleRampFeedback, GIMBAL_RAMP_BEGIN_YAW);
-			
-			/* 平缓地让云台移动到中间，防止上电狂甩 */
-			Gimbal_PID[MECH][PITCH_206].Angle.target = RAMP_float(GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT, Gimbal_PID[MECH][PITCH_206].Angle.target, GIMBAL_RAMP_BEGIN_PITCH);
-		}		
+		/* 平缓地让云台移动到中间，防止上电狂甩 */
+		/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
+		if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback < Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 正向累加
+		{
+			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], GIMBAL_RAMP_BEGIN_YAW);
+		} 
+		else if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback > Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 反向累加
+		{
+			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], -GIMBAL_RAMP_BEGIN_YAW);
+		} 
+		else // 缓冲池清零
+		{
+			Gimbal_PID[MECH][YAW_205].AngleRampTarget = 0;
+			Gimbal_PID[MECH][YAW_205].AngleRampFeedback = 0;
+		}
+		Gimbal_PID[MECH][YAW_205].AngleRampFeedback = RAMP_float(Gimbal_PID[MECH][YAW_205].AngleRampTarget, Gimbal_PID[MECH][YAW_205].AngleRampFeedback, GIMBAL_RAMP_BEGIN_YAW);
+		
+		/* 平缓地让云台移动到中间，防止上电狂甩 */
+		Gimbal_PID[MECH][PITCH_206].Angle.target = RAMP_float(GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT, Gimbal_PID[MECH][PITCH_206].Angle.target, GIMBAL_RAMP_BEGIN_PITCH);
 		
 		/* 等待云台归中 */
 		if(abs(Gimbal_PID[MECH][YAW_205].Angle.feedback - target_angle) <= 1 

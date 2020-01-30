@@ -41,21 +41,16 @@ typedef struct {
 		uint8_t		FLAG_mode;
 	}Remote;
 	struct {
-		uint8_t		FLAG_pidStart;
 		uint8_t		FLAG_angleTurnOk;
 		uint8_t		FLAG_mode;
 		uint8_t		FLAG_goHome;	// ≈§Õ∑æÕ≈‹
 	}Chassis;
 	struct {
-		uint8_t		FLAG_pidStart;
 		uint8_t		FLAG_pidMode;
 		uint8_t		FLAG_resetOK;
 		uint8_t		FLAG_angleRecordStart;
 		uint8_t		FLAG_angleTurnOk;
 	}Gimbal;
-	struct {
-		uint8_t		FLAG_pidStart;
-	}Revolver;
 	struct {
 		uint8_t		FLAG_resetOK;
 	}Friction;
