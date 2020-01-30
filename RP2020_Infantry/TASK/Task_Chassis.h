@@ -73,11 +73,11 @@ void CHASSIS_updateMotorAngle(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
 void CHASSIS_updateMotorCurrent(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
 
 void CHASSIS_PID_ParamsInit(Chassis_PID_t *pid, uint8_t motor_cnt);
-void CHASSIS_Z_Speed_PID_ParamsInit(PID_Object_t *pid);
+void CHASSIS_Z_PID_ParamsInit(PID_Object_t *pid);
 void CHASSIS_stop(Chassis_PID_t *pid);
-void CHASSIS_Speed_PID_calculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
-void CHASSIS_Angle_PID_calculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
-float CHASSIS_Z_Speed_PID_calculate(PID_Object_t *pid, float kp);
+void CHASSIS_Speed_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
+void CHASSIS_Angle_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
+float CHASSIS_Z_Speed_pidCalculate(PID_Object_t *pid, float kp);
 void CHASSIS_PID_out(Chassis_PID_t *pid);
 
 /* #–≈œ¢≤„# ---------------------------------------------------------------------------------------------------------------------------------------*/

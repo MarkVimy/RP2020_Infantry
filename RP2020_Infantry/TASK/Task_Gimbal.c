@@ -1443,12 +1443,6 @@ void GIMBAL_IMU_recordFeedback(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_
 	}
 	last_yaw = yaw; 	
 	
-	/* 利用陀螺仪数据作扭头补偿 */
-	if(GIMBAL_ifTopGyroOpen() == true) {
-		Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, 		
-																	delta_yaw * 8192 / 360.f);
-	}
-	
 	/* # 陀螺仪模式下的角度反馈值利用IMU的角度值 */
 	pid[GYRO][YAW_205].Angle.feedback += delta_yaw * GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
 	
@@ -2304,7 +2298,8 @@ void GIMBAL_normalControl(void)
 void GIMBAL_autoControl(void)
 {
 	/* 视觉数据可用 && 键盘模式下 */
-	if( (VISION_isDataValid()) && (Flag.Remote.FLAG_mode == KEY) ) {
+	if( (VISION_isDataValid()) && (Flag.Remote.FLAG_mode == KEY) ) 
+	{
 		/*----期望修改----*/
 		/* 视觉预测版 */
 		//GIMBAL_VISION_AUTO_pidCalculate(Gimbal_PID, &Gimbal);
@@ -2351,7 +2346,8 @@ void GIMBAL_buffControl(void)
 	}
 	
 	/* 视觉数据可用 && 键盘模式下 */
-	if( (VISION_isDataValid()) && (Flag.Remote.FLAG_mode == KEY) ) {
+	if( (VISION_isDataValid()) && (Flag.Remote.FLAG_mode == KEY) ) 
+	{
 		/*----期望修改----*/
 		GIMBAL_BUFF_pidCalculate(Gimbal_PID, &Gimbal);	
 	}
@@ -2379,9 +2375,12 @@ void GIMBAL_pidControlTask(void)
 	/* YAW 角度环 */
 	GIMBAL_Angle_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], YAW_205);
 	/* YAW 速度环 */
-	if(test_yaw_pid == 0) {
-			Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Speed.target = Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Angle.out;
-	} else {
+	if(test_yaw_pid == 0) 
+	{
+		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Speed.target = Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Angle.out;
+	} 
+	else 
+	{
 		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Speed.target = (RC_Ctl_Info.rc.ch0 - 1024)/660.f * test_yaw_speed_max_target;
 	}
 	GIMBAL_Speed_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], YAW_205);
@@ -2389,10 +2388,12 @@ void GIMBAL_pidControlTask(void)
 	/* PITCH 角度环 */
 	GIMBAL_Angle_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], PITCH_206);
 	/* PITCH 速度环 */
-	if(test_pitch_pid == 0) {
+	if(test_pitch_pid == 0) 
+	{
 		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Speed.target = Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Angle.out;
 	} 
-	else {
+	else 
+	{
 		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Speed.target = -RC_RIGH_CH_UD_VALUE/660.f * test_pitch_speed_max_target;
 	}
 	GIMBAL_Speed_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], PITCH_206);
@@ -2418,7 +2419,7 @@ void GIMBAL_keyControlTask(void)
 	KEY_setGimbalMode(&RC_Ctl_Info);
 	switch(Gimbal.State.mode)
 	{
-		case GIMBAL_MODE_NORMAL:
+		case GIMBAL_MODE_NORMAL:	
 			GIMBAL_normalControl();
 			break;
 		case GIMBAL_MODE_AUTO:
@@ -2458,13 +2459,19 @@ void GIMBAL_control(void)
 	//GIMBAL_IMU_recordFeedback(Gimbal_PID);
 	GIMBAL_getInfo();
 	/*----期望修改----*/
-	if(BM_ifSet(BitMask.System.BM_reset, BM_RESET_GIMBAL)) {	// 复位状态
+	if(BM_ifSet(BitMask.System.BM_reset, BM_RESET_GIMBAL)) 
+	{	// 复位状态
 		Gimbal.State.mode = GIMBAL_MODE_NORMAL;
 		GIMBAL_reset(); // 云台复位
-	} else {
-		if(Flag.Remote.FLAG_mode == RC) {
+	} 
+	else 
+	{
+		if(Flag.Remote.FLAG_mode == RC) 
+		{
 			GIMBAL_rcControlTask();
-		} else if(Flag.Remote.FLAG_mode == KEY) {
+		} 
+		else if(Flag.Remote.FLAG_mode == KEY) 
+		{
 			GIMBAL_keyControlTask();
 		}
 	}

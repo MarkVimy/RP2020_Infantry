@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\project.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Jan 22 20:07:22 2020
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Jan 29 21:53:52 2020
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -552,7 +552,7 @@ Global Symbols
 <P><STRONG><a name="[224]"></a>KalmanFilter</STRONG> (Thumb, 134 bytes, Stack size 0 bytes, kalman.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[262]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_AUTO_pidCalculate
 <LI><a href="#[246]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_Angle_pidCalculate
-<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_calculate
+<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_pidCalculate
 </UL>
 
 <P><STRONG><a name="[2ec]"></a>REMOTE_reenableRC</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, remote.o(.text), UNUSED)
@@ -2162,7 +2162,7 @@ Global Symbols
 <LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setGimbalTurn
 <LI><a href="#[23c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_twistTargetCalculate
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[269]"></a>STEP_float</STRONG> (Thumb, 64 bytes, Stack size 0 bytes, sys.o(.text))
@@ -4001,20 +4001,19 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[148]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_init
 </UL>
 
-<P><STRONG><a name="[242]"></a>CHASSIS_PID_ParamsInit</STRONG> (Thumb, 378 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[243]"></a>CHASSIS_PID_ParamsInit</STRONG> (Thumb, 378 bytes, Stack size 0 bytes, task_chassis.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[14a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_selfProtect
 </UL>
 
 <P><STRONG><a name="[220]"></a>CHASSIS_getMiddleAngle</STRONG> (Thumb, 18 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_logicControl
-<LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
-<LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
-<LI><a href="#[21f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_ParamsInit
+<BR><BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
+<LI><a href="#[21f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_PID_ParamsInit
 </UL>
 
-<P><STRONG><a name="[21f]"></a>CHASSIS_Z_Speed_PID_ParamsInit</STRONG> (Thumb, 78 bytes, Stack size 4 bytes, task_chassis.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = CHASSIS_Z_Speed_PID_ParamsInit
+<P><STRONG><a name="[21f]"></a>CHASSIS_Z_PID_ParamsInit</STRONG> (Thumb, 78 bytes, Stack size 4 bytes, task_chassis.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = CHASSIS_Z_PID_ParamsInit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getMiddleAngle
 </UL>
@@ -4043,29 +4042,29 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[14a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_selfProtect
 </UL>
 
-<P><STRONG><a name="[243]"></a>CHASSIS_Speed_PID_calculate</STRONG> (Thumb, 1106 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
+<P><STRONG><a name="[23f]"></a>CHASSIS_Speed_pidCalculate</STRONG> (Thumb, 1106 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
 </UL>
 
-<P><STRONG><a name="[3c0]"></a>CHASSIS_Angle_PID_calculate</STRONG> (Thumb, 660 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
+<P><STRONG><a name="[3c0]"></a>CHASSIS_Angle_pidCalculate</STRONG> (Thumb, 660 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
 
 <P><STRONG><a name="[225]"></a>CHASSIS_ifTopGyroOpen</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, task_chassis.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[251]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_getInfo
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
-<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_calculate
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
+<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_pidCalculate
 </UL>
 
-<P><STRONG><a name="[223]"></a>CHASSIS_Z_Speed_PID_calculate</STRONG> (Thumb, 378 bytes, Stack size 16 bytes, task_chassis.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = CHASSIS_Z_Speed_PID_calculate
+<P><STRONG><a name="[223]"></a>CHASSIS_Z_Speed_pidCalculate</STRONG> (Thumb, 378 bytes, Stack size 16 bytes, task_chassis.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = CHASSIS_Z_Speed_pidCalculate
 </UL>
 <BR>[Calls]<UL><LI><a href="#[224]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KalmanFilter
 <LI><a href="#[225]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifTopGyroOpen
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_logicControl
-<LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
-<LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
+<BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[226]"></a>CHASSIS_PID_out</STRONG> (Thumb, 88 bytes, Stack size 16 bytes, task_chassis.o(.text))
@@ -4073,14 +4072,22 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[102]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_send
 </UL>
-<BR>[Called By]<UL><LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
+<BR>[Called By]<UL><LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
 </UL>
 
-<P><STRONG><a name="[227]"></a>CHASSIS_getInfo</STRONG> (Thumb, 30 bytes, Stack size 8 bytes, task_chassis.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = CHASSIS_getInfo
+<P><STRONG><a name="[228]"></a>CHASSIS_MECH_yawTargetBoundaryProcess</STRONG> (Thumb, 68 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
 </UL>
-<BR>[Calls]<UL><LI><a href="#[228]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifMechMode
-<LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifGyroMode
+
+<P><STRONG><a name="[227]"></a>CHASSIS_getInfo</STRONG> (Thumb, 274 bytes, Stack size 16 bytes, task_chassis.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = CHASSIS_getInfo
+</UL>
+<BR>[Calls]<UL><LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifMechMode
+<LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifGyroMode
+<LI><a href="#[228]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_MECH_yawTargetBoundaryProcess
+<LI><a href="#[225]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifTopGyroOpen
 </UL>
 <BR>[Called By]<UL><LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
 </UL>
@@ -4094,56 +4101,49 @@ Global Symbols
 <P><STRONG><a name="[239]"></a>CHASSIS_setMode</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, task_chassis.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[271]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_buffControl
 <LI><a href="#[256]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setGimbalMode
-<LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_logicControl
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[3c2]"></a>CHASSIS_logicRevert</STRONG> (Thumb, 22 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
 
-<P><STRONG><a name="[22d]"></a>CHASSIS_ifMechMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[22e]"></a>CHASSIS_ifMechMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_chassis.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 </UL>
 
-<P><STRONG><a name="[22e]"></a>CHASSIS_ifGyroMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[22f]"></a>CHASSIS_ifGyroMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_chassis.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[23a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setTopGyro
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 <LI><a href="#[235]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setTopGyro
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[3c3]"></a>CHASSIS_ifNormalMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
 
 <P><STRONG><a name="[3c4]"></a>CHASSIS_ifLogicRevert</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
 
-<P><STRONG><a name="[22b]"></a>CHASSIS_omniSpeedCalculate</STRONG> (Thumb, 454 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[22c]"></a>CHASSIS_omniSpeedCalculate</STRONG> (Thumb, 394 bytes, Stack size 0 bytes, task_chassis.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
-<LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
 </UL>
 
-<P><STRONG><a name="[22a]"></a>REMOTE_setChassisSpeed</STRONG> (Thumb, 1034 bytes, Stack size 16 bytes, task_chassis.o(.text), UNUSED)
-<BR><BR>[Calls]<UL><LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
-<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_calculate
+<P><STRONG><a name="[22b]"></a>REMOTE_setChassisSpeed</STRONG> (Thumb, 1020 bytes, Stack size 16 bytes, task_chassis.o(.text), UNUSED)
+<BR><BR>[Calls]<UL><LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
+<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_pidCalculate
 <LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getMiddleAngle
 </UL>
 
-<P><STRONG><a name="[22f]"></a>CHASSIS_MECH_yawTargetBoundaryProcess</STRONG> (Thumb, 68 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_IMU_recordFeedback
-<LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
-</UL>
-
-<P><STRONG><a name="[22c]"></a>REMOTE_TOP_setChassisSpeed</STRONG> (Thumb, 1606 bytes, Stack size 72 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[22d]"></a>REMOTE_TOP_setChassisSpeed</STRONG> (Thumb, 1644 bytes, Stack size 72 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 256<LI>Call Chain = REMOTE_TOP_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[230]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
 <LI><a href="#[231]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_getTopGyroAngleOffset
-<LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_MECH_yawTargetBoundaryProcess
-<LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
-<LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
-<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifMechMode
-<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_calculate
+<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
+<LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
+<LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifMechMode
+<LI><a href="#[228]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_MECH_yawTargetBoundaryProcess
+<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_pidCalculate
 <LI><a href="#[225]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifTopGyroOpen
 <LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getMiddleAngle
 <LI><a href="#[232]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sin
@@ -4154,18 +4154,18 @@ Global Symbols
 <LI><a href="#[1d0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dadd
 <LI><a href="#[1d1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<BR>[Called By]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
 </UL>
 
 <P><STRONG><a name="[235]"></a>REMOTE_setTopGyro</STRONG> (Thumb, 118 bytes, Stack size 4 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = REMOTE_setTopGyro
 </UL>
-<BR>[Calls]<UL><LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
+<BR>[Calls]<UL><LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
 </UL>
-<BR>[Called By]<UL><LI><a href="#[23f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<BR>[Called By]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
 </UL>
 
-<P><STRONG><a name="[236]"></a>KEY_rampChassisSpeed</STRONG> (Thumb, 268 bytes, Stack size 64 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[236]"></a>KEY_rampChassisSpeed</STRONG> (Thumb, 206 bytes, Stack size 64 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 136<LI>Call Chain = KEY_rampChassisSpeed &rArr; __hardfp_sqrt &rArr; _dsqrt &rArr; __fpl_dnaninf
 </UL>
 <BR>[Calls]<UL><LI><a href="#[237]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sqrt
@@ -4176,18 +4176,18 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 </UL>
 
-<P><STRONG><a name="[238]"></a>KEY_setChassisSpeed</STRONG> (Thumb, 1420 bytes, Stack size 80 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[238]"></a>KEY_setChassisSpeed</STRONG> (Thumb, 1422 bytes, Stack size 80 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 264<LI>Call Chain = KEY_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[230]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
 <LI><a href="#[231]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_getTopGyroAngleOffset
 <LI><a href="#[236]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_rampChassisSpeed
-<LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_MECH_yawTargetBoundaryProcess
-<LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
-<LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
-<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifMechMode
+<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
+<LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
+<LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifMechMode
 <LI><a href="#[239]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_setMode
-<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_calculate
+<LI><a href="#[228]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_MECH_yawTargetBoundaryProcess
+<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_pidCalculate
 <LI><a href="#[225]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifTopGyroOpen
 <LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getMiddleAngle
 <LI><a href="#[232]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_sin
@@ -4204,7 +4204,7 @@ Global Symbols
 <P><STRONG><a name="[23a]"></a>KEY_setTopGyro</STRONG> (Thumb, 80 bytes, Stack size 4 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = KEY_setTopGyro
 </UL>
-<BR>[Calls]<UL><LI><a href="#[22e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
+<BR>[Calls]<UL><LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
 </UL>
 <BR>[Called By]<UL><LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_normalControl
 </UL>
@@ -4218,9 +4218,9 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;chassis_task
 </UL>
 
-<P><STRONG><a name="[3c5]"></a>CHASSIS_powerLimit</STRONG> (Thumb, 396 bytes, Stack size 8 bytes, task_chassis.o(.text), UNUSED)
+<P><STRONG><a name="[3c5]"></a>CHASSIS_powerLimit</STRONG> (Thumb, 482 bytes, Stack size 8 bytes, task_chassis.o(.text), UNUSED)
 
-<P><STRONG><a name="[23c]"></a>CHASSIS_twistTargetCalculate</STRONG> (Thumb, 262 bytes, Stack size 16 bytes, task_chassis.o(.text), UNUSED)
+<P><STRONG><a name="[23c]"></a>CHASSIS_twistTargetCalculate</STRONG> (Thumb, 206 bytes, Stack size 16 bytes, task_chassis.o(.text), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
 <LI><a href="#[230]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
 </UL>
@@ -4231,32 +4231,35 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[23a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setTopGyro
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 </UL>
-<BR>[Called By]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<BR>[Called By]<UL><LI><a href="#[241]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
 </UL>
 
-<P><STRONG><a name="[241]"></a>CHASSIS_buffControl</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<P><STRONG><a name="[242]"></a>CHASSIS_buffControl</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[241]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
 </UL>
 
-<P><STRONG><a name="[23e]"></a>CHASSIS_logicControl</STRONG> (Thumb, 90 bytes, Stack size 8 bytes, task_chassis.o(.text), UNUSED)
-<BR><BR>[Calls]<UL><LI><a href="#[239]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_setMode
-<LI><a href="#[223]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_calculate
-<LI><a href="#[220]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getMiddleAngle
+<P><STRONG><a name="[23e]"></a>CHASSIS_pidControlTask</STRONG> (Thumb, 42 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 64<LI>Call Chain = CHASSIS_pidControlTask &rArr; CHASSIS_PID_out &rArr; CAN1_send &rArr; CAN_Transmit
 </UL>
-
-<P><STRONG><a name="[23f]"></a>CHASSIS_rcControlTask</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, task_chassis.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 264<LI>Call Chain = CHASSIS_rcControlTask &rArr; REMOTE_TOP_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
-</UL>
-<BR>[Calls]<UL><LI><a href="#[235]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setTopGyro
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<BR>[Calls]<UL><LI><a href="#[226]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_PID_out
+<LI><a href="#[23f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Speed_pidCalculate
 </UL>
 <BR>[Called By]<UL><LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
 </UL>
 
-<P><STRONG><a name="[240]"></a>CHASSIS_keyControlTask</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[240]"></a>CHASSIS_rcControlTask</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 264<LI>Call Chain = CHASSIS_rcControlTask &rArr; REMOTE_TOP_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
+</UL>
+<BR>[Calls]<UL><LI><a href="#[235]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setTopGyro
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+</UL>
+<BR>[Called By]<UL><LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
+</UL>
+
+<P><STRONG><a name="[241]"></a>CHASSIS_keyControlTask</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 280<LI>Call Chain = CHASSIS_keyControlTask &rArr; CHASSIS_normalControl &rArr; KEY_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
-<BR>[Calls]<UL><LI><a href="#[241]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_buffControl
+<BR>[Calls]<UL><LI><a href="#[242]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_buffControl
 <LI><a href="#[23d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_normalControl
 </UL>
 <BR>[Called By]<UL><LI><a href="#[149]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
@@ -4266,20 +4269,19 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 56<LI>Call Chain = CHASSIS_selfProtect &rArr; CHASSIS_stop &rArr; CAN1_send &rArr; CAN_Transmit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[222]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_stop
-<LI><a href="#[21f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_Speed_PID_ParamsInit
-<LI><a href="#[242]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_PID_ParamsInit
+<LI><a href="#[21f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Z_PID_ParamsInit
+<LI><a href="#[243]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_PID_ParamsInit
 </UL>
 <BR>[Called By]<UL><LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;chassis_task
 </UL>
 
-<P><STRONG><a name="[149]"></a>CHASSIS_control</STRONG> (Thumb, 70 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[149]"></a>CHASSIS_control</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 288<LI>Call Chain = CHASSIS_control &rArr; CHASSIS_keyControlTask &rArr; CHASSIS_normalControl &rArr; KEY_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
-<BR>[Calls]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
-<LI><a href="#[23f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<BR>[Calls]<UL><LI><a href="#[241]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<LI><a href="#[23e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
 <LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
-<LI><a href="#[226]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_PID_out
-<LI><a href="#[243]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Speed_PID_calculate
 </UL>
 <BR>[Called By]<UL><LI><a href="#[147]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;chassis_task
 </UL>
@@ -4346,12 +4348,12 @@ Global Symbols
 <LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setGimbalAngle
 </UL>
 
-<P><STRONG><a name="[228]"></a>GIMBAL_ifMechMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[229]"></a>GIMBAL_ifMechMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_gimbal.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setGimbalAngle
 <LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
 </UL>
 
-<P><STRONG><a name="[229]"></a>GIMBAL_ifGyroMode</STRONG> (Thumb, 98 bytes, Stack size 0 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[22a]"></a>GIMBAL_ifGyroMode</STRONG> (Thumb, 98 bytes, Stack size 0 bytes, task_gimbal.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setGimbalAngle
 <LI><a href="#[24b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifTopGyroOpen
 <LI><a href="#[227]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
@@ -4363,12 +4365,8 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[c4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FRICTION_speedSwitch
 </UL>
 
-<P><STRONG><a name="[24b]"></a>GIMBAL_ifTopGyroOpen</STRONG> (Thumb, 22 bytes, Stack size 4 bytes, task_gimbal.o(.text))
-<BR><BR>[Stack]<UL><LI>Max Depth = 4<LI>Call Chain = GIMBAL_ifTopGyroOpen
-</UL>
-<BR>[Calls]<UL><LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifGyroMode
-</UL>
-<BR>[Called By]<UL><LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_IMU_recordFeedback
+<P><STRONG><a name="[24b]"></a>GIMBAL_ifTopGyroOpen</STRONG> (Thumb, 22 bytes, Stack size 4 bytes, task_gimbal.o(.text), UNUSED)
+<BR><BR>[Calls]<UL><LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifGyroMode
 </UL>
 
 <P><STRONG><a name="[24e]"></a>GIMBAL_ifAutoMode</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, task_gimbal.o(.text))
@@ -4412,7 +4410,7 @@ Global Symbols
 
 <P><STRONG><a name="[231]"></a>GIMBAL_getTopGyroAngleOffset</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, task_gimbal.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[250]"></a>speed_calculate</STRONG> (Thumb, 234 bytes, Stack size 0 bytes, task_gimbal.o(.text))
@@ -4445,8 +4443,8 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 24<LI>Call Chain = REMOTE_setGimbalAngle &rArr; GIMBAL_getMiddleAngle
 </UL>
 <BR>[Calls]<UL><LI><a href="#[249]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_getMiddleAngle
-<LI><a href="#[228]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifMechMode
-<LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifGyroMode
+<LI><a href="#[229]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifMechMode
+<LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifGyroMode
 </UL>
 <BR>[Called By]<UL><LI><a href="#[274]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_rcControlTask
 </UL>
@@ -4549,12 +4547,10 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_control
 </UL>
 
-<P><STRONG><a name="[14c]"></a>GIMBAL_IMU_recordFeedback</STRONG> (Thumb, 348 bytes, Stack size 16 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[14c]"></a>GIMBAL_IMU_recordFeedback</STRONG> (Thumb, 306 bytes, Stack size 16 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 328<LI>Call Chain = GIMBAL_IMU_recordFeedback &rArr; mpu_dmp_get_data &rArr; dmp_read_fifo &rArr; mpu_read_fifo_stream &rArr; mpu_reset_fifo &rArr; delay_ms &rArr; vTaskDelay &rArr; xTaskResumeAll &rArr; xTaskIncrementTick
 </UL>
 <BR>[Calls]<UL><LI><a href="#[1d2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MPU_Get_Gyroscope
-<LI><a href="#[24b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_ifTopGyroOpen
-<LI><a href="#[22f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_MECH_yawTargetBoundaryProcess
 <LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;mpu_dmp_get_data
 </UL>
 <BR>[Called By]<UL><LI><a href="#[14b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;system_state_task
@@ -4568,7 +4564,7 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[b8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_rcCorrectProcess
 </UL>
 
-<P><STRONG><a name="[25e]"></a>GIMBAL_VISION_AUTO_pidCalculate</STRONG> (Thumb, 338 bytes, Stack size 16 bytes, task_gimbal.o(.text), UNUSED)
+<P><STRONG><a name="[25e]"></a>GIMBAL_VISION_AUTO_pidCalculate</STRONG> (Thumb, 336 bytes, Stack size 16 bytes, task_gimbal.o(.text), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[260]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;VISION_GYRO_getYawFeedback
 <LI><a href="#[261]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;VISION_MECH_getPitchFeedback
 <LI><a href="#[25f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;VISION_clearFlagStatus
@@ -4577,7 +4573,7 @@ Global Symbols
 <LI><a href="#[230]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
 </UL>
 
-<P><STRONG><a name="[262]"></a>GIMBAL_AUTO_pidCalculate</STRONG> (Thumb, 3236 bytes, Stack size 32 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[262]"></a>GIMBAL_AUTO_pidCalculate</STRONG> (Thumb, 3238 bytes, Stack size 32 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 164<LI>Call Chain = GIMBAL_AUTO_pidCalculate &rArr; kalman_filter_calc &rArr; arm_mat_inverse_f32
 </UL>
 <BR>[Calls]<UL><LI><a href="#[df]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;kalman_filter_calc
@@ -4601,7 +4597,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[270]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_autoControl
 </UL>
 
-<P><STRONG><a name="[26b]"></a>GIMBAL_BUFF_pidCalculate</STRONG> (Thumb, 568 bytes, Stack size 16 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[26b]"></a>GIMBAL_BUFF_pidCalculate</STRONG> (Thumb, 582 bytes, Stack size 16 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = GIMBAL_BUFF_pidCalculate
 </UL>
 <BR>[Calls]<UL><LI><a href="#[26d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;VISION_BUFF_getPitchFeedback
@@ -4680,7 +4676,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[145]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_control
 </UL>
 
-<P><STRONG><a name="[146]"></a>GIMBAL_selfProtect</STRONG> (Thumb, 132 bytes, Stack size 8 bytes, task_gimbal.o(.text))
+<P><STRONG><a name="[146]"></a>GIMBAL_selfProtect</STRONG> (Thumb, 130 bytes, Stack size 8 bytes, task_gimbal.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 148<LI>Call Chain = GIMBAL_selfProtect &rArr; GIMBAL_calPredictInfo &rArr; kalman_filter_calc &rArr; arm_mat_inverse_f32
 </UL>
 <BR>[Calls]<UL><LI><a href="#[24f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_calPredictInfo
@@ -5222,7 +5218,7 @@ Global Symbols
 <LI><a href="#[29a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__set_errno
 </UL>
 <BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[232]"></a>__hardfp_sin</STRONG> (Thumb, 180 bytes, Stack size 32 bytes, sin.o(i.__hardfp_sin))
@@ -5237,7 +5233,7 @@ Global Symbols
 <LI><a href="#[29a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__set_errno
 </UL>
 <BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 </UL>
 
 <P><STRONG><a name="[237]"></a>__hardfp_sqrt</STRONG> (Thumb, 122 bytes, Stack size 32 bytes, sqrt.o(i.__hardfp_sqrt))
@@ -5400,7 +5396,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[1cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MPU_Get_Temperature
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 <LI><a href="#[236]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_rampChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 <LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;mpu_dmp_get_data
 </UL>
 
@@ -5414,7 +5410,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[1cd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;MPU_Get_Temperature
 <LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 <LI><a href="#[2af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__kernel_sin
 <LI><a href="#[2ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ieee754_rem_pio2
 <LI><a href="#[2a6]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__kernel_poly
@@ -5475,7 +5471,7 @@ Global Symbols
 </UL>
 <BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 <LI><a href="#[236]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_rampChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 <LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;mpu_dmp_get_data
 <LI><a href="#[2af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__kernel_sin
 <LI><a href="#[2ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ieee754_rem_pio2
@@ -5539,7 +5535,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = __aeabi_dsub
 </UL>
 <BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 <LI><a href="#[2af]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__kernel_sin
 <LI><a href="#[2ae]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ieee754_rem_pio2
 <LI><a href="#[2b0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__kernel_cos
@@ -5557,7 +5553,7 @@ Global Symbols
 <BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = __aeabi_f2d
 </UL>
 <BR>[Called By]<UL><LI><a href="#[238]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
-<LI><a href="#[22c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
+<LI><a href="#[22d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 <LI><a href="#[208]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;mpu_dmp_get_data
 </UL>
 

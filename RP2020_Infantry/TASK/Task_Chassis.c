@@ -264,6 +264,9 @@ Chassis_Info_t Chassis = {
 /* Private functions ---------------------------------------------------------*/
 /* API functions -------------------------------------------------------------*/
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
+ *	@brief	底盘参数初始化
+ */
 void CHASSIS_initParameter(void)
 {
 	/* 平移摇杆灵敏度 */
@@ -314,7 +317,7 @@ void CHASSIS_PID_ParamsInit(Chassis_PID_t *pid, uint8_t motor_cnt)
 /**
  *	@brief	底盘陀螺仪模式参数重置
  */
-void CHASSIS_Z_Speed_PID_ParamsInit(PID_Object_t *pid)
+void CHASSIS_Z_PID_ParamsInit(PID_Object_t *pid)
 {
 		pid->target = CHASSIS_getMiddleAngle();
 		pid->feedback = CHASSIS_getMiddleAngle();
@@ -380,7 +383,7 @@ void CHASSIS_stop(Chassis_PID_t *pid)
 /**
  *	@brief	底盘电机速度环
  */
-void CHASSIS_Speed_PID_calculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
+void CHASSIS_Speed_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
 {
 	pid[MOTORx].Speed.erro = pid[MOTORx].Speed.target - pid[MOTORx].Speed.feedback;
 	pid[MOTORx].Speed.integrate += pid[MOTORx].Speed.erro;
@@ -429,7 +432,7 @@ void CHASSIS_Speed_PID_calculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
  *			外环 期望值 期望角度
  *					 输出值 期望角速度
  */
-void CHASSIS_Angle_PID_calculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
+void CHASSIS_Angle_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
 {
 	pid[MOTORx].Angle.erro = pid[MOTORx].Angle.target - pid[MOTORx].Angle.feedback;
 	pid[MOTORx].Angle.integrate += pid[MOTORx].Angle.erro;
@@ -470,7 +473,7 @@ void CHASSIS_Angle_PID_calculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
  *				将当前YAW机械角和中值YAW机械角的差值作为误差送进 Z_Speed PID控制器。
  *				反馈期望的角速度
  */
-float CHASSIS_Z_Speed_PID_calculate(PID_Object_t *pid, float kp)
+float CHASSIS_Z_Speed_pidCalculate(PID_Object_t *pid, float kp)
 {
 	pid->kp = kp;
 	pid->erro = pid->target - pid->feedback;
@@ -558,9 +561,29 @@ void CHASSIS_PID_out(Chassis_PID_t *pid)
  */
 void CHASSIS_getInfo(void)
 {
+	static float last_yaw, delta_yaw;
+	float yaw;
+	
+	/* # Yaw # */
+	yaw = Mpu_Info.yaw;
+	delta_yaw = yaw - last_yaw;
+	if(delta_yaw > +180.f) {
+		delta_yaw = -360.f + delta_yaw;
+	} else if(delta_yaw < -180.f) {
+		delta_yaw = +360.f + delta_yaw;
+	}
+	last_yaw = yaw; 	
+	
+	/* 利用陀螺仪数据作扭头补偿 */
+	if(CHASSIS_ifTopGyroOpen() == true) {
+		Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, 		
+																	delta_yaw * 8192 / 360.f);
+	}
+	
 	if(GIMBAL_ifMechMode()) {
 		Chassis.pid_mode = MECH;
-	} else if(GIMBAL_ifGyroMode()) {
+	} 
+	else if(GIMBAL_ifGyroMode()) {
 		Chassis.pid_mode = GYRO;
 	}
 	
@@ -700,7 +723,7 @@ bool CHASSIS_ifLogicRevert(void)
 
 /* #键盘鼠标# -------------------------------------------------------------------------------------------------------------------------------------*/
 /**
- *	@brief	根据遥控值设置速度环的期望值
+ *	@brief	根据遥控值设置速度环的期望值(非小陀螺版本)
  *	@note		涉及麦克纳姆轮的运动合成
  *					target均为+时:
  *					LF201	↑	↓	RF202	
@@ -739,7 +762,7 @@ void REMOTE_setChassisSpeed(void)
 		Chas_Target_Speed[ Y ] = constrain(Chas_Target_Speed[ Y ], -Chas_Standard_Move_Max, Chas_Standard_Move_Max);
 		
 		Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle();	// 恢复底盘跟随
-		Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_PID_calculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
+		Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
 		Chas_Target_Speed[ Z ] = constrain(Chas_Target_Speed[ Z ], -Chas_Spin_Move_Max, Chas_Spin_Move_Max);
 	}
 	
@@ -845,7 +868,7 @@ void REMOTE_TOP_setChassisSpeed(void)
 			/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
 			Chassis_Z_PID.AngleRampFeedback = RAMP_float(Chassis_Z_PID.AngleRampTarget, Chassis_Z_PID.AngleRampFeedback, Chas_Top_Gyro_Step);
 			
-			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_PID_calculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
 		}
 		/* 没开小陀螺 */
 		else {
@@ -855,7 +878,7 @@ void REMOTE_TOP_setChassisSpeed(void)
 			Chassis_Z_PID.AngleRampFeedback = 0;
 			
 			Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle() ;	// 恢复底盘跟随
-			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_PID_calculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
 			
 		}
 		
@@ -1044,7 +1067,7 @@ void KEY_setChassisSpeed(RC_Ctl_t *remoteInfo, int16_t sMoveMax, int16_t sMoveRa
 			/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
 			Chassis_Z_PID.AngleRampFeedback = RAMP_float(Chassis_Z_PID.AngleRampTarget, Chassis_Z_PID.AngleRampFeedback, Chas_Top_Gyro_Step);
 			
-			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_PID_calculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
 		}
 		/* 没开小陀螺 */
 		else {
@@ -1057,10 +1080,11 @@ void KEY_setChassisSpeed(RC_Ctl_t *remoteInfo, int16_t sMoveMax, int16_t sMoveRa
 				Chassis.logic = (Chassis_Logic_Names_t)!Chassis.logic;
 			}
 			
-			Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle() ;	// 恢复底盘跟随
+			/* 设置底盘跟随逻辑 */
+			Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle() ;	
 			
 			if(Flag.Chassis.FLAG_goHome == false)
-				Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_PID_calculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
+				Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
 			else 
 				Chas_Target_Speed[ Z ] = 0;
 		}
@@ -1300,22 +1324,23 @@ void CHASSIS_buffControl(void)
 	Chassis_PID[RIGH_BACK_204].Speed.target = 0;	
 }
 
+/* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
- *	@brief	底盘逻辑取反控制
- *	@note		云台180°扭头底盘控制逻辑取反
+ *	@brief	pid控制器最终输出
  */
-void CHASSIS_logicControl(void)
+void CHASSIS_pidControlTask(void)
 {
-	Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle();
-	CHASSIS_Z_Speed_PID_calculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
-	
-	/* 扭头到位则恢复常规控制 */
-	if(abs(Chassis_Z_PID.Angle.erro) < 20) {
-		CHASSIS_setMode(CHAS_MODE_NORMAL);
-	}
+	/* PID速度环计算 */
+	CHASSIS_Speed_pidCalculate(Chassis_PID, LEFT_FRON_201); 	// 左前 - 速度环
+	CHASSIS_Speed_pidCalculate(Chassis_PID, RIGH_FRON_202); 	// 右前 - 速度环
+	CHASSIS_Speed_pidCalculate(Chassis_PID, LEFT_BACK_203); 	// 左后 - 速度环
+	CHASSIS_Speed_pidCalculate(Chassis_PID, RIGH_BACK_204); 	// 右后 - 速度环
+	/* 功率限制 */
+	//CHASSIS_powerLimit(&Chassis_Power, Chassis_PID, &Judge_Info);
+	/* 最终输出 */
+	CHASSIS_PID_out(Chassis_PID);	
 }
 
-/* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	遥控控制底盘任务
  */
@@ -1357,7 +1382,7 @@ void CHASSIS_selfProtect(void)
 {
 	CHASSIS_stop(Chassis_PID);
 	CHASSIS_PID_ParamsInit(Chassis_PID, CHASSIS_MOTOR_COUNT);
-	CHASSIS_Z_Speed_PID_ParamsInit(&Chassis_Z_PID.Angle);	
+	CHASSIS_Z_PID_ParamsInit(&Chassis_Z_PID.Angle);	
 }
 
 /**
@@ -1375,10 +1400,5 @@ void CHASSIS_control(void)
 		CHASSIS_keyControlTask();
 	}
 	/*----最终输出----*/
-	CHASSIS_Speed_PID_calculate(Chassis_PID, LEFT_FRON_201); 	// 左前 - 速度环
-	CHASSIS_Speed_PID_calculate(Chassis_PID, RIGH_FRON_202); 	// 右前 - 速度环
-	CHASSIS_Speed_PID_calculate(Chassis_PID, LEFT_BACK_203); 	// 左后 - 速度环
-	CHASSIS_Speed_PID_calculate(Chassis_PID, RIGH_BACK_204); 	// 右后 - 速度环
-	//CHASSIS_powerLimit(&Chassis_Power, Chassis_PID, &Judge_Info);
-	CHASSIS_PID_out(Chassis_PID);
+	CHASSIS_pidControlTask();
 }
