@@ -39,17 +39,3 @@
 .\objects\task_timing_report.o: ..\SYSTEM\sys.h
 .\objects\task_timing_report.o: ..\FreeRTOS\include\queue.h
 .\objects\task_timing_report.o: ..\FreeRTOS\include\timers.h
-.\objects\task_timing_report.o: ..\BSP\can.h
-.\objects\task_timing_report.o: ..\TASK\my_task.h
-.\objects\task_timing_report.o: ..\TASK\Task_Chassis.h
-.\objects\task_timing_report.o: ..\APP\my_app.h
-.\objects\task_timing_report.o: ..\AppInfo\judge.h
-.\objects\task_timing_report.o: ..\AppInfo\vision.h
-.\objects\task_timing_report.o: ..\APP\my_app.h
-.\objects\task_timing_report.o: ..\APP\remote.h
-.\objects\task_timing_report.o: ..\APP\friction.h
-.\objects\task_timing_report.o: ..\APP\magzine.h
-.\objects\task_timing_report.o: ..\TASK\my_task.h
-.\objects\task_timing_report.o: ..\APP\ultra.h
-.\objects\task_timing_report.o: ..\TASK\Task_Gimbal.h
-.\objects\task_timing_report.o: ..\TASK\Task_Revolver.h

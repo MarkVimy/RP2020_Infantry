@@ -262,7 +262,9 @@ void revolver_task(void *p_arg)
  */
 void duty_task(void *p_arg)
 {	
+	portTickType currentTime;
 	while(1) {		
+		currentTime = xTaskGetTickCount();
 		switch(System_State) 
 		{
 			case SYSTEM_STATE_NORMAL:

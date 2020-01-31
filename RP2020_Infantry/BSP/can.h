@@ -27,6 +27,8 @@ void CAN_Filter_ParamsInit(CAN_FilterInitTypeDef* CAN_FilterInitStructure);
 void CAN1_init(void);
 void CAN2_init(void);
 void CAN1_send(uint32_t stdID, int16_t *dat);
+void CAN1_queueSend(uint32_t stdID, int16_t *dat);
 void CAN2_send(uint32_t stdID, int16_t *dat);
+void CAN2_queueSend(uint32_t stdID, int16_t *dat);
 
 #endif

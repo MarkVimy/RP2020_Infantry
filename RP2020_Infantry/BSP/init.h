@@ -10,6 +10,7 @@
 #include "sys.h"
 #include "delay.h"
 #include "my_include.h"
+#include "Task_Timing_Report.h"
 //#include "exti.h"
 //#include "wdg.h"
 //#include "timer.h"

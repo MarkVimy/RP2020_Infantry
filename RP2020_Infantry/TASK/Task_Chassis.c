@@ -543,7 +543,7 @@ float CHASSIS_Z_Speed_pidCalculate(PID_Object_t *pid, float kp)
 /**
  *	@brief	底盘电机PID的最终输出
  */
-void CHASSIS_PID_out(Chassis_PID_t *pid)
+void CHASSIS_pidOut(Chassis_PID_t *pid)
 {
 	int16_t pidOut[4];
 	
@@ -571,7 +571,7 @@ void CHASSIS_PID_out(Chassis_PID_t *pid)
 		pidOut[RIGH_BACK_204] = 0;	// 失联后卸力
 	}
 	
-	CAN1_send(0x200, pidOut);
+	CAN1_queueSend(0x200, pidOut);
 }
 
 /* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -1357,7 +1357,7 @@ void CHASSIS_pidControlTask(void)
 	/* 功率限制 */
 	//CHASSIS_powerLimit(&Chassis_Power, Chassis_PID, &Judge_Info);
 	/* 最终输出 */
-	CHASSIS_PID_out(Chassis_PID);	
+	CHASSIS_pidOut(Chassis_PID);	
 }
 
 /**

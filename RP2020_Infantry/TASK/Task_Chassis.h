@@ -78,7 +78,7 @@ void CHASSIS_stop(Chassis_PID_t *pid);
 void CHASSIS_Speed_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
 void CHASSIS_Angle_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
 float CHASSIS_Z_Speed_pidCalculate(PID_Object_t *pid, float kp);
-void CHASSIS_PID_out(Chassis_PID_t *pid);
+void CHASSIS_pidOut(Chassis_PID_t *pid);
 
 /* #–≈œ¢≤„# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void CHASSIS_getInfo(void);

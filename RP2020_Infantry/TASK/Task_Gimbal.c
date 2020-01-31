@@ -622,7 +622,7 @@ void GIMBAL_pidOut(Gimbal_PID_t *pid)
 		pidOut[PITCH_206] = 0;	// Ê§ÁªºóÐ¶Á¦
 	}
 	
-	CAN1_send(0x1FF, pidOut);
+	CAN1_queueSend(0x1FF, pidOut);
 }
 
 /**

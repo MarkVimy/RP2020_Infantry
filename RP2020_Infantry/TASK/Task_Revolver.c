@@ -214,9 +214,9 @@ void REVOLVER_pidOut(Revolver_PID_t *pid)
 	}
 	
 #if REVOLVER_ID > 0x204
-	CAN2_send(0x1FF, pidOut);
+	CAN2_queueSend(0x1FF, pidOut);
 #else
-	CAN2_send(0x200, pidOut);
+	CAN2_queueSend(0x200, pidOut);
 #endif	
 }
 

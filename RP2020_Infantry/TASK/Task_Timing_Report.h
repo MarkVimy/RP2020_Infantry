@@ -10,5 +10,7 @@
 extern QueueHandle_t CAN1_Queue;	// CAN1消息队列句柄
 extern QueueHandle_t CAN2_Queue;	// CAN2消息队列句柄
 
+void Timer_Send_Create(void);
+
 #endif
 

@@ -57,22 +57,19 @@ static void my_hardware_init(void)
 			}
 	}	
 	
-//	while(1)
-//	{
-//		ULTRA_control();
-//		delay_ms(10);
-//	}
+	/* 创建软件定时器数据收发任务,can1,can2,不要放太多函数 */
+	Timer_Send_Create();
 }
 
 static void my_system_init(void)
 {
 	/* 创建初始化任务 */
-	xTaskCreate((TaskFunction_t		)start_task,				// 任务函数
-				(const char*		)"start_task",				// 任务名称
-				(uint16_t			)START_STK_SIZE,			// 任务堆栈大小
-				(void*				)NULL,						// 传递给任务函数的参数
-				(UBaseType_t		)START_TASK_PRIO,			// 任务优先级
-				(TaskHandle_t*		)&StartTask_Handler);		// 任务句柄
+	xTaskCreate((TaskFunction_t		)start_task,					// 任务函数
+							(const char*		)"start_task",					// 任务名称
+							(uint16_t			)START_STK_SIZE,					// 任务堆栈大小
+							(void*				)NULL,										// 传递给任务函数的参数
+							(UBaseType_t		)START_TASK_PRIO,				// 任务优先级
+							(TaskHandle_t*		)&StartTask_Handler);	// 任务句柄
 	vTaskStartScheduler();	// 开启任务调度
 }
 

@@ -384,11 +384,11 @@ static CAN_InitTypeDef CAN_DefaultParams =
 
 static CAN_FilterInitTypeDef CAN_Filter_DefaultParams =
 {
-	.CAN_FilterNumber = 0,  					// 过滤器0
+	.CAN_FilterNumber = 0,  										// 过滤器0
 	.CAN_FilterMode = CAN_FilterMode_IdMask,   	// 屏蔽模式
 	.CAN_FilterScale = CAN_FilterScale_32bit,   // 32位宽
 	.CAN_FilterFIFOAssignment = 0,              // 过滤器0关联到FIFO0
-	.CAN_FilterActivation = ENABLE,   			// 激活过滤器
+	.CAN_FilterActivation = ENABLE,   					// 激活过滤器
 	.CAN_FilterIdHigh = 0x0000,                 // 32位ID
 	.CAN_FilterIdLow = 0x0000,
 	.CAN_FilterMaskIdHigh = 0x0000,             // 32位Mask
@@ -400,6 +400,9 @@ MOTOR_Info_t g_Chassis_Motor_Info[CHASSIS_MOTOR_COUNT];
 MOTOR_Info_t g_Gimbal_Motor_Info[GIMBAL_MOTOR_COUNT];
 MOTOR_Info_t g_Revolver_Motor_Info;
 
+extern QueueHandle_t CAN1_Queue;
+extern QueueHandle_t CAN2_Queue;
+	
 /* Private function prototypes -----------------------------------------------*/
 static void CAN1_GPIO_init(void);
 static void CAN2_GPIO_init(void);
@@ -642,6 +645,35 @@ void CAN1_send(uint32_t stdID, int16_t *dat)
 }
 
 /**
+ *	@brief	CAN1 队列填充函数
+ *	@param	uint32_t stdID	- 标准标识符
+ *					int16_t* dat - 数据缓冲区
+ *	@note		默认8个字节的数据
+ */
+void CAN1_queueSend(uint32_t stdID, int16_t *dat)
+{
+	CanTxMsg	txMsg;
+	
+	txMsg.StdId = stdID;		// 使用标准标识符
+	txMsg.IDE = CAN_ID_STD;	// 使用标准模式
+	txMsg.RTR = CAN_RTR_DATA;	// 0 - 数据帧
+	txMsg.DLC = 8;	// 数据长度
+
+	// 先发高8位数据，再发低8位数据
+	txMsg.Data[0] = (uint8_t)((int16_t)dat[0] >> 8);
+	txMsg.Data[1] = (uint8_t)((int16_t)dat[0]);
+	txMsg.Data[2] = (uint8_t)((int16_t)dat[1] >> 8);
+	txMsg.Data[3] = (uint8_t)((int16_t)dat[1]);
+	txMsg.Data[4] = (uint8_t)((int16_t)dat[2] >> 8);
+	txMsg.Data[5] = (uint8_t)((int16_t)dat[2]);
+	txMsg.Data[6] = (uint8_t)((int16_t)dat[3] >> 8);
+	txMsg.Data[7] = (uint8_t)((int16_t)dat[3]);
+	
+	//CAN_Transmit(CAN1, &txMsg);
+	xQueueSend(CAN1_Queue, &txMsg, 1);
+}
+
+/**
  *	@brief	CAN2 发送函数
  *	@param	uint32_t stdID	- 标准标识符
  *					int16_t* dat - 数据缓冲区
@@ -669,6 +701,36 @@ void CAN2_send(uint32_t stdID, int16_t *dat)
 	
 	CAN_Transmit(CAN2, &txMsg);
 	//xQueueSend(CAN2_Queue, &txMsg, 1);
+}
+
+/**
+ *	@brief	CAN2 队列填充函数
+ *	@param	uint32_t stdID	- 标准标识符
+ *					int16_t* dat - 数据缓冲区
+ *	@note		默认8个字节的数据
+ *	@debug	
+ */
+void CAN2_queueSend(uint32_t stdID, int16_t *dat)
+{
+	CanTxMsg	txMsg;
+	
+	txMsg.StdId = stdID;		// 使用标准标识符
+	txMsg.IDE = CAN_ID_STD;	// 使用标准模式
+	txMsg.RTR = CAN_RTR_DATA;	// 0 - 数据帧
+	txMsg.DLC = 8;	// 数据长度
+
+	// 先发高8位数据，再发低8位数据
+	txMsg.Data[0] = (uint8_t)((int16_t)dat[0] >> 8);
+	txMsg.Data[1] = (uint8_t)((int16_t)dat[0]);
+	txMsg.Data[2] = (uint8_t)((int16_t)dat[1] >> 8);
+	txMsg.Data[3] = (uint8_t)((int16_t)dat[1]);
+	txMsg.Data[4] = (uint8_t)((int16_t)dat[2] >> 8);
+	txMsg.Data[5] = (uint8_t)((int16_t)dat[2]);
+	txMsg.Data[6] = (uint8_t)((int16_t)dat[3] >> 8);
+	txMsg.Data[7] = (uint8_t)((int16_t)dat[3]);
+	
+	//CAN_Transmit(CAN2, &txMsg);
+	xQueueSend(CAN2_Queue, &txMsg, 1);
 }
 
 /**
