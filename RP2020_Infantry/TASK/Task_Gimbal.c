@@ -846,9 +846,9 @@ bool GIMBAL_AUTO_chaseReady(void)
 }
 
 /**
- *	@brief	反馈底盘偏离设定的机械归中值的机械角度(0~8192)
- *	@return 反馈值为 >= 0 的机械角度
- *	@note	规定：以机械中值为轴，机械角度增加的方向为正方向
+ *	@brief	反馈底盘偏离设定的机械归中值的机械角度(-8191~+8191)
+ *	@return 反馈值为机械角度差值(带正负号)
+ *	@note		规定：以机械中值为轴，机械角度增加的方向为正方向
  */
 float GIMBAL_getTopGyroAngleOffset(void)
 {
@@ -856,12 +856,8 @@ float GIMBAL_getTopGyroAngleOffset(void)
 
 	feedback = g_Gimbal_Motor_Info[YAW_205].angle;
 	
-
-	
 	delta_angle = feedback - GIMBAL_TOP_YAW_ANGLE_MID_LIMIT;
 
-	
-	
 	return delta_angle;
 }
 
@@ -909,8 +905,8 @@ void REMOTE_setGimbalAngle(void)
 		/* Pitch */
 		targetAngle = RC_RIGH_CH_UD_VALUE * RC_GIMBAL_MECH_PITCH_SENSITIVY; // Pitch机械角为绝对角度
 		Gimbal_PID[MECH][PITCH_206].Angle.target = constrain(Gimbal_PID[MECH][PITCH_206].Angle.target - targetAngle, // 抬头机械角度减小
-															 GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT, 
-															 GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)
+																													GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT, 
+																													GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)
 	} 
 	/* 陀螺仪模式 */
 	else if(GIMBAL_ifGyroMode() == true) {	
@@ -921,8 +917,8 @@ void REMOTE_setGimbalAngle(void)
 		/* Pitch */		
 		targetAngle = RC_RIGH_CH_UD_VALUE * RC_GIMBAL_GYRO_PITCH_SENSITIVY;
 		Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-															 GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
-															 GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)		
+																													GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
+																													GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)		
 	}
 }
 
@@ -969,8 +965,8 @@ void KEY_setGimbalAngle(void)
 	/* Pitch */		
 	targetAngle = -MOUSE_Y_MOVE_SPEED * KEY_GIMBAL_GYRO_PITCH_SENSITIVY;// 鼠标Y反馈速度*灵敏度
 	Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-														 GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
-														 GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)	
+																												GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
+																												GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)	
 }
 
 /**
@@ -1257,7 +1253,7 @@ void GIMBAL_init(void)
 /**
  *	@brief	云台电机复位
  *	@note	# 先用机械模式归中
- *			# 具备5s的超时退出机制，防止云台没有复位到位一直卡死	
+ *				# 具备5s的超时退出机制，防止云台没有复位到位一直卡死	
  */
 void GIMBAL_reset(void)
 {
@@ -1309,8 +1305,8 @@ void GIMBAL_reset(void)
 		
 		Flag.Gimbal.FLAG_pidMode = MECH;
 
-		/* 平缓地让云台移动到中间，防止上电狂甩 */
-		/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
+		/* 平缓地让云台移动到中间，防止上电狂甩
+			 斜坡函数给累加期望，防止突然增加很大的期望值 */
 		if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback < Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 正向累加
 		{
 			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], GIMBAL_RAMP_BEGIN_YAW);
@@ -1339,7 +1335,7 @@ void GIMBAL_reset(void)
 		if(Cnt.Gimbal.CNT_resetOK > 250 || resetTime >= 2500) {	
 			Cnt.Gimbal.CNT_resetOK = 0;
 			Flag.Gimbal.FLAG_resetOK = true;// 云台复位成功
-			resetTime = 0;					// 复位计时清零
+			resetTime = 0;	// 复位计时清零
 		}		
 	} else if(Flag.Gimbal.FLAG_resetOK == true) {	// 云台复位完成
 		Flag.Gimbal.FLAG_resetOK = false;	// 清除状态标志位
@@ -1350,10 +1346,12 @@ void GIMBAL_reset(void)
 			Flag.Remote.FLAG_mode = KEY;
 			Flag.Gimbal.FLAG_pidMode = GYRO;
 			GIMBAL_rcMech_To_keyGyro();
-		} else if(RC_Ctl_Info.rc.s2 == RC_SW_MID) {
+		} 
+		else if(RC_Ctl_Info.rc.s2 == RC_SW_MID) {
 			Flag.Remote.FLAG_mode = RC;
 			Flag.Gimbal.FLAG_pidMode = MECH;					
-		} else if(RC_Ctl_Info.rc.s2 == RC_SW_DOWN) {
+		} 
+		else if(RC_Ctl_Info.rc.s2 == RC_SW_DOWN) {
 			Flag.Remote.FLAG_mode = RC;
 			Flag.Gimbal.FLAG_pidMode = GYRO;
 			GIMBAL_rcMech_To_rcGyro();					
@@ -1523,7 +1521,7 @@ float GIMBAL_GYRO_yawTargetBoundaryProcess(Gimbal_PID_t *pid, float delta_target
 
 /**
  *	@brief	遥控机械模式 -> 遥控陀螺仪模式
- *	@note	异步切换
+ *	@note		异步切换
  */
 void GIMBAL_rcMech_To_rcGyro(void)
 {
@@ -1536,7 +1534,7 @@ void GIMBAL_rcMech_To_rcGyro(void)
 
 /**
  *	@brief	遥控陀螺仪模式 -> 遥控机械模式
- *	@note	异步切换
+ *	@note		异步切换
  */
 void GIMBAL_rcGyro_To_rcMech(void)
 {
@@ -1550,7 +1548,7 @@ void GIMBAL_rcGyro_To_rcMech(void)
 
 /**
  *	@brief	遥控机械模式 -> 键盘模式
- *	@note	异步切换
+ *	@note		异步切换
  */
 void GIMBAL_rcMech_To_keyGyro(void)
 {
@@ -1564,7 +1562,7 @@ void GIMBAL_rcMech_To_keyGyro(void)
 
 /**
  *	@brief	键盘模式 -> 遥控机械模式
- *	@note	异步切换
+ *	@note		异步切换
  */
 void GIMBAL_keyGyro_To_rcMech(void)
 {
@@ -1579,7 +1577,7 @@ void GIMBAL_keyGyro_To_rcMech(void)
 
 /**
  *	@brief	键盘陀螺仪模式 -> 键盘机械模式
- *	@note	异步切换
+ *	@note		异步切换
  */
 void GIMBAL_keyGyro_To_keyMech(void)
 {
@@ -1591,7 +1589,7 @@ void GIMBAL_keyGyro_To_keyMech(void)
 
 /**
  *	@brief	键盘机械模式 -> 键盘陀螺仪模式
- *	@note	异步切换
+ *	@note		异步切换
  */
 void GIMBAL_keyMech_To_keyGyro(void)
 {
@@ -1602,7 +1600,7 @@ void GIMBAL_keyMech_To_keyGyro(void)
 
 /**
  *	@brief	目标速度解算
- *	@note	利用两帧之间的角度差算出目标的速度
+ *	@note		利用两帧之间的角度差算出目标的速度
  */
 float speed_calculate(Speed_Calculate_t *info, uint32_t time, float position)
 {

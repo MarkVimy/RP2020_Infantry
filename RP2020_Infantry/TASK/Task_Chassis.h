@@ -44,10 +44,9 @@ typedef struct {
 
 typedef enum {
 	CHAS_MODE_NORMAL = 0,	// 正常模式
-	CHAS_MODE_TWIST = 1,	// 扭腰模式
-	CHAS_MODE_BUFF = 2,		// 打符模式
-	CHAS_MODE_SLOW = 3,		// 底盘低速补弹模式
-	CHAS_MODE_SZUPUP = 4,	// SZU爬坡模式
+	CHAS_MODE_BUFF = 1,		// 打符模式
+	CHAS_MODE_SLOW = 2,		// 底盘低速补弹模式
+	CHAS_MODE_SZUPUP = 3,	// SZU爬坡模式
 }Chassis_Mode_Names_t;
 
 typedef enum {
@@ -60,6 +59,7 @@ typedef struct {
 	Chassis_Mode_Names_t	mode;
 	Chassis_Logic_Names_t logic;
 	uint8_t								top_gyro;
+	uint8_t								twist;
 }Chassis_Info_t;
 
 /* ## Global Variables Prototypes ## -----------------------------------------*/
@@ -77,7 +77,7 @@ void CHASSIS_Z_PID_ParamsInit(PID_Object_t *pid);
 void CHASSIS_stop(Chassis_PID_t *pid);
 void CHASSIS_Speed_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
 void CHASSIS_Angle_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
-float CHASSIS_Z_Speed_pidCalculate(PID_Object_t *pid, float kp);
+float CHASSIS_Z_Angle_pidCalculate(PID_Object_t *pid, float kp);
 void CHASSIS_pidOut(Chassis_PID_t *pid);
 
 /* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -89,6 +89,7 @@ Chassis_Logic_Names_t CHASSIS_getLogic(void);
 float CHASSIS_getMiddleAngle(void);
 bool CHASSIS_ifNormalMode(void);
 bool CHASSIS_ifTopGyroOpen(void);
+bool CHASSIS_ifTwistOpen(void);
 bool CHASSIS_ifLogicRevert(void);
 	
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/

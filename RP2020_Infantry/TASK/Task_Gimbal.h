@@ -14,20 +14,20 @@
 #define GIMBAL_MECH_YAW_ANGLE_MID_LIMIT			GIMBAL_TOP_YAW_ANGLE_MID_LIMIT	//(4104)	// 中间值
 //#define GIMBAL_MECH_YAW_ANGLE_RIGHT_LIMIT		(6235 - 200)	// 实测最大可达6180(不发力)	6184(发力)
 
-#define GIMBAL_TOP_YAW_ANGLE_MID_LIMIT			(6325)	// 陀螺模式下的中间值	6325
-#define GIMBAL_REVERT_YAW_ANGLE_MID_LIMIT		(2229)	// 底盘逻辑反向逃跑
+#define GIMBAL_TOP_YAW_ANGLE_MID_LIMIT			(6325)	// 底盘正向逻辑机械中值	6325
+#define GIMBAL_REVERT_YAW_ANGLE_MID_LIMIT		(2229)	// 底盘反向逻辑机械中值
 
 #define GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT		(3410 + 150)	// 实测最小可达3312(不发力)
-#define GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT		(4048)			// 中间值
+#define GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT		(4048)				// 中间值
 #define GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT	(4435 - 100)	// 实测最小可达4382(不发力)
 
 #define GIMBAL_AUTO_LOCK_SENTRY_ANGLE			(GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT + 150)
 
-#define GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT		GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT 	//((-28+2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
+#define GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT		GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT 		//((-28+2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
 #define GIMBAL_GYRO_PITCH_ANGLE_MID_LIMIT		GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT 	//( +1 * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
 #define GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT	GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT 	//((+13-2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
 
-#define GIMBAL_GYRO_ANGLE_ZOOM_INDEX				(20.0f)	// IMU角度的缩放系数
+#define GIMBAL_GYRO_ANGLE_ZOOM_INDEX				(20.0f)	// IMU角度的缩放系数(方便滤波和调参)
 
 #define GIMBAL_RAMP_BEGIN_YAW						2
 #define GIMBAL_RAMP_BEGIN_PITCH					1
@@ -59,9 +59,9 @@ typedef enum {
 typedef struct {
 	PID_Object_t	Speed;
 	PID_Object_t	Angle;
-	float			AngleRampTarget;
-	float			AngleRampFeedback;
-	float			Out;
+	float					AngleRampTarget;
+	float					AngleRampFeedback;
+	float					Out;
 }Gimbal_PID_t;
 
 /**
@@ -69,7 +69,7 @@ typedef struct {
  */
 typedef struct {
 	Gimbal_Mode_t mode;
-	uint8_t		  FLAG_topGyroOpen;
+	uint8_t		  	FLAG_topGyroOpen;
 }Gimbal_State_t;
 
 /**
@@ -125,7 +125,7 @@ typedef struct {
 }Gimbal_Info_t;
 
 /* ## Global Variables Prototypes ## -----------------------------------------*/
-extern Gimbal_PID_t Gimbal_PID[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT];
+extern Gimbal_PID_t  Gimbal_PID[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT];
 extern Gimbal_Info_t Gimbal;
 
 /* API functions Prototypes --------------------------------------------------*/

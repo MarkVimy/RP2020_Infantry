@@ -60,7 +60,7 @@ float Chas_Top_Move_scale = 0.2;	// 小陀螺行进所能分配的速度比例
 
 /* 斜坡 */
 uint16_t Time_Inc_Normal;			// 正常斜坡增加量
-uint16_t Time_IncSaltation;	// 前后方向突变斜坡增加量
+uint16_t Time_IncSaltation;		// 前后方向突变斜坡增加量
 
 /* 键盘模式下的前后左后以及旋转斜坡变量 */
 float	Chas_Slope_Move_Fron, Chas_Slope_Move_Back, Chas_Slope_Move_Left, Chas_Slope_Move_Righ;
@@ -85,8 +85,14 @@ float kKey_Gyro_Chas_Standard, kKey_Gyro_Chas_Revolve;//平移，旋转
 //小陀螺模式下底盘比例系数
 float k_Gyro_Chas_Top;
 
+//扭腰模式下底盘比例系数
+float k_Gyro_Chas_Twist;
+
 //小陀螺旋转转速步长
 float Chas_Top_Gyro_Step;
+
+//扭腰旋转步长
+float Chas_Twist_Step;
 
 /* ## Global variables ## ----------------------------------------------------*/
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -280,9 +286,14 @@ void CHASSIS_initParameter(void)
 	/* 小陀螺底盘系数 */
 	k_Gyro_Chas_Top = -4.8;
 	
+	/* 扭腰底盘系数 */
+	k_Gyro_Chas_Twist = -4.8;
+	
 	/* 小陀螺转速步长 */
 	Chas_Top_Gyro_Step = 10;
-
+	
+	/* 扭腰旋转步长 */
+	Chas_Twist_Step = 4;
 }
 
 /**
@@ -423,7 +434,7 @@ void CHASSIS_Speed_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
 }
 
 /**
- *	@brief	底盘电机位置环
+ *	@brief	底盘单电机位置环
  *	@note
  *			串环PID
  *			内环 期望值 期望角速度(实际上就是速度环)
@@ -470,10 +481,10 @@ void CHASSIS_Angle_pidCalculate(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
 /**
  *	@brief	底盘陀螺仪模式加上Z方向的速度环(实际上是位置环)
  *	@note
- *				将当前YAW机械角和中值YAW机械角的差值作为误差送进 Z_Speed PID控制器。
+ *				将当前YAW机械角和中值YAW机械角的差值作为误差送进 Z_PID控制器。
  *				反馈期望的角速度
  */
-float CHASSIS_Z_Speed_pidCalculate(PID_Object_t *pid, float kp)
+float CHASSIS_Z_Angle_pidCalculate(PID_Object_t *pid, float kp)
 {
 	pid->kp = kp;
 	pid->erro = pid->target - pid->feedback;
@@ -593,14 +604,17 @@ void CHASSIS_getInfo(void)
 	}
 	last_yaw = yaw; 	
 	
-	/* 利用陀螺仪数据作扭头补偿 */
-	if(CHASSIS_ifTopGyroOpen() == true) {
+	/* 利用陀螺仪数据作扭头补偿(使得云台与底盘独立运动) */
+	if(CHASSIS_ifTopGyroOpen() == true
+		|| CHASSIS_ifTwistOpen() == true) {
 		Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, 		
 																	delta_yaw * 8192 / 360.f);
 	}
 	
 	if(GIMBAL_ifMechMode()) {
 		Chassis.pid_mode = MECH;
+		Chassis.top_gyro = false;	// 关陀螺
+		Chassis.twist = false;		// 关扭腰
 	} 
 	else if(GIMBAL_ifGyroMode()) {
 		Chassis.pid_mode = GYRO;
@@ -721,6 +735,18 @@ bool CHASSIS_ifTopGyroOpen(void)
 	return false;
 }
 
+/**
+ *	@brief	底盘是否处于扭腰模式
+ */
+bool CHASSIS_ifTwistOpen(void)
+{
+	if(Chassis.pid_mode == GYRO
+			&& Chassis.twist == true)
+		return true;
+			
+	return false;
+}
+
 /**	
  *	@breif	底盘逻辑是否取反
  */
@@ -781,7 +807,7 @@ void REMOTE_setChassisSpeed(void)
 		Chas_Target_Speed[ Y ] = constrain(Chas_Target_Speed[ Y ], -Chas_Standard_Move_Max, Chas_Standard_Move_Max);
 		
 		Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle();	// 恢复底盘跟随
-		Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
+		Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
 		Chas_Target_Speed[ Z ] = constrain(Chas_Target_Speed[ Z ], -Chas_Spin_Move_Max, Chas_Spin_Move_Max);
 	}
 	
@@ -834,7 +860,7 @@ void REMOTE_setChassisSpeed(void)
  */
 float delta_angle;
 int8_t top_gyro_dir = 0;
-
+int8_t twist_dir = 0;
 void REMOTE_TOP_setChassisSpeed(void)
 {
 	float k_rc_z;
@@ -887,7 +913,7 @@ void REMOTE_TOP_setChassisSpeed(void)
 			/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
 			Chassis_Z_PID.AngleRampFeedback = RAMP_float(Chassis_Z_PID.AngleRampTarget, Chassis_Z_PID.AngleRampFeedback, Chas_Top_Gyro_Step);
 			
-			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
 		}
 		/* 没开小陀螺 */
 		else {
@@ -897,7 +923,7 @@ void REMOTE_TOP_setChassisSpeed(void)
 			Chassis_Z_PID.AngleRampFeedback = 0;
 			
 			Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle() ;	// 恢复底盘跟随
-			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
 			
 		}
 		
@@ -952,6 +978,7 @@ void REMOTE_setTopGyro(void)
 			if(CHASSIS_ifGyroMode() == true) {
 				Chassis_Z_PID.Angle.target = Chassis_Z_PID.Angle.feedback;
 				Chassis.top_gyro = true;
+				Chassis.twist = false;
 				top_gyro_dir = -1;
 			}
 		}
@@ -1038,8 +1065,6 @@ float KEY_rampChassisSpeed(int8_t key_state, int16_t *time, uint16_t inc_ramp_st
  *	
  *					转子rpm(r/min) = 60/1000/(麦轮周长(mm)*减速比) * (Chas_Target_Speed[ Z ] / 8192 * 360 / 57.3 * 轮子距轴心的距离)
  */
-uint8_t keyFLockFlag = 0;
-
 float rotate_ratio_fr;
 float rotate_ratio_fl;
 float rotate_ratio_bl;
@@ -1056,17 +1081,9 @@ void KEY_setChassisSpeed(RC_Ctl_t *remoteInfo, int16_t sMoveMax, int16_t sMoveRa
 	Time_Inc_Normal = sMoveRamp;
 	
 	if(CHASSIS_ifMechMode() == true) {
-		top_gyro_dir = 0;
 		CHASSIS_setMode(CHAS_MODE_NORMAL);
 	}
 	else if(CHASSIS_ifGyroMode() == true) {
-		if(Flag.Chassis.FLAG_goHome == true)
-		{
-			//保持底盘状态
-			//屏蔽底盘跟随
-			//修改底盘逻辑
-		}		
-		
 		/* 开启了小陀螺 */
 		if(CHASSIS_ifTopGyroOpen() == true) {
 			Chassis_Z_PID.AngleRampTarget += top_gyro_dir * Chas_Top_Gyro_Step;
@@ -1086,26 +1103,40 @@ void KEY_setChassisSpeed(RC_Ctl_t *remoteInfo, int16_t sMoveMax, int16_t sMoveRa
 			/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
 			Chassis_Z_PID.AngleRampFeedback = RAMP_float(Chassis_Z_PID.AngleRampTarget, Chassis_Z_PID.AngleRampFeedback, Chas_Top_Gyro_Step);
 			
-			Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
 		}
-		/* 没开小陀螺 */
+		/* 开启了扭腰 */
+		else if(CHASSIS_ifTwistOpen() == true) {
+			if(Chassis_Z_PID.Angle.target >= CHASSIS_getMiddleAngle() + 800) {
+				twist_dir = -1;
+			} 
+			else if(Chassis_Z_PID.Angle.target <= CHASSIS_getMiddleAngle() - 800) {
+				twist_dir = +1;
+			}
+			Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, twist_dir * Chas_Twist_Step);
+			
+			Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Twist);
+		}
+		/* 没开小陀螺/扭腰 */
 		else {
 			/* 小陀螺缓冲池清零 */
-			top_gyro_dir = 0;
 			Chassis_Z_PID.AngleRampTarget = 0;
 			Chassis_Z_PID.AngleRampFeedback = 0;
 			
-			if(Flag.Chassis.FLAG_goHome == true){
-				Chassis.logic = (Chassis_Logic_Names_t)!Chassis.logic;
+			if(Flag.Chassis.FLAG_goHome == true) {
+				/* 保持底盘状态
+					 屏蔽底盘跟随
+					 修改底盘逻辑 */
+				Chassis.logic = (Chassis_Logic_Names_t)!Chassis.logic;	// 修改底盘逻辑
 			}
 			
 			/* 设置底盘跟随逻辑 */
-			Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle() ;	
+			Chassis_Z_PID.Angle.target = CHASSIS_getMiddleAngle();
 			
 			if(Flag.Chassis.FLAG_goHome == false)
-				Chas_Target_Speed[ Z ] = CHASSIS_Z_Speed_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
+				Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * kRc_Gyro_Chas_Spin);
 			else 
-				Chas_Target_Speed[ Z ] = 0;
+				Chas_Target_Speed[ Z ] = 0;	// 屏蔽底盘跟随
 		}
 		
 		
@@ -1152,8 +1183,10 @@ void KEY_setChassisSpeed(RC_Ctl_t *remoteInfo, int16_t sMoveMax, int16_t sMoveRa
 		delta_angle = GIMBAL_getTopGyroAngleOffset() * MECH_2_ANGLE_RADIAN;	//  (8192.f-GIMBAL_getTopGyroAngleOffset()) * MECH_2_ANGLE_RADIAN
 		target_speed_x = Chas_Target_Speed[ X ];
 		target_speed_y = Chas_Target_Speed[ Y ];
-		if(Flag.Chassis.FLAG_goHome==true)
-			delta_angle=0;
+		
+		if(Flag.Chassis.FLAG_goHome == true)
+			delta_angle = 0;	// 保持底盘状态
+		
 		/* 旋转矩阵 将云台坐标系的期望速度 转换到 底盘坐标系的期望速度 */
 		Chas_Target_Speed[ X ] = cos(delta_angle) * target_speed_x - sin(delta_angle) * target_speed_y;
 		Chas_Target_Speed[ Y ] = sin(delta_angle) * target_speed_x + cos(delta_angle) * target_speed_y;
@@ -1167,19 +1200,20 @@ void KEY_setChassisSpeed(RC_Ctl_t *remoteInfo, int16_t sMoveMax, int16_t sMoveRa
 }
 
 /**
- *	@brief	根据按键值设置云台小陀螺模式
+ *	@brief	根据按键值设置底盘小陀螺模式
  */
 void KEY_setTopGyro(void)
 {
-	static uint8_t keyFLockFlag = false;
+	static uint8_t KeyLockFlag_F = false;
 	
 	if(IF_KEY_PRESSED_F) {
-		if(keyFLockFlag == false) {
+		if(KeyLockFlag_F == false) {
 			if(CHASSIS_ifGyroMode() == true) {
 				if(Chassis.top_gyro == false) {
-					Chassis_Z_PID.Angle.target = Chassis_Z_PID.Angle.feedback;
-					Chassis.top_gyro = true;
-					top_gyro_dir = -1;
+					Chassis_Z_PID.Angle.target = Chassis_Z_PID.Angle.feedback;	// 更新刚开启小陀螺时的目标角度
+					Chassis.top_gyro = true;	// 开陀螺
+					Chassis.twist = false;		// 关扭腰
+					top_gyro_dir = -1;	// 后面可设置随机数来使得小陀螺方向随机
 				}
 				else {
 					Chassis.top_gyro = false;
@@ -1187,9 +1221,37 @@ void KEY_setTopGyro(void)
 				}
 			}
 		}
-		keyFLockFlag = true;
+		KeyLockFlag_F = true;
 	} else {
-		keyFLockFlag = false;
+		KeyLockFlag_F = false;
+	}	
+}
+
+/**
+ *	@brief	根据按键值设置底盘扭腰模式
+ */
+void KEY_setTwist(void)
+{
+	static uint8_t KeyLockFlag_C = false;
+	
+	if(IF_KEY_PRESSED_C) {
+		if(KeyLockFlag_C == false) {
+			if(CHASSIS_ifGyroMode() == true) {
+				if(Chassis.twist == false) {
+					Chassis_Z_PID.Angle.target = Chassis_Z_PID.Angle.feedback;	// 更新刚开启扭腰时的目标角度
+					Chassis.twist = true;			// 开扭腰
+					Chassis.top_gyro = false;	// 关陀螺
+					twist_dir = -1;	// 后面可设置随机数来使得扭腰方向随机
+				}
+				else {
+					Chassis.twist = false;
+					twist_dir = 0;
+				}
+			}
+		}
+		KeyLockFlag_C = true;
+	} else {
+		KeyLockFlag_C = false;
 	}	
 }
 
@@ -1217,9 +1279,9 @@ void CHASSIS_powerLimit(Chassis_Power_t *power, Chassis_PID_t *pid, Judge_Info_t
 	// 读取缓冲焦耳能量
 	remain_J = judge_info->PowerHeatData.chassis_power_buffer;	
 	totalOutput = abs(pid[LEFT_FRON_201].Out) + 
-				  abs(pid[RIGH_FRON_202].Out) + 
-				  abs(pid[LEFT_BACK_203].Out) + 
-				  abs(pid[RIGH_BACK_204].Out);
+								abs(pid[RIGH_FRON_202].Out) + 
+								abs(pid[LEFT_BACK_203].Out) + 
+								abs(pid[RIGH_BACK_204].Out);
 	
 	if(judge_info->data_valid == false) {
 		judge_err_cnt++;
@@ -1328,6 +1390,7 @@ void CHASSIS_normalControl(void)
 {
 	KEY_setChassisSpeed(&RC_Ctl_Info, Chas_Standard_Move_Max, TIME_INC_NORMAL);
 	KEY_setTopGyro();
+	KEY_setTwist();
 }
 
 /**
@@ -1380,8 +1443,6 @@ void CHASSIS_keyControlTask(void)
 		case CHAS_MODE_NORMAL:
 			CHASSIS_normalControl();
 			break;
-		case CHAS_MODE_TWIST:
-			break;
 		case CHAS_MODE_BUFF:
 			CHASSIS_buffControl();
 			break;
@@ -1413,9 +1474,12 @@ void CHASSIS_control(void)
 	//..can.c中
 	CHASSIS_getInfo();
 	/*----期望修改----*/
-	if(Flag.Remote.FLAG_mode == RC) {
+	if(Flag.Remote.FLAG_mode == RC) 
+	{
 		CHASSIS_rcControlTask();
-	} else if(Flag.Remote.FLAG_mode == KEY) {
+	} 
+	else if(Flag.Remote.FLAG_mode == KEY) 
+	{
 		CHASSIS_keyControlTask();
 	}
 	/*----最终输出----*/
