@@ -5,7 +5,7 @@
 #include "sys.h"
 
 /* Global macro --------------------------------------------------------------*/
-#define REVOLVER_ID					0x207
+#define REVOLVER_ID							0x207
 #define REVOLVER_BM_RX_REPORT		BM_RX_REPORT_207
 
 #define REVOLVER_SPEED_RATIO		2160		// 1秒转一圈(= 60rpm*36(减速比) => 1rps)
@@ -66,10 +66,10 @@ typedef struct {
 typedef struct {
 	uint16_t 	total_count;	// 总发弹量
 	uint32_t 	real_time;		// 单点实时时间(用来测试射击延迟)
-	uint16_t	freq;			// 射频
-	int16_t		interval;		// 发射时间间隔
-	int16_t		ready_num;		// 需要发射的子弹数
-	int16_t		ready_num_buffer; // 允许发射的子弹数
+	uint16_t	freq;					// 射频
+	int16_t		interval;			// 发射时间间隔
+	int16_t		num;					// 需要发射的子弹数
+	int16_t		num_buffer; 	// 允许发射的子弹数
 	int16_t		heat_cooling_rate; // 17mm枪口每秒冷却值
 	int16_t		heat_real;		// 17mm枪口热量
 	int16_t		heat_limit;		// 17mm枪口热量限制
@@ -79,8 +79,8 @@ typedef struct {
 typedef struct {
 	Revolver_State_Names_t 	state;
 	Revolver_Mode_Names_t 	pidMode; 
-	Revolver_Action_t		action;
-	Revolver_Shoot_Info_t	Shoot;
+	Revolver_Action_t				action;
+	Revolver_Shoot_Info_t		Shoot;
 	uint16_t	freq;	// 射频
 	int16_t		shootInterval;	// 发射时间间隔
 	int16_t		shootNum;		// 需要发射的子弹数

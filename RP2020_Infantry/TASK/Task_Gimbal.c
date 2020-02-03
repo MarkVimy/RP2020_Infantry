@@ -125,7 +125,7 @@ Gimbal_PID_t	Gimbal_PID[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT] = {
 			.Angle.kp = 10.51,	
 			.Angle.ki = 0,			
 			.Angle.kd = 0,
-			.Angle.target = GIMBAL_MECH_YAW_ANGLE_MID_LIMIT,	// 归中
+			.Angle.target = GIMBAL_MECH_YAW_MID_ANGLE,	// 归中
 			.Angle.feedback = 0,
 			.Angle.erro = 0,
 			.Angle.last_erro = 0,
@@ -160,7 +160,7 @@ Gimbal_PID_t	Gimbal_PID[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT] = {
 			.Angle.kp = 8.21,		
 			.Angle.ki = 0,
 			.Angle.kd = 0,
-			.Angle.target = GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT,
+			.Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE,
 			.Angle.feedback = 0,
 			.Angle.erro = 0,
 			.Angle.last_erro = 0,
@@ -232,7 +232,7 @@ Gimbal_PID_t	Gimbal_PID[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT] = {
 			.Angle.kp = 8.21,		
 			.Angle.ki = 0,
 			.Angle.kd = 0,
-			.Angle.target = GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT,
+			.Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE,
 			.Angle.feedback = 0,
 			.Angle.erro = 0,
 			.Angle.last_erro = 0,
@@ -303,9 +303,9 @@ void GIMBAL_pidParamsInit(Gimbal_PID_t *pid, uint8_t motor_cnt)
 		pid[i].Speed.out = 0;
 
 		if(i == YAW_205) {
-			pid[i].Angle.target = GIMBAL_MECH_YAW_ANGLE_MID_LIMIT;
+			pid[i].Angle.target = GIMBAL_MECH_YAW_MID_ANGLE;
 		} else if(i == PITCH_206) {
-			pid[i].Angle.target = GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT;
+			pid[i].Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE;
 		}
 		//pid[i].Angle.feedback = 0,
 		pid[i].Angle.erro = 0;
@@ -668,17 +668,25 @@ void GIMBAL_setMode(Gimbal_Mode_t mode)
 }
 
 /**
+ *	@brief	返回云台当前的模式
+ */
+Gimbal_Mode_t GIMBAL_getMode(void)
+{
+	return Gimbal.State.mode;
+}
+
+/**
  *	@brief	根据底盘控制逻辑反馈机械中值
  */
 float GIMBAL_getMiddleAngle(void)
 {
 	if(CHASSIS_getLogic() == CHAS_LOGIC_NORMAL) {
-		return GIMBAL_TOP_YAW_ANGLE_MID_LIMIT;
+		return GIMBAL_TOP_YAW_MID_ANGLE;
 	} 
 	else if(CHASSIS_getLogic() == CHAS_LOGIC_REVERT) {
-		return GIMBAL_REVERT_YAW_ANGLE_MID_LIMIT;
+		return GIMBAL_REVERT_YAW_MID_ANGLE;
 	}
-	return GIMBAL_TOP_YAW_ANGLE_MID_LIMIT;
+	return GIMBAL_TOP_YAW_MID_ANGLE;
 }
 
 /**
@@ -695,14 +703,6 @@ bool GIMBAL_ifMechMode(void)
 bool GIMBAL_ifGyroMode(void)
 {
 	return (Flag.Gimbal.FLAG_pidMode == GYRO);
-}
-
-/**
- *	@brief	返回云台当前的模式
- */
-Gimbal_Mode_t GIMBAL_getGimbalMode(void)
-{
-	return Gimbal.State.mode;
 }
 
 /**
@@ -856,7 +856,7 @@ float GIMBAL_getTopGyroAngleOffset(void)
 
 	feedback = g_Gimbal_Motor_Info[YAW_205].angle;
 	
-	delta_angle = feedback - GIMBAL_TOP_YAW_ANGLE_MID_LIMIT;
+	delta_angle = feedback - GIMBAL_TOP_YAW_MID_ANGLE;
 
 	return delta_angle;
 }
@@ -905,8 +905,8 @@ void REMOTE_setGimbalAngle(void)
 		/* Pitch */
 		targetAngle = RC_RIGH_CH_UD_VALUE * RC_GIMBAL_MECH_PITCH_SENSITIVY; // Pitch机械角为绝对角度
 		Gimbal_PID[MECH][PITCH_206].Angle.target = constrain(Gimbal_PID[MECH][PITCH_206].Angle.target - targetAngle, // 抬头机械角度减小
-																													GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT, 
-																													GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)
+																													GIMBAL_MECH_PITCH_UP_ANGLE, 
+																													GIMBAL_MECH_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)
 	} 
 	/* 陀螺仪模式 */
 	else if(GIMBAL_ifGyroMode() == true) {	
@@ -917,8 +917,8 @@ void REMOTE_setGimbalAngle(void)
 		/* Pitch */		
 		targetAngle = RC_RIGH_CH_UD_VALUE * RC_GIMBAL_GYRO_PITCH_SENSITIVY;
 		Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-																													GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
-																													GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)		
+																													GIMBAL_GYRO_PITCH_UP_ANGLE, 
+																													GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)		
 	}
 }
 
@@ -965,8 +965,8 @@ void KEY_setGimbalAngle(void)
 	/* Pitch */		
 	targetAngle = -MOUSE_Y_MOVE_SPEED * KEY_GIMBAL_GYRO_PITCH_SENSITIVY;// 鼠标Y反馈速度*灵敏度
 	Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-																												GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
-																												GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)	
+																												GIMBAL_GYRO_PITCH_UP_ANGLE, 
+																												GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)	
 }
 
 /**
@@ -1082,8 +1082,8 @@ void KEY_setQuickPickUp(void)
 		if(keyGLockFlag == false) {
 			targetAngle = 15.f/360*8192;	// 快速抬头15°
 			Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-															 GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT, 
-															 GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT);	// 设置Pitch轴(绝对值)
+															 GIMBAL_GYRO_PITCH_UP_ANGLE, 
+															 GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)
 		}
 		keyGLockFlag = true;
 	} else {
@@ -1135,7 +1135,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 		if(IF_MOUSE_PRESSED_RIGH) {
 			if(mouseRLockFlag == false && GIMBAL_ifBuffMode() == false) {
 				/* 云台模式调整 */
-				Gimbal.State.mode = GIMBAL_MODE_AUTO;
+				GIMBAL_setMode(GIMBAL_MODE_AUTO);
 				Gimbal.Auto.FLAG_first_into_auto = true;
 				/* 视觉模式调整 */
 				VISION_setMode(VISION_MODE_AUTO);
@@ -1146,7 +1146,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 		} else {
 			if(GIMBAL_ifAutoMode() == true) { // 退出自瞄模式
 				/* 云台模式调整 */
-				Gimbal.State.mode = GIMBAL_MODE_NORMAL;
+				GIMBAL_setMode(GIMBAL_MODE_NORMAL);
 				Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
 				Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
 				/* 视觉模式调整 */
@@ -1160,7 +1160,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 		if(IF_RC_SW1_MID) {
 			if(rcSw1LockFlag == false) {
 				/* 云台模式调整 */
-				Gimbal.State.mode = GIMBAL_MODE_AUTO;
+				GIMBAL_setMode(GIMBAL_MODE_AUTO);
 				Gimbal.Auto.FLAG_first_into_auto = true;
 				/* 视觉模式调整 */
 				VISION_setMode(VISION_MODE_AUTO);
@@ -1169,7 +1169,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 		} else {
 			if(GIMBAL_ifAutoMode() == true) { // 退出自瞄模式
 				/* 云台模式调整 */
-				Gimbal.State.mode = GIMBAL_MODE_NORMAL;
+				GIMBAL_setMode(GIMBAL_MODE_NORMAL);
 				Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
 				Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
 				/* 视觉模式调整 */
@@ -1183,7 +1183,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 	if(IF_KEY_PRESSED_CTRL) {
 		if(keyCtrlLockFlag == false) {
 			/* 云台模式调整 */
-			Gimbal.State.mode = GIMBAL_MODE_NORMAL;
+			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
 			Flag.Gimbal.FLAG_pidMode = MECH;	// 强制进入机械模式
 			GIMBAL_keyGyro_To_keyMech();
 			/* 视觉模式调整 */
@@ -1196,7 +1196,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 			if(IF_KEY_PRESSED_V) {	// Ctrl+V
 				if(Gimbal.State.mode != GIMBAL_MODE_SMALL_BUFF) {
 					/* 云台模式调整 */
-					Gimbal.State.mode = GIMBAL_MODE_SMALL_BUFF;
+					GIMBAL_setMode(GIMBAL_MODE_SMALL_BUFF);
 					Gimbal.Buff.FLAG_first_into_buff = true;
 					Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
 					GIMBAL_keyMech_To_keyGyro();
@@ -1212,7 +1212,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 			if(IF_KEY_PRESSED_F) {	// Ctrl+F
 				if(Gimbal.State.mode != GIMBAL_MODE_BIG_BUFF) {
 					/* 云台模式调整 */
-					Gimbal.State.mode = GIMBAL_MODE_BIG_BUFF;
+					GIMBAL_setMode(GIMBAL_MODE_BIG_BUFF);
 					Gimbal.Buff.FLAG_first_into_buff = true;
 					Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
 					GIMBAL_keyMech_To_keyGyro();
@@ -1227,7 +1227,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 	} else {
 		if(keyCtrlLockFlag == true && Gimbal.State.mode == GIMBAL_MODE_NORMAL) {
 			/* 云台模式调整 */
-			Gimbal.State.mode = GIMBAL_MODE_NORMAL;
+			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
 			Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
 			GIMBAL_keyMech_To_keyGyro();
 			/* 视觉模式调整 */
@@ -1323,11 +1323,11 @@ void GIMBAL_reset(void)
 		Gimbal_PID[MECH][YAW_205].AngleRampFeedback = RAMP_float(Gimbal_PID[MECH][YAW_205].AngleRampTarget, Gimbal_PID[MECH][YAW_205].AngleRampFeedback, GIMBAL_RAMP_BEGIN_YAW);
 		
 		/* 平缓地让云台移动到中间，防止上电狂甩 */
-		Gimbal_PID[MECH][PITCH_206].Angle.target = RAMP_float(GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT, Gimbal_PID[MECH][PITCH_206].Angle.target, GIMBAL_RAMP_BEGIN_PITCH);
+		Gimbal_PID[MECH][PITCH_206].Angle.target = RAMP_float(GIMBAL_MECH_PITCH_MID_ANGLE, Gimbal_PID[MECH][PITCH_206].Angle.target, GIMBAL_RAMP_BEGIN_PITCH);
 		
 		/* 等待云台归中 */
 		if(abs(Gimbal_PID[MECH][YAW_205].Angle.feedback - target_angle) <= 1 
-			&& abs(Gimbal_PID[MECH][PITCH_206].Angle.feedback - GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT) <= 1) {
+			&& abs(Gimbal_PID[MECH][PITCH_206].Angle.feedback - GIMBAL_MECH_PITCH_MID_ANGLE) <= 1) {
 			Cnt.Gimbal.CNT_resetOK++;
 		}
 			
@@ -2214,8 +2214,8 @@ void GIMBAL_BUFF_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 	gimbal->Buff.Time[DELTA] = gimbal->Auto.Time[NOW] - gimbal->Auto.Time[PREV];
 
 //	/* 切换pitch补偿角 */
-//	if((GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT - pid[GYRO][PITCH_206].Angle.feedback) > 0)
-//		GIMBAL_BUFF_PITCH_COMPENSATION = BUFF_PITCH_MODIFY_TABLE[(uint8_t)((GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT - pid[GYRO][PITCH_206].Angle.feedback)/100)];
+//	if((GIMBAL_MECH_PITCH_DOWN_ANGLE - pid[GYRO][PITCH_206].Angle.feedback) > 0)
+//		GIMBAL_BUFF_PITCH_COMPENSATION = BUFF_PITCH_MODIFY_TABLE[(uint8_t)((GIMBAL_MECH_PITCH_DOWN_ANGLE - pid[GYRO][PITCH_206].Angle.feedback)/100)];
 //	else
 //		GIMBAL_BUFF_PITCH_COMPENSATION = 0;
 	
@@ -2333,7 +2333,7 @@ void GIMBAL_buffControl(void)
 		Flag.Gimbal.FLAG_pidMode = GYRO;		// 进入陀螺仪模式
 		
 		Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-		Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;	// GIMBAL_GYRO_PITCH_ANGLE_MID_LIMIT
+		Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;	// GIMBAL_GYRO_PITCH_MID_ANGLE
 
 		/* 拨盘模式调整 */
 		REVOLVER_setAction(SHOOT_NORMAL);		// 变成常规控制模式
@@ -2344,7 +2344,7 @@ void GIMBAL_buffControl(void)
 	}
 	
 	/* 视觉数据可用 && 键盘模式下 */
-	if( (VISION_isDataValid()) && (Flag.Remote.FLAG_mode == KEY) ) 
+	if( VISION_isDataValid() ) 
 	{
 		/*----期望修改----*/
 		GIMBAL_BUFF_pidCalculate(Gimbal_PID, &Gimbal);	
@@ -2357,7 +2357,7 @@ void GIMBAL_buffControl(void)
  */
 void GIMBAL_reloadBullet(void)
 {
-	Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Angle.target = GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT;
+	Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE;
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/

@@ -449,7 +449,8 @@ void REVOLVER_pidControlTask(void)
 			REVOLVER_Speed_pidCalculate(&Revolver_PID);
 		}
 		REVOLVER_pidOut(&Revolver_PID);	
-	} else {	// 未开启摩擦轮
+	} 
+	else {	// 未开启摩擦轮
 		g_Revolver_Motor_Info.angle_sum = 0;	// 累加角度值清零
 		REVOLVER_stop(&Revolver_PID);
 		REVOLVER_pidParamsInit(&Revolver_PID);
@@ -494,7 +495,7 @@ void REVOLVER_normalControl(Revolver_Info_t *info)
 		}
 		else if(GIMBAL_ifAutoMode())
 		{
-			/* 打符模式 */
+			/* 自瞄模式 */
 			Revolver.pidMode = REVO_POSI_MODE;
 			Revolver.action = SHOOT_AUTO;
 			/* 切换模式时清除左键响应时间 */
@@ -585,6 +586,14 @@ void REVOLVER_tripleShootControl(Revolver_Info_t *info)
 		timePressedShoot = 0;
 		Revolver.action = SHOOT_NORMAL;
 	}
+}
+
+/**
+ *	@brief	秘技之暴雨梨花
+ */
+void REVOLVER_comboShootControl(Revolver_Info_t *info)
+{
+	
 }
 
 /**
@@ -819,6 +828,44 @@ void REVOLVER_autoShootControl(Revolver_Info_t *info)
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
+ *	@brief	根据云台模式调整拨盘模式
+ *	@note		# 与原有的控制逻辑存在冲突，暂时不用
+ */
+void REVOLVER_getInfo(void)
+{
+	static Gimbal_Mode_t now_mode, prev_mode;
+	
+	now_mode = GIMBAL_getMode();
+	switch(now_mode)
+	{
+		case GIMBAL_MODE_NORMAL:
+		case GIMBAL_MODE_RELOAD_BULLET:
+		/*
+			云台常规和对位时恢复常规控制
+		*/
+			if(prev_mode != SHOOT_NORMAL)
+				REVOLVER_setAction(SHOOT_NORMAL);
+			break;
+		case GIMBAL_MODE_AUTO:
+		/*
+			云台自瞄时拨盘进入自瞄模式
+		*/
+			REVOLVER_setAction(SHOOT_AUTO);
+			break;
+		case GIMBAL_MODE_SMALL_BUFF:
+		case GIMBAL_MODE_BIG_BUFF:
+		/*
+			云台打符时拨盘进入打符模式
+		*/
+			REVOLVER_setAction(SHOOT_BUFF);
+			break;
+		default:
+			break;
+	}
+	prev_mode = now_mode;
+}
+
+/**
  *	@brief	拨盘电机读取裁判系统信息
  */
 void REVOLVER_recordJudgeInfo(Revolver_Info_t *revo_info, Judge_Info_t *judge_info)
@@ -859,6 +906,7 @@ void REVOLVER_keyControlTask(void)
 			REVOLVER_tripleShootControl(&Revolver);
 			break;
 		case SHOOT_HIGH_F_LOW_S:
+			REVOLVER_comboShootControl(&Revolver);
 			break;
 		case SHOOT_MID_F_HIGH_S:
 			break;
@@ -889,6 +937,7 @@ void REVOLVER_selfProtect(void)
 void REVOLVER_control(void)
 {
 	/*----信息读入----*/
+	//REVOLVER_getInfo();
 	REVOLVER_recordJudgeInfo(&Revolver, &Judge_Info);
 	/*----期望修改----*/
 	if(Flag.Remote.FLAG_mode == RC) {

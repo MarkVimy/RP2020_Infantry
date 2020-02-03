@@ -417,6 +417,7 @@ void REMOTE_rcLostProcess(void)
 {
 	Cnt.Remote.CNT_rcLost++;
 	if(Cnt.Remote.CNT_rcLost > 2) {	// 40ms遥控失联容限(不能太小，遥控数据 帧/14ms，需要预留处理时间)
+		Cnt.Remote.CNT_rcLost = 2;	 // 防止溢出
 		Flag.Remote.FLAG_rcLost = 1;
 	} else {	// 具有恢复的弹性(遥控重新连接)
 		Flag.Remote.FLAG_rcLost = 0;

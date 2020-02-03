@@ -11,21 +11,21 @@
 #define YAW_DIR	(-1)
 
 //#define GIMBAL_MECH_YAW_ANGLE_LEFT_LIMIT		(1998 + 200)	// 实测最小可达1896(不发力) 1892(发力)
-#define GIMBAL_MECH_YAW_ANGLE_MID_LIMIT			GIMBAL_TOP_YAW_ANGLE_MID_LIMIT	//(4104)	// 中间值
+#define GIMBAL_MECH_YAW_MID_ANGLE			GIMBAL_TOP_YAW_MID_ANGLE	//(4104)	// 中间值
 //#define GIMBAL_MECH_YAW_ANGLE_RIGHT_LIMIT		(6235 - 200)	// 实测最大可达6180(不发力)	6184(发力)
 
-#define GIMBAL_TOP_YAW_ANGLE_MID_LIMIT			(6325)	// 底盘正向逻辑机械中值	6325
-#define GIMBAL_REVERT_YAW_ANGLE_MID_LIMIT		(2229)	// 底盘反向逻辑机械中值
+#define GIMBAL_TOP_YAW_MID_ANGLE			(6325)	// 底盘正向逻辑机械中值	6325
+#define GIMBAL_REVERT_YAW_MID_ANGLE		(2229)	// 底盘反向逻辑机械中值
 
-#define GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT		(3410 + 150)	// 实测最小可达3312(不发力)
-#define GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT		(4048)				// 中间值
-#define GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT	(4435 - 100)	// 实测最小可达4382(不发力)
+#define GIMBAL_MECH_PITCH_UP_ANGLE		(3410 + 150)	// 实测最小可达3312(不发力)
+#define GIMBAL_MECH_PITCH_MID_ANGLE		(4048)				// 中间值
+#define GIMBAL_MECH_PITCH_DOWN_ANGLE	(4435 - 100)	// 实测最小可达4382(不发力)
 
-#define GIMBAL_AUTO_LOCK_SENTRY_ANGLE			(GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT + 150)
+#define GIMBAL_AUTO_LOCK_SENTRY_ANGLE			(GIMBAL_MECH_PITCH_UP_ANGLE + 150)
 
-#define GIMBAL_GYRO_PITCH_ANGLE_UP_LIMIT		GIMBAL_MECH_PITCH_ANGLE_UP_LIMIT 		//((-28+2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
-#define GIMBAL_GYRO_PITCH_ANGLE_MID_LIMIT		GIMBAL_MECH_PITCH_ANGLE_MID_LIMIT 	//( +1 * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
-#define GIMBAL_GYRO_PITCH_ANGLE_DOWN_LIMIT	GIMBAL_MECH_PITCH_ANGLE_DOWN_LIMIT 	//((+13-2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
+#define GIMBAL_GYRO_PITCH_UP_ANGLE		GIMBAL_MECH_PITCH_UP_ANGLE 		//((-28+2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
+#define GIMBAL_GYRO_PITCH_MID_ANGLE		GIMBAL_MECH_PITCH_MID_ANGLE 	//( +1 * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
+#define GIMBAL_GYRO_PITCH_DOWN_ANGLE	GIMBAL_MECH_PITCH_DOWN_ANGLE 	//((+13-2) * GIMBAL_GYRO_ANGLE_ZOOM_INDEX)
 
 #define GIMBAL_GYRO_ANGLE_ZOOM_INDEX				(20.0f)	// IMU角度的缩放系数(方便滤波和调参)
 
@@ -142,10 +142,10 @@ void GIMBAL_pidOut(Gimbal_PID_t *pid);
 
 /* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void GIMBAL_setMode(Gimbal_Mode_t mode);
+Gimbal_Mode_t GIMBAL_getMode(void);
 float GIMBAL_getMiddleAngle(void);
 bool GIMBAL_ifMechMode(void);
 bool GIMBAL_ifGyroMode(void);
-Gimbal_Mode_t GIMBAL_getGimbalMode(void);
 bool GIMBAL_ifNormalMode(void);
 bool GIMBAL_ifTopGyroMode(void);
 bool GIMBAL_ifAutoMode(void);

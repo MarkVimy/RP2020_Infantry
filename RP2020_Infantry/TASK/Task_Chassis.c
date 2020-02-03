@@ -228,8 +228,8 @@ Chassis_Z_PID_t Chassis_Z_PID = {
 		.kp = 0.48,
 		.ki = 0,
 		.kd = 0,
-		.target = GIMBAL_MECH_YAW_ANGLE_MID_LIMIT,
-		.feedback = GIMBAL_MECH_YAW_ANGLE_MID_LIMIT,
+		.target = GIMBAL_MECH_YAW_MID_ANGLE,
+		.feedback = GIMBAL_MECH_YAW_MID_ANGLE,
 		.erro = 0,
 		.last_erro = 0,
 		.integrate = 0,
@@ -591,26 +591,27 @@ void CHASSIS_pidOut(Chassis_PID_t *pid)
  */
 void CHASSIS_getInfo(void)
 {
-	static float last_yaw, delta_yaw;
-	float yaw;
+	static Gimbal_Mode_t now_mode, prev_mode;
+	static float yaw[TIME_STATE_COUNT];
 	
 	/* # Yaw # */
-	yaw = Mpu_Info.yaw;
-	delta_yaw = yaw - last_yaw;
-	if(delta_yaw > +180.f) {
-		delta_yaw = -360.f + delta_yaw;
-	} else if(delta_yaw < -180.f) {
-		delta_yaw = +360.f + delta_yaw;
+	yaw[NOW] = Mpu_Info.yaw;
+	yaw[DELTA] = yaw[NOW] - yaw[PREV];
+	if(yaw[DELTA] > +180.f) {
+		yaw[DELTA] = -360.f + yaw[DELTA];
+	} else if(yaw[DELTA] < -180.f) {
+		yaw[DELTA] = +360.f + yaw[DELTA];
 	}
-	last_yaw = yaw; 	
+	yaw[PREV] = yaw[NOW]; 	
 	
 	/* 利用陀螺仪数据作扭头补偿(使得云台与底盘独立运动) */
 	if(CHASSIS_ifTopGyroOpen() == true
 		|| CHASSIS_ifTwistOpen() == true) {
 		Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, 		
-																	delta_yaw * 8192 / 360.f);
+																	yaw[DELTA] * 8192 / 360.f);
 	}
 	
+	/* 底盘pid模式 */
 	if(GIMBAL_ifMechMode()) {
 		Chassis.pid_mode = MECH;
 		Chassis.top_gyro = false;	// 关陀螺
@@ -619,6 +620,35 @@ void CHASSIS_getInfo(void)
 	else if(GIMBAL_ifGyroMode()) {
 		Chassis.pid_mode = GYRO;
 	}
+	
+	/* 底盘模式调整 */
+	now_mode = GIMBAL_getMode();
+	switch(now_mode)
+	{
+		case GIMBAL_MODE_NORMAL:
+		case GIMBAL_MODE_AUTO:
+			/*
+				云台常规和自瞄时底盘恢复常规
+			*/
+			CHASSIS_setMode(CHAS_MODE_NORMAL);
+			break;
+		case GIMBAL_MODE_BIG_BUFF:
+		case GIMBAL_MODE_SMALL_BUFF:
+			/*
+				云台打符时底盘进入打符模式
+			*/
+			CHASSIS_setMode(CHAS_MODE_BUFF);
+			break;
+		case GIMBAL_MODE_RELOAD_BULLET:
+			/*
+				自动对位时底盘进入慢速对位模式
+			*/
+			CHASSIS_setMode(CHAS_MODE_SLOW);
+			break;
+		default:
+			break;
+	}
+	prev_mode = now_mode;
 	
 //	/* 小陀螺模式开启 */
 //	if(GIMBAL_ifTopGyroMode() == true) {
@@ -663,10 +693,10 @@ Chassis_Logic_Names_t CHASSIS_getLogic(void)
 float CHASSIS_getMiddleAngle(void)
 {
 	if(Chassis.logic == 0) {
-		return GIMBAL_TOP_YAW_ANGLE_MID_LIMIT;
+		return GIMBAL_TOP_YAW_MID_ANGLE;
 	}
 	else {
-		return GIMBAL_REVERT_YAW_ANGLE_MID_LIMIT;
+		return GIMBAL_REVERT_YAW_MID_ANGLE;
 	}
 }
 
