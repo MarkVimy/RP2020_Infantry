@@ -131,6 +131,17 @@ void FRICTION_reset(void)
 }
 
 /**
+ *	@brief	判断摩擦轮是否开启
+ */
+bool FRICTION_ifOpen(void)
+{
+	if(Friction.state == FRIC_STATE_OFF)
+		return false;
+	else
+		return true;
+}
+
+/**
  *	@brief	判断摩擦轮是否加速/减速到期望速度
  */
 bool FRICTION_ifReady(void)
@@ -140,6 +151,9 @@ bool FRICTION_ifReady(void)
 	return (abs(Friction.speedTarget - Friction.speedFeedback)<=20)?1:0;
 }
 
+/**
+ *	@brief	摩擦轮速度切换
+ */
 void FRICTION_speedSwitch(Friction_Info_t *fric)
 {
 	if(FRICTION_ifReady()) {
@@ -174,7 +188,7 @@ void REMOTE_setFrictionState(RC_Ctl_t *remoteInfo)
 		if((sw1 == RC_SW_UP && prev_sw1 != RC_SW_UP) && (sw2 == RC_SW_DOWN)) {
 			if(Friction.state == FRIC_STATE_OFF) {
 				Friction.state = FRIC_STATE_ON;			// 打开摩擦轮
-				Friction.speedLevel = FRIC_SPEED_SENTRY;	// 中等射速
+				Friction.speedLevel = FRIC_SPEED_HIGH;	// 高射速
 				Friction.speedTarget = Friction_Pwm_Output[Friction.speedLevel];
 				LASER_ON();
 			} else if(Friction.state == FRIC_STATE_ON){
@@ -197,7 +211,7 @@ void KEY_setFrictionState(RC_Ctl_t *remoteInfo)
 	if(BM_ifReset(BitMask.System.BM_reset, BM_RESET_FRIC)) {	// 摩擦轮复位完成
 		if(Friction.state == FRIC_STATE_OFF && IF_MOUSE_PRESSED_LEFT) {
 			Friction.state = FRIC_STATE_ON;			// 打开摩擦轮
-			Friction.speedLevel = FRIC_SPEED_SENTRY;	// 中等射速
+			Friction.speedLevel = FRIC_SPEED_HIGH;	// 高射速
 			Friction.speedTarget = Friction_Pwm_Output[Friction.speedLevel];
 			LASER_ON();
 		}

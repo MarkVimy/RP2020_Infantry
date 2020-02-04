@@ -14,7 +14,7 @@
 #define ANGLE_AN_BULLET				24576.0f	// 8192*36/12 = 24576.0f
 #define ANGLE_AN_BULLET_RAMP		(ANGLE_AN_BULLET/20)
 
-#define HEAT_AN_BULLET				30	// 打一颗弹丸的热量增加
+#define HEAT_AN_BULLET				10	// 打一颗弹丸的热量增加(RM2020固定为10)
 
 //#define LEVEL_COUNT				3
 //uint16_t REVOLVER_HEAT_LIMIT[LEVEL_COUNT] = {240, 360, 480};
@@ -33,14 +33,13 @@ typedef enum {
 }Revolver_Mode_Names_t;
 
 typedef enum {
-	SHOOT_NORMAL = 0,		// 常规模式
-	SHOOT_SINGLE = 1,		// 单发模式
-	SHOOT_TRIPLE = 2,		// 三连发
-	SHOOT_HIGH_F_LOW_S = 3,	// 高射频低射速(推家)
-	SHOOT_MID_F_HIGH_S = 4,	// 中射频高射速(暴击)
-	SHOOT_BUFF	 = 5,		// 打符模式
-	SHOOT_AUTO	 = 6,		// 自瞄模式
-	REVO_ACTION_COUNT = 7,
+	SHOOT_NORMAL = 0,		// 常规模式(不发弹/点射/连发)
+//	SHOOT_SINGLE = 1,		// 单发模式
+//	SHOOT_TRIPLE = 2,		// 三连发
+//	SHOOT_HIGH_F_LOW_S = 3,	// 高射频低射速(推家)
+	SHOOT_BUFF	 = 1,		// 打符模式
+	SHOOT_AUTO	 = 2,		// 自瞄模式
+	REVO_ACTION_COUNT = 3,
 }Revolver_Action_t;
 
 typedef struct {
@@ -81,15 +80,7 @@ typedef struct {
 	Revolver_Mode_Names_t 	pidMode; 
 	Revolver_Action_t				action;
 	Revolver_Shoot_Info_t		Shoot;
-	uint16_t	freq;	// 射频
-	int16_t		shootInterval;	// 发射时间间隔
-	int16_t		shootNum;		// 需要发射的子弹数
-	int16_t		shootNumBuffer; // 允许发射的子弹数
-	int16_t		shootHeatCoolingRate; // 17mm枪口每秒冷却值
-	int16_t		shootHeatReal;	// 17mm枪口热量
-	int16_t		shootHeatLimit;	// 17mm枪口热量限制
-	uint16_t 	stuckCount;	// 卡弹计数
-	Revolver_Buff_Info_t	buff;
+	Revolver_Buff_Info_t		buff;
 }Revolver_Info_t;
 
 /* ## Global Variables Prototypes ## -----------------------------------------*/
@@ -110,7 +101,7 @@ void REVOLVER_addShootCount(void);
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void REVOLVER_setAction(Revolver_Action_t action);
-uint8_t REVOLVER_heatLimit(Revolver_Info_t *info, uint8_t targetNum);
+uint8_t REVOLVER_heatLimit(Revolver_Info_t *info, uint8_t target_num);
 void REVOLVER_normalControl(Revolver_Info_t *info);
 void REVOLVER_singleShootControl(Revolver_Info_t *info);
 void REVOLVER_tripleShootControl(Revolver_Info_t *info);

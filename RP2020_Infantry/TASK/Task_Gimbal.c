@@ -2296,7 +2296,7 @@ void GIMBAL_normalControl(void)
 void GIMBAL_autoControl(void)
 {
 	/* 视觉数据可用 && 键盘模式下 */
-	if( (VISION_isDataValid()) && (Flag.Remote.FLAG_mode == KEY) ) 
+	if( VISION_isDataValid() ) 
 	{
 		/*----期望修改----*/
 		/* 视觉预测版 */
@@ -2464,12 +2464,10 @@ void GIMBAL_control(void)
 	} 
 	else 
 	{
-		if(Flag.Remote.FLAG_mode == RC) 
-		{
+		if(Flag.Remote.FLAG_mode == RC) {
 			GIMBAL_rcControlTask();
 		} 
-		else if(Flag.Remote.FLAG_mode == KEY) 
-		{
+		else if(Flag.Remote.FLAG_mode == KEY) {
 			GIMBAL_keyControlTask();
 		}
 	}
