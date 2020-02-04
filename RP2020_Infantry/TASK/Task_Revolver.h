@@ -71,6 +71,7 @@ typedef struct {
 	int16_t		heat_real;		// 17mm枪口热量
 	int16_t		heat_limit;		// 17mm枪口热量限制
 	uint16_t 	stuck_count;	// 卡弹计数	
+	uint8_t		suicide_mode;	// 自杀模式(枪口热量超限)
 }Revolver_Shoot_Info_t;
 
 typedef struct {

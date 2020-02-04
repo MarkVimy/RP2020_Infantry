@@ -481,6 +481,9 @@ uint8_t REVOLVER_heatLimit(Revolver_Info_t *info, uint8_t target_num)
 	if(target_num == 0)	// 防止出错
 		return 0;
 	
+	if(info->Shoot.suicide_mode == true)	// 热量超限扣血换取射频
+		return target_num;
+	
 	remain_heat = info->Shoot.heat_limit - info->Shoot.heat_real;
 	allow_num = remain_heat / HEAT_AN_BULLET;	// 当前热量下允许的最大发弹量
 	if(allow_num > 0) {
@@ -512,7 +515,10 @@ void REVOLVER_pidControlTask(void)
 		if(Revolver.pidMode ==  REVO_SPEED_MODE) // 连射模式
 		{	
 			if(Revolver.state == REVO_STATE_ON) {	// 开启拨盘旋转
-				Revolver_PID.Speed.target = SPEED_AN_BULLET_PER_SECOND * Revolver.Shoot.freq;	// 每秒一颗的转速乘以射频
+				if(REVOLVER_heatLimit(&Revolver, 1))
+					Revolver_PID.Speed.target = SPEED_AN_BULLET_PER_SECOND * Revolver.Shoot.freq;	// 每秒一颗的转速乘以射频
+				else
+					Revolver_PID.Speed.target = 0;
 			} else if(Revolver.state == REVO_STATE_OFF) {	// 关闭拨盘旋转
 				Revolver_PID.Speed.target = 0;
 			}
@@ -870,6 +876,14 @@ void REVOLVER_autoShootControl(Revolver_Info_t *info)
 	
 	current_time = xTaskGetTickCount();
 	
+	/* 自爆模式(紧急情况下以热量超限扣血换取射频 */
+	if(IF_KEY_PRESSED_B) {
+		info->Shoot.freq = 20;
+		info->Shoot.suicide_mode = true;
+	} else {
+		info->Shoot.suicide_mode = false;
+	}
+
 	/* 根据射频计算响应间隔 */
 	info->Shoot.interval = TIME_STAMP_1000MS / info->Shoot.freq;
 	
@@ -878,7 +892,7 @@ void REVOLVER_autoShootControl(Revolver_Info_t *info)
 		//info->Shoot.interval = TIME_STAMP_1000MS/10;
 		/* 自瞄开火条件 */
 		if(GIMBAL_AUTO_chaseReady() == true				// 预测到位
-				&& respond_time_MobiPre < current_time	// 射击响应
+				&& respond_time_MobiPre < current_time// 射击响应
 					&& info->Shoot.num == 0							// 上一颗已打出
 						&& IF_MOUSE_PRESSED_LEFT)					// 左键按下
 		{
@@ -894,7 +908,7 @@ void REVOLVER_autoShootControl(Revolver_Info_t *info)
 		//info->Shoot.interval = TIME_STAMP_1000MS/5;
 		/* 自瞄开火条件 */
 		if(GIMBAL_AUTO_chaseReady() == true				// 预测到位
-				&& respond_time_Stop < current_time			// 射击响应
+				&& respond_time_Stop < current_time		// 射击响应
 					&& info->Shoot.num == 0							// 上一颗已打出
 						&& IF_MOUSE_PRESSED_LEFT)					// 左键按下
 		{
@@ -948,7 +962,7 @@ void REVOLVER_recordJudgeInfo(Revolver_Info_t *revo_info, Judge_Info_t *judge_in
  */
 void REVOLVER_getInfo(void)
 {
-	static Gimbal_Mode_t now_mode, prev_mode;
+	static Gimbal_Mode_t now_mode;
 	
 	/* 获取裁判系统信息 */
 	REVOLVER_recordJudgeInfo(&Revolver, &Judge_Info);
@@ -980,7 +994,6 @@ void REVOLVER_getInfo(void)
 		default:
 			break;
 	}
-	prev_mode = now_mode;
 }
 
 /**

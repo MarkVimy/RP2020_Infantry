@@ -1973,7 +1973,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 					mobpre_yaw_right_delay = 0;
 				}
 				
-				Mobi_Pre_Yaw = true;	// 标记已开启预测
+				Mobi_Pre_Yaw = true;	// 标记已开启移动预测
 				mobpre_yaw_stop_delay = 0;	// 重置静止时的开火延迟
 				
 			}
@@ -1981,7 +1981,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 			else {
 				pid[GYRO][YAW_205].Angle.target = gimbal->Auto.Yaw.target;//RAMP_float(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
 				
-				Mobi_Pre_Yaw = false;	// 标记未开启预测
+				Mobi_Pre_Yaw = false;	// 标记未开启移动预测
 				mobpre_yaw_left_delay = 0;
 				mobpre_yaw_right_delay = 0;
 				

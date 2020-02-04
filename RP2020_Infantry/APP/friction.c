@@ -227,6 +227,20 @@ void KEY_setFrictionState(RC_Ctl_t *remoteInfo)
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
+ *	@brief	读取外部信息
+ *	@note		主要是根据性能点分配调整摩擦轮射速
+ */
+void FRICTION_getInfo(Judge_Info_t *judge_info)
+{
+	/* #根据最高射速限制调整摩擦轮的速度 */
+//	switch(judge_info->GameRobotStatus.robot_level)
+//	{
+//		case: Friction.speedLevel = FRIC_SPEED_HIGH;
+//		default:break;
+//	}
+}
+
+/**
  *	@brief	遥控设置摩擦轮开启/关闭
  *	@note	Loop Time: 10ms
  */
@@ -259,6 +273,7 @@ void FRICTION_selfProtect(void)
 void FRICTION_control(void)
 {
 	/*----信息读入----*/
+	FRICTION_getInfo(&Judge_Info);
 	
 	/*----期望修改----*/
 	if(BM_ifSet(BitMask.System.BM_reset, BM_RESET_FRIC)) {	// 复位状态
