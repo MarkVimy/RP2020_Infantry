@@ -1036,9 +1036,7 @@ void KEY_setGimbalTurn(void)
 					targetAngle = +180*GIMBAL_GYRO_ANGLE_ZOOM_INDEX * (YAW_DIR);
 					Gimbal_PID[GYRO][YAW_205].AngleRampTarget += targetAngle;
 				}
-				
-//				/* ÐÞ¸Äµ×ÅÌÂß¼­ */
-//				CHASSIS_logicRevert();
+
 			}
 			keyVLockFlag = true;
 		}

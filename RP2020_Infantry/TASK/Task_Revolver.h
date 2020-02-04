@@ -16,8 +16,6 @@
 
 #define HEAT_AN_BULLET				10	// 打一颗弹丸的热量增加(RM2020固定为10)
 
-//#define LEVEL_COUNT				3
-//uint16_t REVOLVER_HEAT_LIMIT[LEVEL_COUNT] = {240, 360, 480};
 
 /* Global TypeDef ------------------------------------------------------------*/
 typedef enum {

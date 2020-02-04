@@ -31,6 +31,12 @@
 
 #define	TRIPLE_SHOOT_PRESSED_TIME		TIME_STAMP_250MS
 
+#define LEVEL_COUNT		3
+#define LEVEL_1				0
+#define LEVEL_2				1
+#define LEVEL_3				2
+
+
 /* ## Global variables ## ----------------------------------------------------*/
 Revolver_PID_t Revolver_PID = {
 	/* 速度环 */
@@ -66,7 +72,7 @@ Revolver_Info_t Revolver = {
 	.state = REVO_STATE_OFF,
 	.pidMode = REVO_POSI_MODE,
 	.action = SHOOT_NORMAL,
-	.Shoot.freq = 0,	// 默认射频0
+	.Shoot.freq = 8,	// 默认射频8
 	.Shoot.num = 0,	// 允许射弹量
 	.Shoot.heat_cooling_rate = 0,	// 17mm枪管热量冷却值
 	.Shoot.heat_real = 0, // 17mm枪管初始热量
@@ -79,10 +85,13 @@ Revolver_Info_t Revolver = {
 	.buff.lock_time_boundary = TIME_STAMP_80MS,
 	.buff.change_armor_delay = 0,
 	.buff.change_armor_delay_boundary = TIME_STAMP_50MS,
-	.buff.respond_interval = TIME_STAMP_1500MS,	// TIME_STAMP_800MS 调试的时候需要
+	.buff.respond_interval = TIME_STAMP_800MS,	// TIME_STAMP_800MS 调试的时候需要
 	.buff.change_armor = false,
 	.buff.fire = false,
 };
+
+/* 枪口热量上限 */
+uint16_t REVO_HEAT_LIMIT[LEVEL_COUNT] = {180, 240, 300};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -331,7 +340,7 @@ void REMOTE_setRevolverShoot(RC_Ctl_t *remoteInfo)
 		if(Revolver.pidMode == REVO_POSI_MODE) {	// 点射模式
 			if(sw1 == RC_SW_DOWN && prev_sw1 != RC_SW_DOWN) 
 			{
-				//Revolver.Shoot.freq = 8;
+				Revolver.Shoot.freq = 8;
 				Revolver.Shoot.num += REVOLVER_heatLimit(&Revolver, 1);
 			}
 		} else if(Revolver.pidMode == REVO_SPEED_MODE) {	// 连射模式
@@ -341,7 +350,6 @@ void REMOTE_setRevolverShoot(RC_Ctl_t *remoteInfo)
 				Revolver_PID.Speed.target = SPEED_AN_BULLET_PER_SECOND * Revolver.Shoot.freq;	// 发/s
 			} else {
 				Revolver.state = REVO_STATE_OFF;
-				Revolver.Shoot.freq = 0;
 				Revolver_PID.Speed.target = 0;
 			}
 		}
@@ -384,7 +392,6 @@ void REMOTE_setRevolverShoot(RC_Ctl_t *remoteInfo)
 	自瞄		- 手动发弹
 */
 
-static int16_t Time_Pressed_Shoot = 0;
 void KEY_setRevolverShoot(RC_Ctl_t *remoteInfo)
 {	
 //	/* 摩擦轮开启的时候才响应拨盘 */
@@ -537,8 +544,9 @@ void REVOLVER_pidControlTask(void)
 
 /**
  *	@brief	拨盘电机常规控制
- *	@note	默认不打弹
+ *	@note		默认不打弹
  */
+static uint16_t Time_Pressed_Shoot = 0;	
 void REVOLVER_normalControl(Revolver_Info_t *info)
 {
 	/* 摩擦轮没有就绪屏蔽打弹指令 */
@@ -599,9 +607,10 @@ void REVOLVER_singleShootControl(Revolver_Info_t *info)
 	current_time = xTaskGetTickCount();
 	
 	/* # 怎么根据性能点调整射频? */
-	info->Shoot.interval = TIME_STAMP_1000MS/8;	//最快一秒8发
+	info->Shoot.interval = TIME_STAMP_1000MS / info->Shoot.freq;
 	
-	if((respond_time < current_time) && (info->Shoot.num == 0))
+	if((respond_time < current_time)
+			&& (info->Shoot.num == 0))
 	{
 		respond_time = current_time + info->Shoot.interval;
 		info->Shoot.num += REVOLVER_heatLimit(&Revolver, 1);
@@ -620,12 +629,12 @@ void REVOLVER_singleShootControl(Revolver_Info_t *info)
  */
 void REVOLVER_tripleShootControl(Revolver_Info_t *info)
 {
-	/* # 怎么根据性能点调整射频? */
-	if(info->Shoot.heat_real >= 160) {
-		info->Shoot.freq = 14;
-	} else {
-		info->Shoot.freq = 8;
-	}	
+//	/* # 怎么根据性能点调整射频? */
+//	if(info->Shoot.heat_real >= 160) {
+//		info->Shoot.freq = 14;
+//	} else {
+//		info->Shoot.freq = 8;
+//	}	
 	
 	/* 松开左键后返回常规控制 */
 	if(!IF_MOUSE_PRESSED_LEFT) {	
@@ -673,8 +682,13 @@ uint32_t	 respond_into_armor_4 = 0;
 void REVOLVER_buffShootControl(Revolver_Info_t *info)
 {
 	portTickType  current_time = 0;
-	static uint32_t  respond_time = 0;	//响应间隔计时
-		
+	static uint32_t  respond_time = 0;	// 响应间隔计时
+	static uint16_t manual_pressed_left = 0;	// 手动打弹左键响应
+
+	/* #位置环 */
+	Revolver.pidMode = REVO_POSI_MODE;
+	Revolver.state = REVO_STATE_OFF;
+	
 	current_time = xTaskGetTickCount();
 
 	/* 是否更换装甲板 */
@@ -690,6 +704,7 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 		/* 松开右键自动打弹 */
 		if(!IF_MOUSE_PRESSED_RIGH)
 		{
+			manual_pressed_left = 0;
 			/* 未识别到符 */
 			if(VISION_getFlagStatus(VISION_FLAG_LOCK_BUFF) == false)
 			{
@@ -763,17 +778,6 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 			}
 			
 			/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
-//			if(info->buff.change_armor_4 == true) {
-//				if(info->shootNum != 0) {
-//					if(first_into_armor_4 == 0) {
-//						first_into_armor_4 = xTaskGetTickCount();
-//					}
-//				}
-//			} else {
-//				VISION_clearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-//				first_into_armor_4 = 0;
-//			}
-			/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
 			if(info->buff.change_armor_4 == true) {
 				if(info->Shoot.num != 0) {
 					if(first_into_armor_4 == 0) {
@@ -782,7 +786,7 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 				}
 				if(first_into_armor_4 != 0) {
 					respond_into_armor_4 = xTaskGetTickCount();
-					if(respond_into_armor_4 > first_into_armor_4 + TIME_STAMP_50MS) {	// 适当延时模拟发弹延迟
+					if(respond_into_armor_4 > first_into_armor_4 + TIME_STAMP_100MS) {	// 适当延时模拟发弹延迟
 						VISION_setFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
 					}
 				}
@@ -799,12 +803,12 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 			info->buff.lock_time = 0;	// 跟踪装甲板时间清零
 			if(IF_MOUSE_PRESSED_LEFT) 
 			{
-				if(Time_Pressed_Shoot < TIME_STAMP_10S)	// 防止长时间按变量溢出
-					Time_Pressed_Shoot++;
+				if(manual_pressed_left < TIME_STAMP_10S)	// 防止长时间按变量溢出
+					manual_pressed_left++;
 			}
 			else
 			{
-				if(Time_Pressed_Shoot > TIME_STAMP_10MS) {	// 左键抬起后才打出
+				if(manual_pressed_left > TIME_STAMP_10MS) {	// 左键抬起后才打出
 					info->Shoot.num += REVOLVER_heatLimit(&Revolver, 1);
 				}
 				
@@ -817,7 +821,7 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 					}
 					if(first_into_armor_4 != 0) {
 						respond_into_armor_4 = xTaskGetTickCount();
-						if(respond_into_armor_4 > first_into_armor_4 + TIME_STAMP_300MS) {
+						if(respond_into_armor_4 > first_into_armor_4 + TIME_STAMP_100MS) {// 适当延时模拟发弹延迟
 							VISION_setFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
 						}
 					}
@@ -826,7 +830,7 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 					first_into_armor_4 = 0;
 				}
 				
-				Time_Pressed_Shoot = 0;
+				manual_pressed_left = 0;
 			}
 		}
 	}
@@ -837,15 +841,15 @@ void REVOLVER_buffShootControl(Revolver_Info_t *info)
 		info->buff.lock_time = 0;	// 跟踪装甲板时间清零
 		if(IF_MOUSE_PRESSED_LEFT) 
 		{
-			if(Time_Pressed_Shoot < TIME_STAMP_10S)	// 防止长时间按变量溢出
-				Time_Pressed_Shoot++;
+			if(manual_pressed_left < TIME_STAMP_10S)	// 防止长时间按变量溢出
+				manual_pressed_left++;
 		}
 		else
 		{
-			if(Time_Pressed_Shoot > TIME_STAMP_10MS) {	// 左键抬起后才打出
+			if(manual_pressed_left > TIME_STAMP_10MS) {	// 左键抬起后才打出
 				info->Shoot.num += REVOLVER_heatLimit(&Revolver, 1);
 			}
-			Time_Pressed_Shoot = 0;
+			manual_pressed_left = 0;
 		}		
 	}
 }
@@ -859,12 +863,19 @@ void REVOLVER_autoShootControl(Revolver_Info_t *info)
 	static portTickType current_time     = 0;
 	static uint32_t respond_time_Stop    = 0;//响应间隔计时，静止
 	static uint32_t respond_time_MobiPre = 0;//响应间隔计时，移动预测	
+
+	/* #位置环 */
+	Revolver.pidMode = REVO_POSI_MODE;
+	Revolver.state = REVO_STATE_OFF;
 	
 	current_time = xTaskGetTickCount();
 	
+	/* 根据射频计算响应间隔 */
+	info->Shoot.interval = TIME_STAMP_1000MS / info->Shoot.freq;
+	
 	/* 自瞄移动预测已开启 */
 	if( GIMBAL_ifAutoMobiPre() == true) {
-		info->Shoot.interval = TIME_STAMP_1000MS/10;
+		//info->Shoot.interval = TIME_STAMP_1000MS/10;
 		/* 自瞄开火条件 */
 		if(GIMBAL_AUTO_chaseReady() == true				// 预测到位
 				&& respond_time_MobiPre < current_time	// 射击响应
@@ -880,7 +891,7 @@ void REVOLVER_autoShootControl(Revolver_Info_t *info)
 	}
 	/* 自瞄移动预测未开启 */
 	else if( GIMBAL_ifAutoMobiPre() == false) {
-		info->Shoot.interval = TIME_STAMP_1000MS/5;
+		//info->Shoot.interval = TIME_STAMP_1000MS/5;
 		/* 自瞄开火条件 */
 		if(GIMBAL_AUTO_chaseReady() == true				// 预测到位
 				&& respond_time_Stop < current_time			// 射击响应
@@ -908,6 +919,26 @@ void REVOLVER_recordJudgeInfo(Revolver_Info_t *revo_info, Judge_Info_t *judge_in
 		revo_info->Shoot.heat_cooling_rate = judge_info->GameRobotStatus.shooter_heat0_cooling_rate;	// 步兵<20%HP,冷却速率翻倍
 	} else {
 		//..暂不处理
+	}
+	
+	switch(judge_info->GameRobotStatus.robot_level)
+	{
+		// 1级步兵
+		case 1:
+			revo_info->Shoot.freq = 8;
+			break;
+		// 2级步兵
+		case 2:
+			revo_info->Shoot.freq = 10;
+			break;
+		// 3级步兵
+		case 3:
+			revo_info->Shoot.freq = 12;
+			break;
+		// 防止出bug
+		default:
+			revo_info->Shoot.freq = 8;
+			break;
 	}
 }
 
@@ -938,7 +969,6 @@ void REVOLVER_getInfo(void)
 				云台自瞄时拨盘进入自瞄模式
 			*/
 			REVOLVER_setAction(SHOOT_AUTO);
-			Time_Pressed_Shoot = 0;	// 常规模式下左键响应时间清零
 			break;
 		case GIMBAL_MODE_SMALL_BUFF:
 		case GIMBAL_MODE_BIG_BUFF:
@@ -946,7 +976,6 @@ void REVOLVER_getInfo(void)
 				云台打符时拨盘进入打符模式
 			*/
 			REVOLVER_setAction(SHOOT_BUFF);
-			Time_Pressed_Shoot = 0;	// 常规模式下左键响应时间清零
 			break;
 		default:
 			break;

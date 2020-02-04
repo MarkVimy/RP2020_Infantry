@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\project.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Tue Feb 04 11:34:21 2020
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Tue Feb 04 17:51:54 2020
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -4850,7 +4850,7 @@ Global Symbols
 <LI><a href="#[283]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setRevolverShoot
 </UL>
 
-<P><STRONG><a name="[283]"></a>REMOTE_setRevolverShoot</STRONG> (Thumb, 198 bytes, Stack size 16 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[283]"></a>REMOTE_setRevolverShoot</STRONG> (Thumb, 196 bytes, Stack size 16 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = REMOTE_setRevolverShoot &rArr; REVOLVER_heatLimit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FRICTION_ifReady
@@ -4878,11 +4878,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[144]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_control
 </UL>
 
-<P><STRONG><a name="[28e]"></a>REVOLVER_tripleShootControl</STRONG> (Thumb, 38 bytes, Stack size 0 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[28e]"></a>REVOLVER_tripleShootControl</STRONG> (Thumb, 20 bytes, Stack size 0 bytes, task_revolver.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[28d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_normalControl
 </UL>
 
-<P><STRONG><a name="[28c]"></a>REVOLVER_singleShootControl</STRONG> (Thumb, 74 bytes, Stack size 16 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[28c]"></a>REVOLVER_singleShootControl</STRONG> (Thumb, 84 bytes, Stack size 16 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = REVOLVER_singleShootControl &rArr; REVOLVER_heatLimit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
@@ -4891,7 +4891,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[28d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_normalControl
 </UL>
 
-<P><STRONG><a name="[28d]"></a>REVOLVER_normalControl</STRONG> (Thumb, 172 bytes, Stack size 8 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[28d]"></a>REVOLVER_normalControl</STRONG> (Thumb, 162 bytes, Stack size 8 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 36<LI>Call Chain = REVOLVER_normalControl &rArr; REVOLVER_singleShootControl &rArr; REVOLVER_heatLimit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[c5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;FRICTION_ifReady
@@ -4906,7 +4906,7 @@ Global Symbols
 <LI><a href="#[284]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_heatLimit
 </UL>
 
-<P><STRONG><a name="[290]"></a>REVOLVER_buffShootControl</STRONG> (Thumb, 600 bytes, Stack size 16 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[290]"></a>REVOLVER_buffShootControl</STRONG> (Thumb, 602 bytes, Stack size 16 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 28<LI>Call Chain = REVOLVER_buffShootControl &rArr; REVOLVER_heatLimit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[266]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;VISION_clearFlagStatus
@@ -4919,7 +4919,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[297]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_keyControlTask
 </UL>
 
-<P><STRONG><a name="[292]"></a>REVOLVER_autoShootControl</STRONG> (Thumb, 168 bytes, Stack size 8 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[292]"></a>REVOLVER_autoShootControl</STRONG> (Thumb, 182 bytes, Stack size 8 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 20<LI>Call Chain = REVOLVER_autoShootControl &rArr; REVOLVER_heatLimit
 </UL>
 <BR>[Calls]<UL><LI><a href="#[83]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;xTaskGetTickCount
@@ -4930,11 +4930,11 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[297]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_keyControlTask
 </UL>
 
-<P><STRONG><a name="[295]"></a>REVOLVER_recordJudgeInfo</STRONG> (Thumb, 32 bytes, Stack size 0 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[295]"></a>REVOLVER_recordJudgeInfo</STRONG> (Thumb, 76 bytes, Stack size 0 bytes, task_revolver.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[294]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_getInfo
 </UL>
 
-<P><STRONG><a name="[294]"></a>REVOLVER_getInfo</STRONG> (Thumb, 90 bytes, Stack size 8 bytes, task_revolver.o(.text))
+<P><STRONG><a name="[294]"></a>REVOLVER_getInfo</STRONG> (Thumb, 78 bytes, Stack size 8 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = REVOLVER_getInfo
 </UL>
 <BR>[Calls]<UL><LI><a href="#[295]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_recordJudgeInfo

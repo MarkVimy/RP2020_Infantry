@@ -42,7 +42,7 @@ typedef __packed struct
 	uint16_t red_4_robot_HP;	// 红4步兵机器人血量
 	uint16_t red_5_robot_HP;	// 红5步兵机器人血量
 	uint16_t red_7_robot_HP;	// 红7哨兵机器人血量
-	uint16_t red_base_HP;		// 红方基地血量
+	uint16_t red_base_HP;			// 红方基地血量
 	uint16_t blue_1_robot_HP;	// 蓝1英雄机器人血量
 	uint16_t blue_2_robot_HP;	// 蓝2工程机器人血量
 	uint16_t blue_3_robot_HP;	// 蓝3步兵机器人血量
