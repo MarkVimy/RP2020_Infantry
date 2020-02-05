@@ -20,6 +20,7 @@
 
 #include "arm_math.h"
 #include "kalman.h"
+#include "rng.h"
 #include "can.h"
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -99,6 +100,7 @@ float k_Gyro_Chas_Twist;
 
 //小陀螺旋转转速步长
 float Chas_Top_Gyro_Step;
+float Chas_Top_Gyro_Period;	// 单项赛规则(T为3~7s的随机数)
 
 //扭腰旋转步长
 float Chas_Twist_Step;
@@ -606,6 +608,10 @@ void CHASSIS_getInfo(void)
 {
 	static Gimbal_Mode_t now_mode;
 	static float yaw[TIME_STATE_COUNT];
+	static portTickType cur_time;
+	
+	cur_time = xTaskGetTickCount();
+	cur_time %= (int)Chas_Top_Gyro_Period;	// 随机数周期3000~7000
 	
 	/* # Yaw # */
 	yaw[NOW] = Mpu_Info.yaw;
@@ -622,6 +628,8 @@ void CHASSIS_getInfo(void)
 		|| CHASSIS_ifTwistOpen() == true) {
 		Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, 		
 																	yaw[DELTA] * 8192 / 360.f);
+		
+		Chas_Top_Gyro_Step = -7.5*sin(2*3.14f*cur_time/Chas_Top_Gyro_Period) + 22.5;	// 正弦小陀螺
 	}
 	
 	/* 底盘pid模式 */
@@ -1008,6 +1016,7 @@ void REMOTE_setTopGyro(void)
 				Chassis.top_gyro = true;
 				Chassis.twist = false;
 				top_gyro_dir = -1;
+				Chas_Top_Gyro_Period = get_u8_random_num(3, 7)*1000;	// 根据单项赛要求设置
 			}
 		}
 		rcWheelLockOnFlag = true;
@@ -1058,6 +1067,7 @@ float KEY_rampChassisSpeed(int8_t key_state, int16_t *time, uint16_t inc_ramp_st
  */
 void KEY_setChasSpinSpeed(int16_t sSpinMax)
 {
+	
 	Chas_Spin_Move_Max = sSpinMax;
 
 /* 机械模式 */
@@ -1072,7 +1082,7 @@ void KEY_setChasSpinSpeed(int16_t sSpinMax)
 		/* 开启了小陀螺 */
 		if(CHASSIS_ifTopGyroOpen() == true) {
 			
-			// 外环期望斜坡变化
+			// 外环期望斜坡变化(匀速小陀螺)
 			Chassis_Z_PID.Angle.target = CHASSIS_MECH_yawTargetBoundaryProcess(&Chassis_Z_PID, top_gyro_dir * Chas_Top_Gyro_Step);
 			// Z方向速度pid计算
 			Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_pidCalculate(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);
@@ -1421,6 +1431,7 @@ void KEY_setTopGyro(void)
 					Chassis.top_gyro = true;	// 开陀螺
 					Chassis.twist = false;		// 关扭腰
 					top_gyro_dir = -1;	// 后面可设置随机数来使得小陀螺方向随机
+					Chas_Top_Gyro_Period = get_u8_random_num(3, 7)*1000;	// 根据单项赛要求设置
 				}
 				else {
 					Chassis.top_gyro = false;

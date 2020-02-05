@@ -63,6 +63,7 @@
 .\objects\scheduler.o: ..\mpu6050\mpu6050.h
 .\objects\scheduler.o: ..\mpu6050\eMPL\inv_mpu.h
 .\objects\scheduler.o: ..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.h
+.\objects\scheduler.o: ..\BSP\rng.h
 .\objects\scheduler.o: ..\BSP\usart3.h
 .\objects\scheduler.o: ..\BSP\uart4.h
 .\objects\scheduler.o: ..\BSP\uart5.h

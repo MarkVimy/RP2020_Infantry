@@ -189,6 +189,7 @@ void system_state_task(void *p_arg)	// 系统状态机
 void chassis_task(void *p_arg)
 {
 	portTickType currentTime;
+	
 	CHASSIS_init();
 	while(1) {
 		currentTime = xTaskGetTickCount();//当前系统时间
@@ -215,6 +216,7 @@ void chassis_task(void *p_arg)
 void gimbal_task(void *p_arg)
 {
 	portTickType currentTime;
+	
 	GIMBAL_init();
 	while(1) {
 		currentTime = xTaskGetTickCount();//当前系统时间
@@ -240,6 +242,7 @@ void gimbal_task(void *p_arg)
 void revolver_task(void *p_arg)
 {
 	portTickType currentTime;
+	
 	while(1) {
 		currentTime = xTaskGetTickCount();//当前系统时间
 		switch(System_State)
@@ -263,6 +266,7 @@ void revolver_task(void *p_arg)
 void duty_task(void *p_arg)
 {	
 	portTickType currentTime;
+	
 	while(1) {		
 		currentTime = xTaskGetTickCount();
 		switch(System_State) 

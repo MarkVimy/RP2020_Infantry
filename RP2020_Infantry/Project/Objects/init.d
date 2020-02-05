@@ -62,6 +62,7 @@
 .\objects\init.o: ..\mpu6050\mpu6050.h
 .\objects\init.o: ..\mpu6050\eMPL\inv_mpu.h
 .\objects\init.o: ..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.h
+.\objects\init.o: ..\BSP\rng.h
 .\objects\init.o: ..\BSP\usart3.h
 .\objects\init.o: ..\BSP\uart4.h
 .\objects\init.o: ..\BSP\uart5.h

@@ -523,6 +523,11 @@
               <FileType>1</FileType>
               <FilePath>..\BSP\usart3.c</FilePath>
             </File>
+            <File>
+              <FileName>rng.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\rng.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -597,6 +602,11 @@
               <FileName>stm32f4xx_syscfg.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Libraries\src\stm32f4xx_syscfg.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_rng.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\src\stm32f4xx_rng.c</FilePath>
             </File>
           </Files>
         </Group>

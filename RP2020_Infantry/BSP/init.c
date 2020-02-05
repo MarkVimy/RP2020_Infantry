@@ -33,6 +33,8 @@ static void my_hardware_init(void)
 	TIM1_init();	// 弹仓定时器1初始化
 	TIM3_init();	// 摩擦轮定时器3初始化
 	
+	RNG_init();	// 不使用随机数的时候注释掉
+	
 	//祖传MPU初始化
 	MPU_Init();
 	while (mpu_dmp_init( )) 
