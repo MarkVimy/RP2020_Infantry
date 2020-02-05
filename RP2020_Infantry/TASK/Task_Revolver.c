@@ -555,9 +555,11 @@ void REVOLVER_pidControlTask(void)
 static uint16_t Time_Pressed_Shoot = 0;	
 void REVOLVER_normalControl(Revolver_Info_t *info)
 {
-	/* 摩擦轮没有就绪屏蔽打弹指令 */
-	if(FRICTION_ifReady() == false) {
+	/* 摩擦轮没有就绪/正在补弹屏蔽打弹指令 */
+	if(FRICTION_ifReady() == false || GIMBAL_ifReloadBullet() == true) {
 		Time_Pressed_Shoot = 0;
+		Revolver.Shoot.num = 0;
+		Revolver.state = REVO_STATE_OFF;
 		Revolver.pidMode = REVO_POSI_MODE;
 		Revolver.action = SHOOT_NORMAL;
 		return;

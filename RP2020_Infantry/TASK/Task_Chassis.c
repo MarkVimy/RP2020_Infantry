@@ -604,7 +604,7 @@ void CHASSIS_pidOut(Chassis_PID_t *pid)
  */
 void CHASSIS_getInfo(void)
 {
-	static Gimbal_Mode_t now_mode, prev_mode;
+	static Gimbal_Mode_t now_mode;
 	static float yaw[TIME_STATE_COUNT];
 	
 	/* # Yaw # */
@@ -643,7 +643,8 @@ void CHASSIS_getInfo(void)
 			/*
 				云台常规和自瞄时底盘恢复常规
 			*/
-			CHASSIS_setMode(CHAS_MODE_NORMAL);
+			if(Chassis.mode != CHAS_MODE_SZUPUP)
+				CHASSIS_setMode(CHAS_MODE_NORMAL);
 			break;
 		case GIMBAL_MODE_BIG_BUFF:
 		case GIMBAL_MODE_SMALL_BUFF:
@@ -661,7 +662,6 @@ void CHASSIS_getInfo(void)
 		default:
 			break;
 	}
-	prev_mode = now_mode;
 	
 //	/* 小陀螺模式开启 */
 //	if(GIMBAL_ifTopGyroMode() == true) {
@@ -1020,7 +1020,6 @@ void REMOTE_setTopGyro(void)
 		if(rcWheelLockOffFlag == false) {
 			if(CHASSIS_ifGyroMode() == true) {
 				Chassis.top_gyro = false;
-				top_gyro_dir = 0;
 			}
 		}
 		rcWheelLockOffFlag = true;
@@ -1145,7 +1144,7 @@ void KEY_setChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 	if(Chassis.mode == CHAS_MODE_NORMAL) {
 		
 		/* 前后方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
-		if(abs(Chas_Target_Speed[ Y ]) < (Chas_Standard_Move_Max/2.5)) {
+		if(abs(Chas_Target_Speed[ Y ]) < (Chas_Standard_Move_Max/2.5f)) {
 			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_rampChassisSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
 			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_rampChassisSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
 		} else {
@@ -1154,7 +1153,7 @@ void KEY_setChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 		}
 		
 		/* 左右方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
-		if(abs(Chas_Target_Speed[ X ]) < (Chas_Standard_Move_Max/2.5)) {
+		if(abs(Chas_Target_Speed[ X ]) < (Chas_Standard_Move_Max/2.5f)) {
 			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_rampChassisSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
 			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_rampChassisSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
 		} else {
@@ -1257,6 +1256,142 @@ void KEY_setChassisSpeed(int16_t sSpinMax, int16_t sMoveMax, int16_t sMoveRamp)
 	CHASSIS_omniSpeedCalculate();		
 }
 
+
+/**
+ *	@brief 根据按键值设置模式的集总函数
+ */
+void KEY_setMode(void)
+{
+	static uint8_t KeyLockFlag_F;
+	static uint8_t KeyLockFlag_Ctrl;
+	static uint8_t KeyLockFlag_V;
+	static uint8_t MouseLockFlag_R;
+	
+	static portTickType KeyCurTime;
+	static portTickType KeyResTime_Ctrl_V;	// Ctrl+V 响应时间
+	static portTickType KeyResTime_Ctrl_F;	// Ctrl+F 响应时间
+	
+	KeyCurTime = xTaskGetTickCount();
+	
+	/* 右键 */
+	if(IF_MOUSE_PRESSED_RIGH) 
+	{
+		if(MouseLockFlag_R == false && GIMBAL_ifBuffMode() == false) 
+		{
+			//云台->自瞄
+			GIMBAL_setMode(GIMBAL_MODE_AUTO);
+			Gimbal.Auto.FLAG_first_into_auto = true;
+			//视觉->自瞄
+			VISION_setMode(VISION_MODE_AUTO);
+			//拨盘->自瞄
+			REVOLVER_setAction(SHOOT_AUTO);
+		}
+		
+		MouseLockFlag_R = true;
+	}
+	else
+	{
+		//退出自瞄模式
+		if(GIMBAL_ifAutoMode() == true)
+		{
+			//云台->常规
+			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
+			Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
+			Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
+			//视觉->手动
+			VISION_setMode(VISION_MODE_MANUAL);
+			//拨盘->常规
+			REVOLVER_setAction(SHOOT_NORMAL);
+		}
+		
+		MouseLockFlag_R = false;
+	}
+	
+	/* Ctrl */
+	if(IF_KEY_PRESSED_CTRL)
+	{
+		/* Ctrl+W */
+		if(IF_KEY_PRESSED_W) 
+		{
+			CHASSIS_setMode(CHAS_MODE_SZUPUP);
+		}
+		
+		/* Ctrl+R */
+		if(IF_KEY_PRESSED_R) 
+		{
+			//云台
+			GIMBAL_setMode(GIMBAL_MODE_RELOAD_BULLET);
+			//底盘
+			CHASSIS_setMode(CHAS_MODE_SLOW);
+		}
+		
+		if(KeyLockFlag_Ctrl == false)
+		{
+			//云台->常规
+			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
+			Flag.Gimbal.FLAG_pidMode = MECH;
+			GIMBAL_keyGyro_To_keyMech();
+			//视觉->手动
+			VISION_setMode(VISION_MODE_MANUAL);
+			//拨盘->常规
+			REVOLVER_setAction(SHOOT_NORMAL);
+		}
+
+		if(KeyResTime_Ctrl_V < KeyCurTime)
+		{
+			KeyResTime_Ctrl_V = KeyCurTime + TIME_STAMP_400MS;
+			/* Ctrl+V */
+			if(IF_KEY_PRESSED_V)
+			{
+				if(Gimbal.State.mode != GIMBAL_MODE_SMALL_BUFF)
+				{
+					//云台->打小符
+					GIMBAL_setMode(GIMBAL_MODE_SMALL_BUFF);
+					Gimbal.Buff.FLAG_first_into_buff = true;
+					Flag.Gimbal.FLAG_pidMode = GYRO;
+					GIMBAL_keyMech_To_keyGyro();
+					//视觉->打小符
+					VISION_setMode(VISION_MODE_SMALL_BUFF);
+					//底盘->打符
+					CHASSIS_setMode(CHAS_MODE_BUFF);
+				}
+			}
+		}
+		
+		if(KeyResTime_Ctrl_F < KeyCurTime)
+		{
+			/* Ctrl+F */
+			if(IF_KEY_PRESSED_F)
+			{
+				KeyResTime_Ctrl_F = KeyCurTime + TIME_STAMP_400MS;
+				/* Ctrl+F */
+				if(IF_KEY_PRESSED_F)
+				{
+					if(Gimbal.State.mode != GIMBAL_MODE_BIG_BUFF)
+					{
+						//云台->大符
+						GIMBAL_setMode(GIMBAL_MODE_BIG_BUFF);
+						Gimbal.Buff.FLAG_first_into_buff = true;
+						Flag.Gimbal.FLAG_pidMode = GYRO;
+						GIMBAL_keyMech_To_keyGyro();
+						//视觉->大符
+						VISION_setMode(VISION_MODE_BIG_BUFF);
+						//底盘->打符
+						CHASSIS_setMode(CHAS_MODE_BUFF);
+					}
+				}
+			}
+		}
+		
+		KeyLockFlag_Ctrl = true;
+	}
+	else
+	{
+		KeyLockFlag_Ctrl = false;
+	}
+	
+}
+
 /**
  *	@brief	根据按键值设置底盘模式
  */
@@ -1265,6 +1400,7 @@ void KEY_setChassisMode(void)
 	static uint8_t KeyLockFlag_F = false;
 	static uint8_t KeyLockFlag_C = false;
 	
+	/* Ctrl+W */
 	if(IF_KEY_PRESSED_W && IF_KEY_PRESSED_CTRL) {
 		CHASSIS_setMode(CHAS_MODE_SZUPUP);
 	}
@@ -1288,7 +1424,6 @@ void KEY_setTopGyro(void)
 				}
 				else {
 					Chassis.top_gyro = false;
-					top_gyro_dir = 0;
 				}
 			}
 		}
@@ -1316,7 +1451,6 @@ void KEY_setTwist(void)
 				}
 				else {
 					Chassis.twist = false;
-					twist_dir = 0;
 				}
 			}
 		}
@@ -1459,9 +1593,10 @@ float CHASSIS_MECH_yawTargetBoundaryProcess(Chassis_Z_PID_t *pid, float delta_ta
  */
 void CHASSIS_normalControl(void)
 {
-	KEY_setChassisSpeed(SPIN_MAX_NORMAL, STANDARD_MAX_NORMAL, TIME_INC_NORMAL);
+	KEY_setChassisMode();
 	KEY_setTopGyro();
 	KEY_setTwist();
+	KEY_setChassisSpeed(SPIN_MAX_NORMAL, STANDARD_MAX_NORMAL, TIME_INC_NORMAL);
 }
 
 /**
@@ -1488,6 +1623,48 @@ void CHASSIS_szupupControl(void)
 	}
 	
 	KEY_setChassisSpeed(SPIN_MAX_SZUPUP, STANDARD_MAX_SZUPUP, TIME_INC_SZUPUP);
+}
+
+/**
+ *	@brief	自动对位控制
+ */
+#define R_B_CASE	1
+void CHASSIS_reloadBulletControl(void)
+{
+	// 操作手先将车开至左上方顶住一个角
+	#if (R_B_CASE == 1)
+		// 速度-时间延迟模型
+		/*
+				if(tx) {
+					tx--;
+					tar_x = spd_x, 
+				} else {
+					tar_x = 0;
+				}
+	
+				if(ty) {
+					ty--;
+					tar_y = spd_y;
+				} else {
+					tar_y = 0;
+				}
+		*/
+	
+	#elif (R_B_CASE == 2)
+		// 电机机械角度角度总和模型
+		/*
+				在竖直方向y上，利用电机机械角度和麦轮半径可以定位
+				在水平方向x上，
+		*/
+	
+	#elif (R_B_CASE == 3)
+		// 超声波测距模型
+		/*
+				
+		*/
+	#else
+	
+	#endif
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -1522,7 +1699,6 @@ void CHASSIS_rcControlTask(void)
  */
 void CHASSIS_keyControlTask(void)
 {	
-	KEY_setChassisMode();
 	switch(Chassis.mode)
 	{
 		case CHAS_MODE_NORMAL:
@@ -1532,6 +1708,7 @@ void CHASSIS_keyControlTask(void)
 			CHASSIS_buffControl();
 			break;
 		case CHAS_MODE_SLOW:
+			CHASSIS_reloadBulletControl();
 			break;
 		case CHAS_MODE_SZUPUP:
 			CHASSIS_szupupControl();
@@ -1557,15 +1734,12 @@ void CHASSIS_selfProtect(void)
 void CHASSIS_control(void)
 {
 	/*----信息读入----*/
-	//..can.c中
 	CHASSIS_getInfo();
 	/*----期望修改----*/
-	if(Flag.Remote.FLAG_mode == RC) 
-	{
+	if(Flag.Remote.FLAG_mode == RC) {
 		CHASSIS_rcControlTask();
 	} 
-	else if(Flag.Remote.FLAG_mode == KEY) 
-	{
+	else if(Flag.Remote.FLAG_mode == KEY) {
 		CHASSIS_keyControlTask();
 	}
 	/*----最终输出----*/

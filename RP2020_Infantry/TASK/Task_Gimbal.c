@@ -1177,8 +1177,9 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 		}
 	}
 	
-	/* Ctrl+V组合键 */
+	/* Ctrl */
 	if(IF_KEY_PRESSED_CTRL) {
+		
 		if(keyCtrlLockFlag == false) {
 			/* 云台模式调整 */
 			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
@@ -1189,22 +1190,28 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 			/* 拨盘模式调整 */
 			REVOLVER_setAction(SHOOT_NORMAL);	
 		}
+		
+		/* Ctrl+V */
 		if(keyCurrentTime > keyCtrlVLockTime) {	
 			keyCtrlVLockTime = keyCurrentTime + TIME_STAMP_400MS;
 			if(IF_KEY_PRESSED_V) {	// Ctrl+V
 				if(Gimbal.State.mode != GIMBAL_MODE_SMALL_BUFF) {
-					/* 云台模式调整 */
+					/* 云台->小符 */
 					GIMBAL_setMode(GIMBAL_MODE_SMALL_BUFF);
 					Gimbal.Buff.FLAG_first_into_buff = true;
 					Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
 					GIMBAL_keyMech_To_keyGyro();
-					/* 视觉模式调整 */
+					/* 视觉->小符 */
 					VISION_setMode(VISION_MODE_SMALL_BUFF);	// 击打小符
+					/* 拨盘->打符 */
+					REVOLVER_setAction(SHOOT_BUFF);
 					/* 底盘模式调整 */
 					CHASSIS_setMode(CHAS_MODE_BUFF);
 				}
 			}
 		}
+		
+		/* Ctrl+F */
 		if(keyCurrentTime > keyCtrlFLockTime) {
 			keyCtrlFLockTime = keyCurrentTime + TIME_STAMP_400MS;
 			if(IF_KEY_PRESSED_F) {	// Ctrl+F
@@ -1221,8 +1228,22 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 				}
 			}
 		}
+		
+		/* Ctrl+R */
+		if(IF_KEY_PRESSED_R) {
+			/* 云台模式调整 */
+			GIMBAL_setMode(GIMBAL_MODE_RELOAD_BULLET);
+			Flag.Gimbal.FLAG_pidMode = MECH;	// 强制进入机械模式
+			GIMBAL_keyGyro_To_keyMech();
+			/* 视觉模式调整 */
+			VISION_setMode(VISION_MODE_MANUAL);
+			/* 底盘模式调整 */
+			CHASSIS_setMode(CHAS_MODE_SLOW);
+		}
+		
 		keyCtrlLockFlag = true;
 	} else {
+		//松开Ctrl键
 		if(keyCtrlLockFlag == true && Gimbal.State.mode == GIMBAL_MODE_NORMAL) {
 			/* 云台模式调整 */
 			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
@@ -1235,6 +1256,8 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 		}
 		keyCtrlLockFlag = false;
 	}
+	
+	
 }
 
 /* #云台# -----------------------------------------------------------------------------------------------------------------------------------------*/
@@ -1525,8 +1548,6 @@ void GIMBAL_rcMech_To_rcGyro(void)
 {
 	Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
 	Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-	Gimbal_PID[MECH][YAW_205].Out = 0;
-	Gimbal_PID[MECH][PITCH_206].Out = 0;	
 	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
 }
 
@@ -1538,8 +1559,6 @@ void GIMBAL_rcGyro_To_rcMech(void)
 {
 	Gimbal_PID[MECH][YAW_205].Angle.target = Gimbal_PID[MECH][YAW_205].Angle.feedback;
 	Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
-	Gimbal_PID[GYRO][YAW_205].Out = 0;
-	Gimbal_PID[GYRO][PITCH_206].Out = 0;	
 	Gimbal.State.FLAG_topGyroOpen = false;
 	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
 }
@@ -1552,10 +1571,7 @@ void GIMBAL_rcMech_To_keyGyro(void)
 {
 	Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
 	Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-	Gimbal_PID[MECH][YAW_205].Out = 0;
-	Gimbal_PID[MECH][PITCH_206].Out = 0;	
 	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
-	//CHASSIS_setMode(CHAS_MODE_NORMAL);
 }
 
 /**
@@ -1566,11 +1582,8 @@ void GIMBAL_keyGyro_To_rcMech(void)
 {
 	Gimbal_PID[MECH][YAW_205].Angle.target = Gimbal_PID[MECH][YAW_205].Angle.feedback;
 	Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
-	Gimbal_PID[GYRO][YAW_205].Out = 0;
-	Gimbal_PID[GYRO][PITCH_206].Out = 0;
 	Gimbal.State.FLAG_topGyroOpen = false;
-	//CHASSIS_setMode(CHAS_MODE_NORMAL);
-	//Gimbal.State.mode = GIMBAL_MODE_NORMAL;
+	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
 }
 
 /**
@@ -1582,7 +1595,6 @@ void GIMBAL_keyGyro_To_keyMech(void)
 	Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_getMiddleAngle();
 	Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
 	Gimbal.State.FLAG_topGyroOpen = false;
-	//Gimbal.State.mode = GIMBAL_MODE_NORMAL;
 }
 
 /**
@@ -1593,7 +1605,6 @@ void GIMBAL_keyMech_To_keyGyro(void)
 {
 	Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
 	Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-	//Gimbal.State.mode = GIMBAL_MODE_NORMAL;
 }
 
 /**
@@ -2285,7 +2296,6 @@ void GIMBAL_normalControl(void)
 	KEY_setGimbalAngle();
 	KEY_setGimbalTurn();
 	KEY_setQuickPickUp();	
-	//KEY_setTopGyro();
 }
 
 /**
@@ -2339,6 +2349,7 @@ void GIMBAL_buffControl(void)
 		VISION_setMode(VISION_MODE_MANUAL);	// 手动模式
 		/* 底盘模式调整 */
 		CHASSIS_setMode(CHAS_MODE_NORMAL);
+		return;
 	}
 	
 	/* 视觉数据可用 && 键盘模式下 */
@@ -2353,8 +2364,19 @@ void GIMBAL_buffControl(void)
  *	@brief	云台自动补弹
  *	@note		
  */
-void GIMBAL_reloadBullet(void)
+void GIMBAL_reloadBulletControl(void)
 {
+	/* 按下WSADQEV(任意方向键)则退出自动补弹模式 */
+	if((IF_KEY_PRESSED_W || IF_KEY_PRESSED_S || IF_KEY_PRESSED_A || IF_KEY_PRESSED_D
+		|| IF_KEY_PRESSED_Q || IF_KEY_PRESSED_E || IF_KEY_PRESSED_V))
+	{
+		GIMBAL_setMode(GIMBAL_MODE_NORMAL);
+		Flag.Gimbal.FLAG_pidMode = GYRO;
+		GIMBAL_keyMech_To_keyGyro();
+		return;
+	}
+	
+	/* 头定在中间 */
 	Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE;
 }
 
@@ -2426,7 +2448,7 @@ void GIMBAL_keyControlTask(void)
 			GIMBAL_buffControl();
 			break;
 		case GIMBAL_MODE_RELOAD_BULLET:
-			GIMBAL_reloadBullet();
+			GIMBAL_reloadBulletControl();
 			break;
 		default:
 			break;

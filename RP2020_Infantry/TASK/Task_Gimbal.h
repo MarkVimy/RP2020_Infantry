@@ -65,7 +65,7 @@ typedef struct {
 }Gimbal_PID_t;
 
 /**
- *	@brief	视觉反馈信息
+ *	@brief	云台状态
  */
 typedef struct {
 	Gimbal_Mode_t mode;
@@ -151,6 +151,7 @@ bool GIMBAL_ifTopGyroMode(void);
 bool GIMBAL_ifAutoMode(void);
 bool GIMBAL_ifBuffMode(void);
 bool GIMBAL_ifAimSentry(void);
+bool GIMBAL_ifReloadBullet(void);
 bool GIMBAL_BUFF_chaseReady(void);
 bool GIMBAL_ifAutoMobiPre(void);
 bool GIMBAL_AUTO_chaseReady(void);
