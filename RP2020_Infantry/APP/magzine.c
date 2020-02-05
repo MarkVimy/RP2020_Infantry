@@ -90,7 +90,7 @@ bool MAGZINE_ifOpen(void)
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	遥控设置弹仓开启/关闭
- *	@note	SW2_MID + SW1_UP
+ *	@note		SW2_MID + SW1_UP
  */
 void REMOTE_setMagzineState(RC_Ctl_t *remoteInfo)
 {
@@ -113,7 +113,7 @@ void REMOTE_setMagzineState(RC_Ctl_t *remoteInfo)
 
 /**
  *	@brief	遥控设置弹仓开启/关闭
- *	@note	按键 R
+ *	@note		按键 R
  */
 void KEY_setMagzineState(RC_Ctl_t *remoteInfo)
 {
@@ -133,9 +133,22 @@ void KEY_setMagzineState(RC_Ctl_t *remoteInfo)
 //		}
 //	}
 	
-	static uint8_t keyRLockFlag = false;
+	static uint8_t KeyLockFlag_R = false;
+
+//	#----方便装弹调试所以这里先去掉----#
+//	/* 自动对位模式下弹仓常开 */
+//	if(GIMBAL_ifReloadBullet() == true) {
+//		Magzine.state = MAGZ_STATE_OPEN;
+//		Magzine.angleTarget = MAGZ_ANGLE_OPEN;	// 打开弹仓
+//	} 
+//	/* 其他模式下弹仓常闭 */
+//	else {
+//		Magzine.state = MAGZ_STATE_CLOSE;
+//		Magzine.angleTarget = MAGZ_ANGLE_CLOSE;	// 关闭弹仓
+//	}
+	
 	if(IF_KEY_PRESSED_R) {	// 按下R
-		if(keyRLockFlag == false) {
+		if(KeyLockFlag_R == false) {
 			if((Magzine.state == MAGZ_STATE_CLOSE) && (Magzine.angleFeedback == Magzine.angleTarget)) {
 				Magzine.state = MAGZ_STATE_OPEN;
 				Magzine.angleTarget = MAGZ_ANGLE_OPEN;	// 打开弹仓
@@ -144,16 +157,16 @@ void KEY_setMagzineState(RC_Ctl_t *remoteInfo)
 				Magzine.angleTarget = MAGZ_ANGLE_CLOSE;	// 关闭弹仓
 			}
 		}
-		keyRLockFlag = true;
+		KeyLockFlag_R = true;
 	} else {	// 松开R
-		keyRLockFlag = false;
+		KeyLockFlag_R = false;
 	}
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	遥控设置弹仓开启/关闭
- *	@note	Loop Time: 20ms
+ *	@note		Loop Time: 10ms
  */
 void MAGZINE_rcControlTask(void)
 {
@@ -162,7 +175,7 @@ void MAGZINE_rcControlTask(void)
 
 /**
  *	@brief	按键设置弹仓开启/关闭
- *	@note	Loop Time: 20ms
+ *	@note		Loop Time: 10ms
  */
 void MAGZINE_keyControlTask(void)
 {

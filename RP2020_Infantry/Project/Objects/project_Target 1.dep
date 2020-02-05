@@ -83,7 +83,7 @@ I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\TASK\my_task.h)(0x5D9F4A10)
 I (..\TASK\Task_Chassis.h)(0x5E3A6E7B)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -139,7 +139,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\APP\ultra.h)(0x5E27A387)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -206,7 +206,7 @@ I (..\AppInfo\vision.h)(0x5E37BC63)
 I (..\APP\ultra.h)(0x5E27A387)
 I (..\TASK\my_task.h)(0x5D9F4A10)
 I (..\TASK\Task_Chassis.h)(0x5E3A6E7B)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -259,14 +259,14 @@ I (..\AppInfo\vision.h)(0x5E37BC63)
 I (..\APP\ultra.h)(0x5E27A387)
 I (..\TASK\my_task.h)(0x5D9F4A10)
 I (..\TASK\Task_Chassis.h)(0x5E3A6E7B)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
 I (..\FreeRTOS\include\timers.h)(0x5E3393BA)
 I (..\BSP\laser.h)(0x5DF27300)
 I (..\SYSTEM\delay.h)(0x5DE5EB74)
-F (..\APP\magzine.c)(0x5E3A5D56)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\magzine.o --omf_browse .\objects\magzine.crf --depend .\objects\magzine.d)
+F (..\APP\magzine.c)(0x5E3ABE0C)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\magzine.o --omf_browse .\objects\magzine.crf --depend .\objects\magzine.d)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\SYSTEM\sys.h)(0x5E38E9FC)
 I (..\Libraries\cmsis\stm32f4xx.h)(0x5E27035A)
@@ -310,7 +310,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\TASK\my_task.h)(0x5D9F4A10)
 I (..\TASK\Task_Chassis.h)(0x5E3A6E7B)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -554,7 +554,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\APP\ultra.h)(0x5E27A387)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -618,7 +618,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\APP\ultra.h)(0x5E27A387)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -783,7 +783,7 @@ I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\TASK\my_task.h)(0x5D9F4A10)
 I (..\TASK\Task_Chassis.h)(0x5E3A6E7B)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -1198,7 +1198,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\APP\ultra.h)(0x5E27A387)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -1607,7 +1607,7 @@ I (..\FreeRTOS\include\task.h)(0x5CD62452)
 I (..\FreeRTOS\include\list.h)(0x5CD62452)
 I (..\SYSTEM\my_include.h)(0x5E379BFE)
 F (..\TASK\my_task.h)(0x5D9F4A10)()
-F (..\TASK\Task_Chassis.c)(0x5E3A85CF)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\task_chassis.o --omf_browse .\objects\task_chassis.crf --depend .\objects\task_chassis.d)
+F (..\TASK\Task_Chassis.c)(0x5E3ABEC9)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\task_chassis.o --omf_browse .\objects\task_chassis.crf --depend .\objects\task_chassis.d)
 I (..\TASK\Task_Chassis.h)(0x5E3A6E7B)
 I (..\SYSTEM\sys.h)(0x5E38E9FC)
 I (..\Libraries\cmsis\stm32f4xx.h)(0x5E27035A)
@@ -1651,7 +1651,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\TASK\my_task.h)(0x5D9F4A10)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
@@ -1661,8 +1661,8 @@ I (..\Libraries\cmsis\Include\arm_math.h)(0x5DD8A09A)
 I (C:\Keil_v5\ARM\ARMCC\include\math.h)(0x5475F2FE)
 I (..\APP\kalman.h)(0x5D660204)
 I (..\BSP\can.h)(0x5E339B5B)
-F (..\TASK\Task_Gimbal.c)(0x5E3A87FA)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\task_gimbal.o --omf_browse .\objects\task_gimbal.crf --depend .\objects\task_gimbal.d)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+F (..\TASK\Task_Gimbal.c)(0x5E3ABC97)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\task_gimbal.o --omf_browse .\objects\task_gimbal.crf --depend .\objects\task_gimbal.d)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\SYSTEM\sys.h)(0x5E38E9FC)
 I (..\Libraries\cmsis\stm32f4xx.h)(0x5E27035A)
 I (..\Libraries\cmsis\Include\core_cm4.h)(0x5B5185C2)
@@ -1760,7 +1760,7 @@ I (..\FreeRTOS\include\list.h)(0x5CD62452)
 I (..\SYSTEM\my_include.h)(0x5E379BFE)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
 I (..\FreeRTOS\include\timers.h)(0x5E3393BA)
-F (..\TASK\Task_Revolver.c)(0x5E3A801F)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\task_revolver.o --omf_browse .\objects\task_revolver.crf --depend .\objects\task_revolver.d)
+F (..\TASK\Task_Revolver.c)(0x5E3ABAE7)(-c --cpu Cortex-M4.fp -g -O0 --apcs=interwork -I..\AppInfo -I..\APP -I..\BSP -I..\Libraries\inc -I..\Libraries\src -I..\Libraries\cmsis\Include -I..\Libraries\cmsis -I..\SYSTEM -I..\mpu6050 -I..\mpu6050\eMPL -I..\Temperature -I..\FreeRTOS\include -I..\FreeRTOS\portable\RVDS\ARM_CM4F -I..\TASK --C99-I C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE-I C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include-I C:\Keil_v5\ARM\CMSIS\Include-D__UVISION_VERSION="514" -DSTM32F40_41xxx -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DARM_MATH_CM4 -D__FPU_PRESENT-o .\objects\task_revolver.o --omf_browse .\objects\task_revolver.crf --depend .\objects\task_revolver.d)
 I (..\TASK\Task_Revolver.h)(0x5E394173)
 I (..\SYSTEM\sys.h)(0x5E38E9FC)
 I (..\Libraries\cmsis\stm32f4xx.h)(0x5E27035A)
@@ -1807,7 +1807,7 @@ I (..\APP\remote.h)(0x5E396DB1)
 I (..\APP\friction.h)(0x5E394740)
 I (..\APP\magzine.h)(0x5E197AE2)
 I (..\APP\ultra.h)(0x5E27A387)
-I (..\TASK\Task_Gimbal.h)(0x5E3A8872)
+I (..\TASK\Task_Gimbal.h)(0x5E3A8902)
 I (..\TASK\Task_Timing_Report.h)(0x5E3395A2)
 I (..\FreeRTOS\include\queue.h)(0x5E3397C3)
 I (..\FreeRTOS\include\timers.h)(0x5E3393BA)
