@@ -1238,7 +1238,7 @@ void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
 			/* 视觉模式调整 */
 			VISION_setMode(VISION_MODE_MANUAL);
 			/* 底盘模式调整 */
-			CHASSIS_setMode(CHAS_MODE_SLOW);
+			CHASSIS_setMode(CHAS_MODE_RELOAD_BULLET);
 		}
 		
 		keyCtrlLockFlag = true;

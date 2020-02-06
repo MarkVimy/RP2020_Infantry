@@ -45,7 +45,7 @@ typedef struct {
 typedef enum {
 	CHAS_MODE_NORMAL = 0,	// 正常模式
 	CHAS_MODE_BUFF = 1,		// 打符模式
-	CHAS_MODE_SLOW = 2,		// 底盘低速补弹模式
+	CHAS_MODE_RELOAD_BULLET = 2,	// 底盘低速补弹模式
 	CHAS_MODE_SZUPUP = 3,	// SZU爬坡模式
 }Chassis_Mode_Names_t;
 

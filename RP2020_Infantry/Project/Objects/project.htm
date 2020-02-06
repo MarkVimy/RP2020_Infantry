@@ -3,7 +3,7 @@
 <title>Static Call Graph - [.\Objects\project.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\project.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Wed Feb 05 21:10:35 2020
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5050106: Last Updated: Thu Feb 06 23:08:44 2020
 <BR><P>
 <H3>Maximum Stack Usage =        360 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
@@ -1021,14 +1021,15 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[289]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_pidOut
 </UL>
 
-<P><STRONG><a name="[21]"></a>CAN1_RX0_IRQHandler</STRONG> (Thumb, 548 bytes, Stack size 24 bytes, can.o(.text))
+<P><STRONG><a name="[21]"></a>CAN1_RX0_IRQHandler</STRONG> (Thumb, 696 bytes, Stack size 24 bytes, can.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40<LI>Call Chain = CAN1_RX0_IRQHandler &rArr; CAN_GetITStatus
 </UL>
 <BR>[Calls]<UL><LI><a href="#[10c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_Receive
 <LI><a href="#[10a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_GetITStatus
 <LI><a href="#[10b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_ClearITPendingBit
-<LI><a href="#[10f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorTemperature
-<LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorSpeed
+<LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calMotorAngleSum
+<LI><a href="#[110]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorTemperature
+<LI><a href="#[10f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorSpeed
 <LI><a href="#[10d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorAngle
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f40xx.o(RESET)
@@ -1039,8 +1040,8 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[10c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_Receive
 <LI><a href="#[10a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_GetITStatus
 <LI><a href="#[10b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN_ClearITPendingBit
-<LI><a href="#[110]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calMotorAngleSum
-<LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorSpeed
+<LI><a href="#[10e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;calMotorAngleSum
+<LI><a href="#[10f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorSpeed
 <LI><a href="#[10d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;getMotorAngle
 </UL>
 <BR>[Address Reference Count : 1]<UL><LI> startup_stm32f40xx.o(RESET)
@@ -2186,6 +2187,7 @@ Global Symbols
 <LI><a href="#[26c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_VISION_AUTO_pidCalculate
 <LI><a href="#[26a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;GIMBAL_reset
 <LI><a href="#[265]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setGimbalTurn
+<LI><a href="#[250]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_reloadBulletControl
 <LI><a href="#[24c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_twistTargetCalculate
 </UL>
 
@@ -4083,8 +4085,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[14f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_selfProtect
 </UL>
 
-<P><STRONG><a name="[251]"></a>CHASSIS_Speed_pidCalculate</STRONG> (Thumb, 1124 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[250]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
+<P><STRONG><a name="[252]"></a>CHASSIS_Speed_pidCalculate</STRONG> (Thumb, 1124 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[251]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
 </UL>
 
 <P><STRONG><a name="[3d3]"></a>CHASSIS_Angle_pidCalculate</STRONG> (Thumb, 666 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
@@ -4113,7 +4115,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[106]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_queueSend
 </UL>
-<BR>[Called By]<UL><LI><a href="#[250]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
+<BR>[Called By]<UL><LI><a href="#[251]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
 </UL>
 
 <P><STRONG><a name="[231]"></a>CHASSIS_setMode</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, task_chassis.o(.text))
@@ -4177,7 +4179,8 @@ Global Symbols
 <P><STRONG><a name="[3d7]"></a>CHASSIS_ifLogicRevert</STRONG> (Thumb, 28 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
 
 <P><STRONG><a name="[233]"></a>CHASSIS_omniSpeedCalculate</STRONG> (Thumb, 394 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
+<BR><BR>[Called By]<UL><LI><a href="#[250]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_reloadBulletControl
+<LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 <LI><a href="#[234]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_TOP_setChassisSpeed
 <LI><a href="#[232]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setChassisSpeed
 </UL>
@@ -4207,7 +4210,7 @@ Global Symbols
 <LI><a href="#[1d4]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_dadd
 <LI><a href="#[1d5]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_d2f
 </UL>
-<BR>[Called By]<UL><LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<BR>[Called By]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
 </UL>
 
 <P><STRONG><a name="[23b]"></a>REMOTE_setTopGyro</STRONG> (Thumb, 180 bytes, Stack size 4 bytes, task_chassis.o(.text))
@@ -4215,7 +4218,7 @@ Global Symbols
 </UL>
 <BR>[Calls]<UL><LI><a href="#[236]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_ifGyroMode
 </UL>
-<BR>[Called By]<UL><LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<BR>[Called By]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
 </UL>
 
 <P><STRONG><a name="[23c]"></a>KEY_rampChassisSpeed</STRONG> (Thumb, 206 bytes, Stack size 64 bytes, task_chassis.o(.text))
@@ -4323,6 +4326,8 @@ Global Symbols
 <LI><a href="#[24d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
 </UL>
 
+<P><STRONG><a name="[3d9]"></a>CHASSIS_locateDis</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, task_chassis.o(.text), UNUSED)
+
 <P><STRONG><a name="[24e]"></a>CHASSIS_normalControl</STRONG> (Thumb, 28 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 288<LI>Call Chain = CHASSIS_normalControl &rArr; KEY_setChassisSpeed &rArr; KEY_setChasMoveSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
@@ -4331,11 +4336,11 @@ Global Symbols
 <LI><a href="#[248]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisMode
 <LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 </UL>
-<BR>[Called By]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<BR>[Called By]<UL><LI><a href="#[254]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
 </UL>
 
-<P><STRONG><a name="[254]"></a>CHASSIS_buffControl</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<P><STRONG><a name="[255]"></a>CHASSIS_buffControl</STRONG> (Thumb, 36 bytes, Stack size 0 bytes, task_chassis.o(.text))
+<BR><BR>[Called By]<UL><LI><a href="#[254]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
 </UL>
 
 <P><STRONG><a name="[24f]"></a>CHASSIS_szupupControl</STRONG> (Thumb, 44 bytes, Stack size 8 bytes, task_chassis.o(.text))
@@ -4344,23 +4349,28 @@ Global Symbols
 <BR>[Calls]<UL><LI><a href="#[240]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;KEY_setChassisSpeed
 <LI><a href="#[231]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_setMode
 </UL>
-<BR>[Called By]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<BR>[Called By]<UL><LI><a href="#[254]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
 </UL>
 
-<P><STRONG><a name="[255]"></a>CHASSIS_reloadBulletControl</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, task_chassis.o(.text))
-<BR><BR>[Called By]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<P><STRONG><a name="[250]"></a>CHASSIS_reloadBulletControl</STRONG> (Thumb, 316 bytes, Stack size 16 bytes, task_chassis.o(.text))
+<BR><BR>[Stack]<UL><LI>Max Depth = 16<LI>Call Chain = CHASSIS_reloadBulletControl
+</UL>
+<BR>[Calls]<UL><LI><a href="#[24d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;RAMP_float
+<LI><a href="#[233]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_omniSpeedCalculate
+</UL>
+<BR>[Called By]<UL><LI><a href="#[254]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
 </UL>
 
-<P><STRONG><a name="[250]"></a>CHASSIS_pidControlTask</STRONG> (Thumb, 42 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[251]"></a>CHASSIS_pidControlTask</STRONG> (Thumb, 42 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 160<LI>Call Chain = CHASSIS_pidControlTask &rArr; CHASSIS_pidOut &rArr; CAN1_queueSend &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
 </UL>
 <BR>[Calls]<UL><LI><a href="#[22a]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidOut
-<LI><a href="#[251]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Speed_pidCalculate
+<LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_Speed_pidCalculate
 </UL>
 <BR>[Called By]<UL><LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
 </UL>
 
-<P><STRONG><a name="[252]"></a>CHASSIS_rcControlTask</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[253]"></a>CHASSIS_rcControlTask</STRONG> (Thumb, 12 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 264<LI>Call Chain = CHASSIS_rcControlTask &rArr; REMOTE_TOP_setChassisSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
 <BR>[Calls]<UL><LI><a href="#[23b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REMOTE_setTopGyro
@@ -4369,12 +4379,12 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
 </UL>
 
-<P><STRONG><a name="[253]"></a>CHASSIS_keyControlTask</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, task_chassis.o(.text))
+<P><STRONG><a name="[254]"></a>CHASSIS_keyControlTask</STRONG> (Thumb, 52 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 296<LI>Call Chain = CHASSIS_keyControlTask &rArr; CHASSIS_szupupControl &rArr; KEY_setChassisSpeed &rArr; KEY_setChasMoveSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
-<BR>[Calls]<UL><LI><a href="#[255]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_reloadBulletControl
+<BR>[Calls]<UL><LI><a href="#[250]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_reloadBulletControl
 <LI><a href="#[24f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_szupupControl
-<LI><a href="#[254]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_buffControl
+<LI><a href="#[255]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_buffControl
 <LI><a href="#[24e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_normalControl
 </UL>
 <BR>[Called By]<UL><LI><a href="#[14e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_control
@@ -4393,9 +4403,9 @@ Global Symbols
 <P><STRONG><a name="[14e]"></a>CHASSIS_control</STRONG> (Thumb, 36 bytes, Stack size 8 bytes, task_chassis.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 304<LI>Call Chain = CHASSIS_control &rArr; CHASSIS_keyControlTask &rArr; CHASSIS_szupupControl &rArr; KEY_setChassisSpeed &rArr; KEY_setChasMoveSpeed &rArr; __hardfp_sin &rArr; __ieee754_rem_pio2 &rArr; __aeabi_d2iz
 </UL>
-<BR>[Calls]<UL><LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
-<LI><a href="#[252]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
-<LI><a href="#[250]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
+<BR>[Calls]<UL><LI><a href="#[254]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_keyControlTask
+<LI><a href="#[253]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_rcControlTask
+<LI><a href="#[251]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_pidControlTask
 <LI><a href="#[22b]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CHASSIS_getInfo
 </UL>
 <BR>[Called By]<UL><LI><a href="#[14c]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;chassis_task
@@ -4934,7 +4944,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[29e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;REVOLVER_rcControlTask
 </UL>
 
-<P><STRONG><a name="[3d9]"></a>KEY_setRevolverShoot</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, task_revolver.o(.text), UNUSED)
+<P><STRONG><a name="[3da]"></a>KEY_setRevolverShoot</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, task_revolver.o(.text), UNUSED)
 
 <P><STRONG><a name="[28c]"></a>REVOLVER_pidControlTask</STRONG> (Thumb, 256 bytes, Stack size 8 bytes, task_revolver.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 168<LI>Call Chain = REVOLVER_pidControlTask &rArr; REVOLVER_pidOut &rArr; CAN2_queueSend &rArr; xQueueGenericSend &rArr; vTaskPlaceOnEventList &rArr; prvAddCurrentTaskToDelayedList &rArr; vListInsert
@@ -5095,7 +5105,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[dd]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;kalman_filter_init
 </UL>
 
-<P><STRONG><a name="[3da]"></a>__use_no_semihosting</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi_2.o(.text), UNUSED)
+<P><STRONG><a name="[3db]"></a>__use_no_semihosting</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi_2.o(.text), UNUSED)
 
 <P><STRONG><a name="[1f4]"></a>__aeabi_ldivmod</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, llsdiv.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_ldivmod
@@ -5145,7 +5155,7 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[6d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_x
 </UL>
 
-<P><STRONG><a name="[3db]"></a>_printf_longlong_hex</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, _printf_hex_int.o(.text), UNUSED)
+<P><STRONG><a name="[3dc]"></a>_printf_longlong_hex</STRONG> (Thumb, 0 bytes, Stack size 16 bytes, _printf_hex_int.o(.text), UNUSED)
 
 <P><STRONG><a name="[2a4]"></a>__printf</STRONG> (Thumb, 308 bytes, Stack size 40 bytes, __printf_flags_wp.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 40 + Unknown Stack Size
@@ -5175,7 +5185,7 @@ Global Symbols
 <BR><BR>[Calls]<UL><LI><a href="#[269]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_memcpy4
 </UL>
 
-<P><STRONG><a name="[3dc]"></a>_memcpy_lastbytes</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_v6.o(.text), UNUSED)
+<P><STRONG><a name="[3dd]"></a>_memcpy_lastbytes</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_v6.o(.text), UNUSED)
 
 <P><STRONG><a name="[269]"></a>__aeabi_memcpy4</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = __aeabi_memcpy4
@@ -5184,11 +5194,11 @@ Global Symbols
 <LI><a href="#[2a7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_memcpy
 </UL>
 
-<P><STRONG><a name="[3dd]"></a>__aeabi_memcpy8</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
+<P><STRONG><a name="[3de]"></a>__aeabi_memcpy8</STRONG> (Thumb, 0 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
 
-<P><STRONG><a name="[3de]"></a>__rt_memcpy_w</STRONG> (Thumb, 100 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
+<P><STRONG><a name="[3df]"></a>__rt_memcpy_w</STRONG> (Thumb, 100 bytes, Stack size 8 bytes, rt_memcpy_w.o(.text), UNUSED)
 
-<P><STRONG><a name="[3df]"></a>_memcpy_lastbytes_aligned</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_w.o(.text), UNUSED)
+<P><STRONG><a name="[3e0]"></a>_memcpy_lastbytes_aligned</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memcpy_w.o(.text), UNUSED)
 
 <P><STRONG><a name="[188]"></a>__aeabi_memset</STRONG> (Thumb, 16 bytes, Stack size 0 bytes, aeabi_memset.o(.text))
 <BR><BR>[Calls]<UL><LI><a href="#[2a8]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_memset
@@ -5218,29 +5228,29 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[86]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;VISION_sendData
 </UL>
 
-<P><STRONG><a name="[3e0]"></a>__aeabi_memclr8</STRONG> (Thumb, 0 bytes, Stack size 4 bytes, rt_memclr_w.o(.text), UNUSED)
+<P><STRONG><a name="[3e1]"></a>__aeabi_memclr8</STRONG> (Thumb, 0 bytes, Stack size 4 bytes, rt_memclr_w.o(.text), UNUSED)
 
-<P><STRONG><a name="[3e1]"></a>__rt_memclr_w</STRONG> (Thumb, 78 bytes, Stack size 4 bytes, rt_memclr_w.o(.text), UNUSED)
+<P><STRONG><a name="[3e2]"></a>__rt_memclr_w</STRONG> (Thumb, 78 bytes, Stack size 4 bytes, rt_memclr_w.o(.text), UNUSED)
 
 <P><STRONG><a name="[2aa]"></a>_memset_w</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, rt_memclr_w.o(.text), UNUSED)
 <BR><BR>[Called By]<UL><LI><a href="#[2a9]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_memclr
 </UL>
 
-<P><STRONG><a name="[3e2]"></a>__use_two_region_memory</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[3e3]"></a>__use_two_region_memory</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[3e3]"></a>__rt_heap_escrow$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[3e4]"></a>__rt_heap_escrow$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[3e4]"></a>__rt_heap_expand$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
+<P><STRONG><a name="[3e5]"></a>__rt_heap_expand$2region</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, heapauxi.o(.text), UNUSED)
 
-<P><STRONG><a name="[3e5]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[3e6]"></a>__I$use$semihosting</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
-<P><STRONG><a name="[3e6]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
+<P><STRONG><a name="[3e7]"></a>__use_no_semihosting_swi</STRONG> (Thumb, 2 bytes, Stack size 0 bytes, use_no_semi.o(.text), UNUSED)
 
 <P><STRONG><a name="[2a1]"></a>__aeabi_uldivmod</STRONG> (Thumb, 0 bytes, Stack size 48 bytes, lludivv7m.o(.text), UNUSED)
 <BR><BR>[Called By]<UL><LI><a href="#[2a0]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_ll_sdiv
 </UL>
 
-<P><STRONG><a name="[3e7]"></a>_ll_udiv</STRONG> (Thumb, 238 bytes, Stack size 48 bytes, lludivv7m.o(.text), UNUSED)
+<P><STRONG><a name="[3e8]"></a>_ll_udiv</STRONG> (Thumb, 238 bytes, Stack size 48 bytes, lludivv7m.o(.text), UNUSED)
 
 <P><STRONG><a name="[2ab]"></a>__read_errno</STRONG> (Thumb, 10 bytes, Stack size 8 bytes, _rserrno.o(.text), UNUSED)
 <BR><BR>[Calls]<UL><LI><a href="#[2ac]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__aeabi_errno_addr
@@ -5283,9 +5293,9 @@ Global Symbols
 <LI><a href="#[2ab]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__read_errno
 </UL>
 
-<P><STRONG><a name="[3e8]"></a>__errno$intlibspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_errno_addr_intlibspace.o(.text), UNUSED)
+<P><STRONG><a name="[3e9]"></a>__errno$intlibspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_errno_addr_intlibspace.o(.text), UNUSED)
 
-<P><STRONG><a name="[3e9]"></a>__rt_errno_addr$intlibspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_errno_addr_intlibspace.o(.text), UNUSED)
+<P><STRONG><a name="[3ea]"></a>__rt_errno_addr$intlibspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, rt_errno_addr_intlibspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[2b0]"></a>_printf_char_common</STRONG> (Thumb, 32 bytes, Stack size 64 bytes, _printf_char_common.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 104 + Unknown Stack Size
@@ -5300,13 +5310,13 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[2a2]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_printf_char_file
 </UL>
 
-<P><STRONG><a name="[3ea]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[3eb]"></a>__user_libspace</STRONG> (Thumb, 8 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[2b2]"></a>__user_perproc_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[72]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__user_setup_stackheap
 </UL>
 
-<P><STRONG><a name="[3eb]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
+<P><STRONG><a name="[3ec]"></a>__user_perthread_libspace</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, libspace.o(.text), UNUSED)
 
 <P><STRONG><a name="[72]"></a>__user_setup_stackheap</STRONG> (Thumb, 74 bytes, Stack size 8 bytes, sys_stackheap_outer.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8 + Unknown Stack Size
@@ -5559,15 +5569,15 @@ Global Symbols
 <LI><a href="#[20f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__hardfp_asin
 </UL>
 
-<P><STRONG><a name="[3ec]"></a>_dneg</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
+<P><STRONG><a name="[3ed]"></a>_dneg</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
 
-<P><STRONG><a name="[3ed]"></a>__aeabi_fneg</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
+<P><STRONG><a name="[3ee]"></a>__aeabi_fneg</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
 
-<P><STRONG><a name="[3ee]"></a>_fneg</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
+<P><STRONG><a name="[3ef]"></a>_fneg</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
 
-<P><STRONG><a name="[3ef]"></a>_dabs</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
+<P><STRONG><a name="[3f0]"></a>_dabs</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
 
-<P><STRONG><a name="[3f0]"></a>_fabs</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
+<P><STRONG><a name="[3f1]"></a>_fabs</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, basic.o(x$fpl$basic), UNUSED)
 
 <P><STRONG><a name="[1d5]"></a>__aeabi_d2f</STRONG> (Thumb, 0 bytes, Stack size 32 bytes, d2f.o(x$fpl$d2f))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = __aeabi_d2f
@@ -5637,13 +5647,13 @@ Global Symbols
 <LI><a href="#[2c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ieee754_rem_pio2
 </UL>
 
-<P><STRONG><a name="[3f1]"></a>_dflt</STRONG> (Thumb, 46 bytes, Stack size 0 bytes, dflt_clz.o(x$fpl$dflt), UNUSED)
+<P><STRONG><a name="[3f2]"></a>_dflt</STRONG> (Thumb, 46 bytes, Stack size 0 bytes, dflt_clz.o(x$fpl$dflt), UNUSED)
 
 <P><STRONG><a name="[2c6]"></a>__aeabi_ui2d</STRONG> (Thumb, 0 bytes, Stack size 0 bytes, dflt_clz.o(x$fpl$dfltu))
 <BR><BR>[Called By]<UL><LI><a href="#[2c1]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__ieee754_rem_pio2
 </UL>
 
-<P><STRONG><a name="[3f2]"></a>_dfltu</STRONG> (Thumb, 38 bytes, Stack size 0 bytes, dflt_clz.o(x$fpl$dfltu), UNUSED)
+<P><STRONG><a name="[3f3]"></a>_dfltu</STRONG> (Thumb, 38 bytes, Stack size 0 bytes, dflt_clz.o(x$fpl$dfltu), UNUSED)
 
 <P><STRONG><a name="[210]"></a>__aeabi_dmul</STRONG> (Thumb, 0 bytes, Stack size 32 bytes, dmul.o(x$fpl$dmul))
 <BR><BR>[Stack]<UL><LI>Max Depth = 32<LI>Call Chain = __aeabi_dmul
@@ -5749,9 +5759,9 @@ Global Symbols
 <BR><BR>[Called By]<UL><LI><a href="#[6f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;__rt_lib_init_fp_1
 </UL>
 
-<P><STRONG><a name="[3f3]"></a>__fplib_config_fpu_vfp</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
+<P><STRONG><a name="[3f4]"></a>__fplib_config_fpu_vfp</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
 
-<P><STRONG><a name="[3f4]"></a>__fplib_config_pureend_doubles</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
+<P><STRONG><a name="[3f5]"></a>__fplib_config_pureend_doubles</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, fpinit.o(x$fpl$fpinit), UNUSED)
 
 <P><STRONG><a name="[2c8]"></a>__fpl_fretinf</STRONG> (Thumb, 10 bytes, Stack size 0 bytes, fretinf.o(x$fpl$fretinf), UNUSED)
 <BR><BR>[Called By]<UL><LI><a href="#[2c7]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;_d2f
@@ -5872,19 +5882,20 @@ Local Symbols
 <LI><a href="#[21]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX0_IRQHandler
 </UL>
 
-<P><STRONG><a name="[10e]"></a>getMotorSpeed</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, can.o(.text))
+<P><STRONG><a name="[10f]"></a>getMotorSpeed</STRONG> (Thumb, 14 bytes, Stack size 0 bytes, can.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN2_RX0_IRQHandler
 <LI><a href="#[21]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX0_IRQHandler
 </UL>
 
-<P><STRONG><a name="[10f]"></a>getMotorTemperature</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, can.o(.text))
+<P><STRONG><a name="[110]"></a>getMotorTemperature</STRONG> (Thumb, 6 bytes, Stack size 0 bytes, can.o(.text))
 <BR><BR>[Called By]<UL><LI><a href="#[21]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX0_IRQHandler
 </UL>
 
-<P><STRONG><a name="[110]"></a>calMotorAngleSum</STRONG> (Thumb, 66 bytes, Stack size 8 bytes, can.o(.text))
+<P><STRONG><a name="[10e]"></a>calMotorAngleSum</STRONG> (Thumb, 66 bytes, Stack size 8 bytes, can.o(.text))
 <BR><BR>[Stack]<UL><LI>Max Depth = 8<LI>Call Chain = calMotorAngleSum
 </UL>
 <BR>[Called By]<UL><LI><a href="#[4d]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN2_RX0_IRQHandler
+<LI><a href="#[21]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;CAN1_RX0_IRQHandler
 </UL>
 
 <P><STRONG><a name="[111]"></a>TIM3_GPIO_init</STRONG> (Thumb, 56 bytes, Stack size 16 bytes, pwm.o(.text))

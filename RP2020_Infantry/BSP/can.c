@@ -750,6 +750,10 @@ void CAN1_RX0_IRQHandler(void)
 		if(rxMsg.StdId == 0x201) {	// 左前
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[LEFT_FRON_201].angle = getMotorAngle(&rxMsg);
+			/* 底盘电机累加角度反馈记录 */			
+			calMotorAngleSum(g_Chassis_Motor_Info[LEFT_FRON_201].angle, g_Chassis_Motor_Info[LEFT_FRON_201].angle_prev, &g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum);
+			g_Chassis_Motor_Info[LEFT_FRON_201].angle_prev = g_Chassis_Motor_Info[LEFT_FRON_201].angle;
+			Chassis_PID[LEFT_FRON_201].Angle.feedback = g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum;
 			/* 速度环实时速度记录 */
 			g_Chassis_Motor_Info[LEFT_FRON_201].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[LEFT_FRON_201].Speed.feedback = getMotorSpeed(&rxMsg);
@@ -760,6 +764,10 @@ void CAN1_RX0_IRQHandler(void)
 		if(rxMsg.StdId == 0x202) {	// 右前
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[RIGH_FRON_202].angle = getMotorAngle(&rxMsg);
+			/* 底盘电机累加角度反馈记录 */			
+			calMotorAngleSum(g_Chassis_Motor_Info[RIGH_FRON_202].angle, g_Chassis_Motor_Info[RIGH_FRON_202].angle_prev, &g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum);
+			g_Chassis_Motor_Info[RIGH_FRON_202].angle_prev = g_Chassis_Motor_Info[RIGH_FRON_202].angle;
+			Chassis_PID[RIGH_FRON_202].Angle.feedback = g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum;
 			/* 速度环实时速度记录 */
 			g_Chassis_Motor_Info[RIGH_FRON_202].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[RIGH_FRON_202].Speed.feedback = getMotorSpeed(&rxMsg);
@@ -770,6 +778,10 @@ void CAN1_RX0_IRQHandler(void)
 		if(rxMsg.StdId == 0x203) {	// 左后
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[LEFT_BACK_203].angle = getMotorAngle(&rxMsg);
+			/* 底盘电机累加角度反馈记录 */			
+			calMotorAngleSum(g_Chassis_Motor_Info[LEFT_BACK_203].angle, g_Chassis_Motor_Info[LEFT_BACK_203].angle_prev, &g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum);
+			g_Chassis_Motor_Info[LEFT_BACK_203].angle_prev = g_Chassis_Motor_Info[LEFT_BACK_203].angle;
+			Chassis_PID[LEFT_BACK_203].Angle.feedback = g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum;
 			/* 速度环实时速度记录 */
 			g_Chassis_Motor_Info[LEFT_BACK_203].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[LEFT_BACK_203].Speed.feedback = getMotorSpeed(&rxMsg);
@@ -780,6 +792,10 @@ void CAN1_RX0_IRQHandler(void)
 		if(rxMsg.StdId == 0x204) {	// 右后
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[RIGH_BACK_204].angle = getMotorAngle(&rxMsg);
+			/* 底盘电机累加角度反馈记录 */			
+			calMotorAngleSum(g_Chassis_Motor_Info[RIGH_BACK_204].angle, g_Chassis_Motor_Info[RIGH_BACK_204].angle_prev, &g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum);
+			g_Chassis_Motor_Info[RIGH_BACK_204].angle_prev = g_Chassis_Motor_Info[RIGH_BACK_204].angle;
+			Chassis_PID[RIGH_BACK_204].Angle.feedback = g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum;
 			/* 速度环实时速度记录 */
 			g_Chassis_Motor_Info[RIGH_BACK_204].speed = getMotorSpeed(&rxMsg);
 			Chassis_PID[RIGH_BACK_204].Speed.feedback = getMotorSpeed(&rxMsg);

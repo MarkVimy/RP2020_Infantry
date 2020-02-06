@@ -253,6 +253,11 @@ Chassis_Z_PID_t Chassis_Z_PID = {
 };
 
 /**
+ *	@brief	底盘定位PID
+ */
+PID_Object_t Chas_Locate_PID[2];
+
+/**
  *	@brief	底盘功率
  */
 Chassis_Power_t Chassis_Power = {
@@ -657,7 +662,7 @@ void CHASSIS_getInfo(void)
 			/*
 				自动对位时底盘进入慢速对位模式
 			*/
-			CHASSIS_setMode(CHAS_MODE_SLOW);
+			CHASSIS_setMode(CHAS_MODE_RELOAD_BULLET);
 			break;
 		default:
 			break;
@@ -680,7 +685,7 @@ void CHASSIS_getInfo(void)
 	
 	/* 弹仓打开后慢速 */
 //	if(MAGZINE_ifOpen() == true) {
-//		CHASSIS_setMode(CHAS_MODE_SLOW);
+//		CHASSIS_setMode(CHAS_MODE_RELOAD_BULLET);
 //	}
 }
 
@@ -1322,7 +1327,7 @@ void KEY_setMode(void)
 			//云台
 			GIMBAL_setMode(GIMBAL_MODE_RELOAD_BULLET);
 			//底盘
-			CHASSIS_setMode(CHAS_MODE_SLOW);
+			CHASSIS_setMode(CHAS_MODE_RELOAD_BULLET);
 		}
 		
 		if(KeyLockFlag_Ctrl == false)
@@ -1571,6 +1576,14 @@ void CHASSIS_omniSpeedCalculate(void)
 }
 
 /**
+ *	@brief	底盘定位算法
+ */
+void CHASSIS_locateDis(void)
+{
+
+}
+
+/**
  *	@brief	机械模式下云台YAW期望值(累加值)边界处理
  */
 float CHASSIS_MECH_yawTargetBoundaryProcess(Chassis_Z_PID_t *pid, float delta_target)
@@ -1627,13 +1640,19 @@ void CHASSIS_szupupControl(void)
 
 /**
  *	@brief	自动对位控制
+ *	@note		x方向距离受大小补给站影响
  */
-#define R_B_CASE	1
+#define R_B_CASE	2
+
+#define RELOAD_BULLET_DIS_Y		200	// 单位mm
+
+bool Reload_Bullet_Init = false;
+float ramp_angle_y = 1024;
 void CHASSIS_reloadBulletControl(void)
 {
 	// 操作手先将车开至左上方顶住一个角
 	#if (R_B_CASE == 1)
-		// 速度-时间延迟模型
+		// 无反馈定速延时模型
 		/*
 				if(tx) {
 					tx--;
@@ -1649,19 +1668,96 @@ void CHASSIS_reloadBulletControl(void)
 					tar_y = 0;
 				}
 		*/
+		static uint16_t tx, ty;
 	
+		if(Reload_Bullet_Init == true) {
+			Reload_Bullet_Init = false;
+			tx = TIME_STAMP_500MS/2;	// 控制周期为2ms
+			ty = TIME_STAMP_500MS/2;	// 控制周期为2ms
+		}
+		
+		if(tx) {
+			tx--;
+			Chas_Target_Speed[ X ] = 3000;
+		} else {
+			Chas_Target_Speed[ X ] = 0;
+		}
+
+		if(ty) {
+			ty--;
+			Chas_Target_Speed[ Y ] = 3000;
+		} else {
+			Chas_Target_Speed[ Y ] = 0;
+		}
+		
+		/* 全向分配算法 */
+		CHASSIS_omniSpeedCalculate();	
+		
 	#elif (R_B_CASE == 2)
-		// 电机机械角度角度总和模型
+		// 单反馈定速延时模型
 		/*
 				在竖直方向y上，利用电机机械角度和麦轮半径可以定位
-				在水平方向x上，
+				在水平方向x上，给定速度+延时
 		*/
-	
+		/* 
+			Branch_1
+				将四个电机的反馈角度取平均作为反馈值，这样的话只有一个外环pid控制器.
+				tar_angle_sum_y - fed_angle_sum_y = err_y -> PID -> Chas_Target_Speed[ Y ]
+				tx 定时 -> Chas_Target_Speed[ X ]
+				底盘全向分配算法
+		*/
+		static uint16_t tx;
+		float tar_angle_sum_y = -((RELOAD_BULLET_DIS_Y / PERIMETER) * 8192) / CHASSIS_DECELE_RATIO;	// 倒退取负
+		float fed_angle_sum_y;
+		
+		if(Reload_Bullet_Init == true) {
+			Reload_Bullet_Init = false;
+			/* Y */
+			g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum = 0;
+			g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum = 0;
+			g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum = 0;
+			g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum = 0;
+			Chassis_PID[LEFT_FRON_201].Angle.feedback = 0;
+			Chassis_PID[RIGH_FRON_202].Angle.feedback = 0;
+			Chassis_PID[LEFT_BACK_203].Angle.feedback = 0;
+			Chassis_PID[RIGH_BACK_204].Angle.feedback = 0;
+			Chas_Locate_PID[ Y ].target = 0;
+			/* X */
+			tx = TIME_STAMP_500MS/2;	// 控制周期2ms
+		}
+
+		/* X */
+		if(tx) {
+			tx--;
+			Chas_Target_Speed[ X ] = 3000;
+		} else {
+			Chas_Target_Speed[ X ] = 0;
+		}
+		
+		/* Y */
+		fed_angle_sum_y = (Chassis_PID[LEFT_FRON_201].Angle.feedback
+											+ Chassis_PID[RIGH_FRON_202].Angle.feedback
+											+ Chassis_PID[LEFT_BACK_203].Angle.feedback
+											+ Chassis_PID[RIGH_BACK_204].Angle.feedback)/4;
+		
+		Chas_Locate_PID[ Y ].target = RAMP_float(tar_angle_sum_y, Chas_Locate_PID[ Y ].target, ramp_angle_y);
+		Chas_Locate_PID[ Y ].feedback = fed_angle_sum_y;
+		Chas_Locate_PID[ Y ].erro = Chas_Locate_PID[ Y ].target - Chas_Locate_PID[ Y ].feedback;
+		Chas_Locate_PID[ Y ].pout = Chas_Locate_PID[ Y ].kp * Chas_Locate_PID[ Y ].erro;
+		Chas_Locate_PID[ Y ].out = constrain(Chas_Locate_PID[ Y ].pout, -CHASSIS_PID_OUT_MAX, CHASSIS_PID_OUT_MAX);
+		
+		Chas_Target_Speed[ Y ] = Chas_Locate_PID[ Y ].out;
+		
+		/* 全向分配算法 */
+		CHASSIS_omniSpeedCalculate();	
+		
 	#elif (R_B_CASE == 3)
-		// 超声波测距模型
+		// 单反馈半自动对位模型
 		/*
 				
 		*/
+	#elif (R_B_CASE == 4)
+		// 双反馈PID控制模型
 	#else
 	
 	#endif
@@ -1707,7 +1803,7 @@ void CHASSIS_keyControlTask(void)
 		case CHAS_MODE_BUFF:
 			CHASSIS_buffControl();
 			break;
-		case CHAS_MODE_SLOW:
+		case CHAS_MODE_RELOAD_BULLET:
 			CHASSIS_reloadBulletControl();
 			break;
 		case CHAS_MODE_SZUPUP:
