@@ -168,7 +168,7 @@ QueueObj VisionQueue =
 {
 	.nowLength = 0,
 	.queueLength = 20,
-	.data = {0}
+	.queue = {0}
 };
 
 
@@ -287,7 +287,7 @@ void VISION_init(void)
 	KalmanCreate(&Gimbal_Gyro_Auto_kalmanError[PITCH_206], kalman_kPitch_Q, kalman_kPitch_R);
 
 	for(uint16_t z = 0; z < VisionQueue.queueLength; z++) {
-		VisionQueue.data[z] = 0;
+		VisionQueue.queue[z] = 0;
 	}
 	VisionQueue.nowLength = 0;
 	visionYawMathExpect = 0;
@@ -483,17 +483,6 @@ float VISION_MECH_getPitchFeedback(void)
 {
 	float pitch_err = 0.0f;
 	
-//	/* 滤波/死区处理 */
-//	if(abs(Vision.RxPacket.RxData.pitch_angle) > 0.1f) {
-//		if(abs(Vision.RxPacket.RxData.pitch_angle) > 65.f) {
-//			pitch_err = 0.0f;
-//		} else {
-//			pitch_err = Vision.RxPacket.RxData.pitch_angle/360.0f*8192.0f;
-//		}
-//	} else {
-//		pitch_err = 0.0f;
-//	}
-	
 	if(abs(Vision.RxPacket.RxData.pitch_angle) > 65.f) {
 		pitch_err = 0.0f;
 	} else {
@@ -511,29 +500,10 @@ float VISION_MECH_getPitchFeedback(void)
  *					云台左摆 - yaw减小	-> -YAW_DIR -> yaw增大
  *					云台右摆 - yaw增大 -> -YAW_DIR -> yaw减小
  */
-float vision_gyro_kLPF = 0.1;
 float VISION_GYRO_getYawFeedback(void)
 {
-//	static float last_yaw_err = 0.0f;
-//	float yaw_err = 0.0f;
-//	/* 滤波/死区处理 */
-//	if(abs(Vision.RxPacket.RxData.yaw_angle) > 0.05f) {
-//		yaw_err = Vision.RxPacket.RxData.yaw_angle * GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
-//		yaw_err = vision_gyro_kLPF*yaw_err + (1-vision_gyro_kLPF)*last_yaw_err;
-//		last_yaw_err = yaw_err;
-//	} else {
-//		yaw_err = 0.0f;
-//	}
-//	return yaw_err; 
-
 	float yaw_err = 0.0f;
 	
-//	/* 滤波/死区处理 */
-//	if(abs(Vision.RxPacket.RxData.yaw_angle) > 0.1f) {
-//		yaw_err = Vision.RxPacket.RxData.yaw_angle * GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
-//	} else {
-//		yaw_err = 0.0f;
-//	}
 	yaw_err = (YAW_DIR) * Vision.RxPacket.RxData.yaw_angle * GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
 	return yaw_err; 	
 }
@@ -653,7 +623,7 @@ void VISION_updateInfo(float input, uint16_t length, QueueObj *queue, float *mat
 	/* 队列未满的时候只进不出 */
 	if(queue->nowLength < length)
 	{
-		queue->data[queue->nowLength] = input;
+		queue->queue[queue->nowLength] = input;
 		queue->nowLength++;
 	}
 	else
@@ -662,16 +632,16 @@ void VISION_updateInfo(float input, uint16_t length, QueueObj *queue, float *mat
 		for(uint16_t i = 0; i < length-1; i++)
 		{
 			/* 更新队列 */
-			queue->data[i] = queue->data[i+1];
+			queue->queue[i] = queue->queue[i+1];
 		}
-		queue->data[length-1] = input;
+		queue->queue[length-1] = input;
 	}
 	
 	/* 更新完队列计算 数学期望 和 标准差 */
 	
 	for(uint16_t j = 0; j < length; j++)
 	{
-		sum += queue->data[j];
+		sum += queue->queue[j];
 	}
 	*mathExpect = sum/(length/1.f);
 	
@@ -690,7 +660,7 @@ void cQueue_in(QueueObj *queue, uint8_t length, uint8_t input)
 	/* 队列未满的时候只进不出 */
 	if(queue->nowLength < length)
 	{
-		queue->data[queue->nowLength] = input;
+		queue->queue[queue->nowLength] = input;
 		queue->nowLength++;
 	}
 	else
@@ -699,9 +669,9 @@ void cQueue_in(QueueObj *queue, uint8_t length, uint8_t input)
 		for(uint16_t i = 0; i < length-1; i++)
 		{
 			/* 更新队列 */
-			queue->data[i] = queue->data[i+1];
+			queue->queue[i] = queue->queue[i+1];
 		}
-		queue->data[length-1] = input;
+		queue->queue[length-1] = input;
 	}
 }
 
@@ -716,7 +686,7 @@ void cQueue_fill(QueueObj *queue, uint8_t length, uint8_t fill)
 		length = queue->queueLength;
 	
 	for(i = 0; i < length; i++) {
-		queue->data[i] = fill;
+		queue->queue[i] = fill;
 	}
 }
 
@@ -728,12 +698,123 @@ bool cQueue_ifFilled(QueueObj *queue, uint8_t length, uint8_t fill)
 	uint8_t i;
 	
 	for(i = 0; i < length; i++) {
-		if(queue->data[i] != fill) {
+		if(queue->queue[i] != fill) {
 			return false;
 		}
 	}
 	
 	return true;
+}
+
+QueueObj target_speed=
+{
+	.nowLength =0,
+	.queueLength = 100,
+	.queue = {0}
+};
+
+/**
+* @brief 获取目标的速度
+* @param void
+* @return void
+*	以队列的逻辑
+*/
+float Get_Target_Speed(uint8_t queue_len,float angle)
+{
+	float sum=0;
+	float tmp=0;
+	
+	if(queue_len>target_speed.queueLength)
+		queue_len=target_speed.queueLength;
+	//防止溢出
+	
+	
+	if(target_speed.nowLength<queue_len)
+	{
+		//队列未满，只进不出
+		target_speed.queue[target_speed.nowLength] = angle;
+		target_speed.nowLength++;
+	}
+	else
+	{
+		//队列已满，FIFO。
+		for(uint16_t i=0;i<queue_len-1;i++)
+		{
+			target_speed.queue[i] = target_speed.queue[i+1];
+			//更新队列
+		
+		}
+		target_speed.queue[queue_len-1] = angle;
+	}
+	
+	//更新完队列
+	
+	
+	for(uint16_t j=0;j<queue_len;j++)
+	{
+		sum+=target_speed.queue[j];
+	}
+	tmp = sum/(queue_len/1.f);
+	
+	tmp = (angle - tmp);	
+	
+	return tmp;
+}
+
+
+QueueObj target_accel=
+{
+	.nowLength =0,
+	.queueLength = 100,
+	.queue = {0}
+};
+
+/**
+* @brief 获取目标的加速度
+* @param void
+* @return void
+*	以队列的逻辑
+*/
+float Get_Target_Accel(uint8_t queue_len,float speed)
+{
+	float sum=0;
+	float tmp=0;
+	
+	if(queue_len>target_accel.queueLength)
+		queue_len=target_accel.queueLength;
+	//防止溢出
+	
+	
+	if(target_accel.nowLength<queue_len)
+	{
+		//队列未满，只进不出
+		target_accel.queue[target_accel.nowLength] = speed;
+		target_accel.nowLength++;
+	}
+	else
+	{
+		//队列已满，FIFO。
+		for(uint16_t i=0;i<queue_len-1;i++)
+		{
+			target_accel.queue[i] = target_accel.queue[i+1];
+			//更新队列
+		
+		}
+		target_accel.queue[queue_len-1] = speed;
+	}
+	
+	//更新完队列
+	
+	
+	for(uint16_t j=0;j<queue_len;j++)
+	{
+		sum+=target_accel.queue[j];
+	}
+	tmp = sum/(queue_len/1.f);
+	
+	tmp = (speed - tmp);	
+	
+	return tmp;
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/

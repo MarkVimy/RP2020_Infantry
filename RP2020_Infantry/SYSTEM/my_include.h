@@ -150,7 +150,7 @@ typedef struct {
 typedef struct {
 	uint8_t nowLength;
 	uint8_t queueLength;
-	float	data[20];
+	float	queue[20];
 }QueueObj;
 
 typedef enum {

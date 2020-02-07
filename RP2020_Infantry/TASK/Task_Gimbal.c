@@ -279,7 +279,7 @@ QueueObj LostQueue =
 {
 	.nowLength = 0,
 	.queueLength = 8,
-	.data = {0}
+	.queue = {0}
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -2158,6 +2158,15 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 //			Gimbal_PID[GYRO][PITCH_206].Angle.target = gimbal->Auto.Pitch.target;
 //		}
 	}
+}
+
+/**
+ *	@brief	ÔÆÌ¨×ÔÃéÔ¤²â
+ *	@author	Lzx
+ */
+void GIMBAL_AutoPredict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+{
+	
 }
 
 /**
