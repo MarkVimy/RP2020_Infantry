@@ -16,33 +16,47 @@ typedef enum {
 	MAGZ_STATE_COUNT = 2,
 }Magzine_State_Names_t;
 
+typedef enum {
+	MAGZ_MODE_FREE	= 0,// 自由控制
+	MAGZ_MODE_NC = 1,	// 常闭模式(Normal Close)
+	MAGZ_MODE_NO = 2,	// 常开模式(Normal Open)
+}Magzine_Mode_Names_t;
+
 typedef struct {
-	Magzine_State_Names_t state;
-	int16_t	angleTarget;
-	int16_t	angleFeedback;
-}Magzine_Info_t;
+	int16_t	target;
+	int16_t	feedback;
+}Magzine_Pwm_t;
+
+typedef struct {
+	/* Info */
+	Magzine_State_Names_t	State;
+	Magzine_Mode_Names_t	Mode;
+	Remote_Mode_Names_t		RemoteMode;
+	/* Ctrl */
+	Magzine_Pwm_t			Angle;
+}Magzine_Handler_t;
 
 /* ## Global Variables Prototypes ## -----------------------------------------*/
-extern Magzine_Info_t Magzine;
+extern Magzine_Handler_t Magzine;
 
 /* API functions Prototypes --------------------------------------------------*/
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void MAGZINE_ParamsInit(Magzine_Info_t *magz);
-void MAGZINE_stop(Magzine_Info_t *magz);
-void MAGZINE_close(Magzine_Info_t *magz);
-void MAGZINE_output(Magzine_Info_t *magz);
+void MAGZINE_ParamsInit(Magzine_Handler_t *magz);
+void MAGZINE_Stop(Magzine_Handler_t *magz);
+void MAGZINE_Close(Magzine_Handler_t *magz);
+void MAGZINE_Output(Magzine_Handler_t *magz);
 
 /* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-bool MAGZINE_ifOpen(void);
+bool MAGZINE_IfOpen(void);
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-//void REMOTE_setMagzineState(RC_Ctl_t *remoteInfo);
-//void KEY_setMagzineState(RC_Ctl_t *remoteInfo);
+//void REMOTE_SetMagzineState(RC_Ctl_t *remote);
+//void KEY_SetMagzineState(RC_Ctl_t *remote);
 	
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void MAGZINE_rcControlTask(void);
-void MAGZINE_keyControlTask(void);
-void MAGZINE_selfProtect(void);
-void MAGZINE_control(void);
+void MAGZINE_RcCtrlTask(void);
+void MAGZINE_KeyCtrlTask(void);
+void MAGZINE_SelfProtect(void);
+void MAGZINE_Ctrl(void);
 
 #endif

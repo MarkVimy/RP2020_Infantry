@@ -8,6 +8,6 @@
 #define LASER_ON()	(LASER = 1)
 #define LASER_OFF()	(LASER = 0)
 
-void LASER_init(void);
+void LASER_Init(void);
 
 #endif

@@ -2,12 +2,31 @@
 #define __JUDGE_H
 
 /* Includes ------------------------------------------------------------------*/
-#include "sys.h"
+#include "stm32f4xx.h" 
+#include "stdbool.h"
 
 /* Global macro --------------------------------------------------------------*/
 #define JUDGE_VERSION	19	// 2019/07/11(V2.0)
 
 /* Global TypeDef ------------------------------------------------------------*/
+
+typedef enum {
+	ARMOR_0 = 0,
+	ARMOR_1 = 1,
+	ARMOR_2 = 2,
+	ARMOR_3 = 3,
+	ARMOR_COUNT = 4,
+	ARMOR_NONE = 0xff,
+} Armor_Id_Names_t;
+
+typedef enum {
+	RED = 0,
+	BLUE = 1,
+} Color_t;
+
+/*----------------------------------------------------------------------------*/
+/*---------------------------↓↓裁判系统数据结构↓↓---------------------------*/
+/*----------------------------------------------------------------------------*/
 /* 自定义帧头 Byte:	  5	*/
 typedef __packed struct
 {
@@ -42,7 +61,7 @@ typedef __packed struct
 	uint16_t red_4_robot_HP;	// 红4步兵机器人血量
 	uint16_t red_5_robot_HP;	// 红5步兵机器人血量
 	uint16_t red_7_robot_HP;	// 红7哨兵机器人血量
-	uint16_t red_base_HP;			// 红方基地血量
+	uint16_t red_base_HP;		// 红方基地血量
 	uint16_t blue_1_robot_HP;	// 蓝1英雄机器人血量
 	uint16_t blue_2_robot_HP;	// 蓝2工程机器人血量
 	uint16_t blue_3_robot_HP;	// 蓝3步兵机器人血量
@@ -106,12 +125,12 @@ typedef __packed struct
 /* ID: 0X0202  Byte: 14    实时功率热量数据 */
 typedef __packed struct 
 { 
-	uint16_t chassis_volt;   
-	uint16_t chassis_current;    
-	float chassis_power;   //瞬时功率 
-	uint16_t chassis_power_buffer;//60焦耳缓冲能量(飞坡根据规则增加至250J)
-	uint16_t shooter_heat0;//17mm
-	uint16_t shooter_heat1;  
+	uint16_t chassis_volt;   	// 底盘输出电压，单位：mV
+	uint16_t chassis_current;	// 底盘输出电流，单位：mA
+	float chassis_power;   		// 瞬时功率，单位：W
+	uint16_t chassis_power_buffer;// 底盘功率缓冲，单位：J60焦耳缓冲能量(飞坡根据规则增加至250J)
+	uint16_t shooter_heat0;		// 17mm枪口热量
+	uint16_t shooter_heat1;  	// 42mm枪口热量
 } ext_power_heat_data_t; 
 
 
@@ -143,8 +162,8 @@ typedef __packed struct
 /* ID: 0x0206  Byte:  1    伤害状态数据 */
 typedef __packed struct 
 { 
-	uint8_t armor_id : 4; 
-	uint8_t hurt_type : 4; 
+	uint8_t armor_id : 4; 	// 装甲伤害时代表装甲ID
+	uint8_t hurt_type : 4; 	// 0x0装甲伤害 0x1模块掉线 0x2超射速 0x3超热量 0x4超功率 0x5撞击
 } ext_robot_hurt_t; 
 
 
@@ -261,6 +280,7 @@ typedef struct
 	uint16_t cmd_id;		// 命令码(调试时使用)
 	uint16_t err_cnt;		// 错帧数(调试时使用)
 	bool	 data_valid;	// 数据有效性
+	bool	 hurt_data_update;	// 伤害数据更新
 	std_frame_header_t				FrameHeader;	// 帧头信息
 	ext_game_status_t 				GameStatus;					// 0x0001
 	ext_game_result_t 				GameResult;					// 0x0002
@@ -279,12 +299,32 @@ typedef struct
 	ext_bullet_remaining_t			BulletRemaining;			// 0x0208	
 }Judge_Info_t;
 
+/*----------------------------------------------------------------------------*/
+/*---------------------------↑↑裁判系统数据结构↑↑---------------------------*/
+/*----------------------------------------------------------------------------*/
 
 /* ## Global Variables Prototypes ## -----------------------------------------*/
-extern Judge_Info_t Judge_Info;
+extern Judge_Info_t Judge;
 
 /* API functions Prototypes --------------------------------------------------*/
-bool JUDGE_readData(uint8_t *rxBuf);
-bool JUDEG_ifDataValid(void);
+/* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+bool JUDGE_ReadData(uint8_t *rxBuf);
+
+/* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+bool 		JUDGE_IfDataValid(void);
+float 		JUDGE_fGetChassisRealPower(void);
+float 		JUDGE_fGetChassisPowerBuffer(void);
+uint8_t 	JUDGE_ucGetRobotLevel(void);
+uint16_t 	JUDGE_usGetShooterRealHeat17(void);
+uint16_t 	JUDGE_usGetShooterLimitHeat17(void);
+uint16_t 	JUDGE_usGetShooterHeatCoolingRate17(void);
+float 		JUDGE_fGetBulletSpeed17(void);
+Color_t 	JUDGE_eGeyMyColor(void);
+uint8_t 	JUDGE_eGetArmorHurt(void);
+
+/* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+void JUDGE_ShootNumCount(void);
+
+/* #交互层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 
 #endif

@@ -36,14 +36,12 @@
 .\objects\task_chassis.o: ..\FreeRTOS\include\task.h
 .\objects\task_chassis.o: ..\FreeRTOS\include\list.h
 .\objects\task_chassis.o: ..\SYSTEM\my_include.h
-.\objects\task_chassis.o: ..\SYSTEM\sys.h
 .\objects\task_chassis.o: ..\APP\my_app.h
 .\objects\task_chassis.o: ..\AppInfo\judge.h
 .\objects\task_chassis.o: ..\AppInfo\vision.h
+.\objects\task_chassis.o: ..\SYSTEM\sys.h
 .\objects\task_chassis.o: ..\APP\my_app.h
 .\objects\task_chassis.o: ..\APP\remote.h
-.\objects\task_chassis.o: ..\APP\friction.h
-.\objects\task_chassis.o: ..\APP\magzine.h
 .\objects\task_chassis.o: ..\TASK\my_task.h
 .\objects\task_chassis.o: ..\TASK\Task_Chassis.h
 .\objects\task_chassis.o: ..\TASK\Task_Gimbal.h
@@ -51,6 +49,8 @@
 .\objects\task_chassis.o: ..\TASK\Task_Timing_Report.h
 .\objects\task_chassis.o: ..\FreeRTOS\include\queue.h
 .\objects\task_chassis.o: ..\FreeRTOS\include\timers.h
+.\objects\task_chassis.o: ..\APP\friction.h
+.\objects\task_chassis.o: ..\APP\magzine.h
 .\objects\task_chassis.o: ..\APP\ultra.h
 .\objects\task_chassis.o: ..\Libraries\cmsis\Include\arm_math.h
 .\objects\task_chassis.o: ..\Libraries\cmsis\Include\core_cm4.h

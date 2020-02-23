@@ -14,10 +14,10 @@
  *	通信协议格式:
  *				帧头		数据段			帧尾
  *	域		frame_header 	data  			frame_tailer(CRC16,整包校验)
- *	字节		3			17				2
+ *	字节		3			x				2
  *	
  *	帧头格式:
- *		  起始字节(0xA5)	数据命令长度	帧头CRC8校验
+ *		  起始字节(0xA5)	数据命令长度		帧头CRC8校验
  *	域			SOF 	 	cmd_id    		CRC8
  *	字节		0			1				1
  */
@@ -31,38 +31,33 @@
 #include "kalman.h"
 
 /* Private typedef -----------------------------------------------------------*/
-typedef enum {
-	RED = 0,
-	BLUE = 1,
-} Vision_Color_t;
-
 /**
  *	电控->视觉
  */
 typedef enum {
-	CMD_AIM_OFF 		= 	0x00,	// 不启动自瞄(实际是视觉那边跑程序但不发送数据)
-	CMD_AIM_AUTO		=		0x01,	// 启动自瞄
+	CMD_AIM_OFF 		= 0x00,	// 不启动自瞄(实际是视觉那边跑程序但不发送数据)
+	CMD_AIM_AUTO		= 0x01,	// 启动自瞄
 	CMD_AIM_SMALL_BUFF	= 0x02,	// 识别小符
-	CMD_AIM_BIG_BUFF		= 0x03,	// 识别大符
-	CMD_AIM_SENTRY			= 0x04,	// 击打哨兵
-	CMD_AIM_BASE				= 0x05	// 吊射基地
+	CMD_AIM_BIG_BUFF	= 0x03,	// 识别大符
+	CMD_AIM_SENTRY		= 0x04,	// 击打哨兵
+	CMD_AIM_BASE		= 0x05	// 吊射基地
 } Vision_Cmd_Id_t;
 
 /* 帧头字节偏移 */
 typedef enum {
 	SOF			= 0,
-	CMD_ID	= 1,
+	CMD_ID		= 1,
 	CRC8		= 2,
 	DATA		= 3,
-	CRC16		= 20,
+	TX_CRC16		= 20,
 } Vision_Frame_Header_Offset_t;
 
 /* 数据长度 */
 typedef enum {
 	/* Std */
 	LEN_FRAME_HEADER 		= 3,	// 帧头长度
-	LEN_RX_DATA 				= 18,	// 接收数据段长度
-	LEN_TX_DATA 				= 17,	// 发送数据段长度
+	LEN_RX_DATA 			= 18,	// 接收数据段长度
+	LEN_TX_DATA 			= 17,	// 发送数据段长度
 	LEN_FRAME_TAILER 		= 2,	// 帧尾CRC16
 	LEN_VISION_RX_PACKET	= 23,	// 接收包整包长度
 	LEN_VISION_TX_PACKET	= 22,	// 发送包整包长度
@@ -71,9 +66,9 @@ typedef enum {
 /* 帧头格式 */
 typedef __packed struct
 {
-	uint8_t  					sof;		// 同步头
+	uint8_t  			sof;		// 同步头
 	Vision_Cmd_Id_t  	cmd_id;		// 命令码
-	uint8_t  					crc8;		// CRC8校验码
+	uint8_t  			crc8;		// CRC8校验码
 } Vision_Frame_Header_t;
 
 /* 帧尾格式 */
@@ -99,16 +94,16 @@ typedef __packed struct
 /* 发送数据段格式 */
 typedef __packed struct
 {
-	uint8_t buff_shoot_four; // 打符的时候射出第四颗子弹
-	uint8_t fric_speed;			// 射速档位(根据等级来分)
-	uint8_t my_color;	// 我自己的颜色
+	uint8_t buff_shoot_four;// 打符的时候射出第四颗子弹
+	uint8_t fric_speed;		// 射速档位(根据等级来分)
+	uint8_t my_color;		// 我自己的颜色
 } Vision_Tx_Data_t;
 
 /* 接收包格式 */
 typedef __packed struct 
 {
 	Vision_Frame_Header_t FrameHeader;	// 帧头
-	Vision_Rx_Data_t	  	RxData;				// 数据
+	Vision_Rx_Data_t	  RxData;		// 数据
 	Vision_Frame_Tailer_t FrameTailer;	// 帧尾	
 } Vision_Rx_Packet_t;
 
@@ -116,25 +111,23 @@ typedef __packed struct
 typedef __packed struct
 {
 	Vision_Frame_Header_t FrameHeader;	// 帧头
-	Vision_Tx_Data_t	  	TxData;				// 数据
+	Vision_Tx_Data_t	  TxData;		// 数据
 	Vision_Frame_Tailer_t FrameTailer;	// 帧尾		
 } Vision_Tx_Packet_t;
 
 /* 辅助标识变量 */
 typedef struct
 {
-	Vision_Color_t 	my_color;				// 机器人自己的颜色
-	Vision_Color_t  attack_color;		// 识别和击打的敌军颜色
-	Vision_Color_t  buff_color;			// 识别和击打的大小符颜色
-	Vision_Mode_t		mode;						// 视觉模式
-	uint16_t		unconnected_cnt;		// 视觉失联计数
-	uint8_t  		rx_data_valid;			// 接收数据的正确性
-	uint16_t 		rx_err_cnt;					// 接收数据的错误统计
-	uint32_t		rx_cnt;							// 接收数据包的统计
-	uint8_t 		rx_data_update;			// 接收数据是否更新
-	uint32_t 		rx_time_prev;				// 接收数据的前一时刻
-	uint32_t 		rx_time_now;				// 接收数据的当前时刻
-	uint16_t 		rx_time_ping;				// 帧率
+	Color_t 		my_color;			// 机器人自己的颜色
+	Vision_Mode_t	mode;				// 视觉模式
+	uint16_t		unconnected_cnt;	// 视觉失联计数
+	uint8_t  		rx_data_valid;		// 接收数据的正确性
+	uint16_t 		rx_err_cnt;			// 接收数据的错误统计
+	uint32_t		rx_cnt;				// 接收数据包的统计
+	uint8_t 		rx_data_update;		// 接收数据是否更新
+	uint32_t 		rx_time_prev;		// 接收数据的前一时刻
+	uint32_t 		rx_time_now;		// 接收数据的当前时刻
+	uint16_t 		rx_time_ping;		// 帧率
 } Vision_State_t;
 
 /* 视觉通信数据包格式 */
@@ -202,7 +195,7 @@ extKalman_t Gimbal_Gyro_Auto_kalmanError[2];
  *					true  - 数据正确	
  *	@note	uart4.c中IRQ调用
  */
-bool VISION_readData(uint8_t *rxBuf)
+bool VISION_ReadData(uint8_t *rxBuf)
 {
 	uint8_t res = false;
 	Vision.State.rx_cnt++;
@@ -246,7 +239,7 @@ bool VISION_readData(uint8_t *rxBuf)
  *	@brief	发送视觉通信数据
  *	@note	uart4发送
  */
-void VISION_sendData(Vision_Tx_Packet_t *txPacket, Vision_Cmd_Id_t cmd_id)
+void VISION_SendData(Vision_Tx_Packet_t *txPacket, Vision_Cmd_Id_t cmd_id)
 {
 	uint8_t i;
 	/* 帧头格式 */
@@ -262,42 +255,23 @@ void VISION_sendData(Vision_Tx_Packet_t *txPacket, Vision_Cmd_Id_t cmd_id)
 	memcpy( &Vision_Tx_Buffer[DATA], &txPacket->TxData, LEN_TX_DATA );
 	/* 写入帧尾CRC16 */
 	Append_CRC16_Check_Sum( Vision_Tx_Buffer, LEN_VISION_TX_PACKET);
-	Vision.TxPacket.FrameTailer.crc16 = Vision_Tx_Buffer[CRC16];
+	Vision.TxPacket.FrameTailer.crc16 = Vision_Tx_Buffer[TX_CRC16];
 	
 	/* 将打包后的数据包发送给视觉PC */
 	for(i = 0; i < LEN_VISION_TX_PACKET; i++) {
-		UART4_sendChar(Vision_Tx_Buffer[i]);
+		UART4_SendChar(Vision_Tx_Buffer[i]);
 	}
 	
 	/* 发送数据包清零 */
 	memset(Vision_Tx_Buffer, 0, VISION_TX_BUFFER_LEN);
 }
 
-/* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-/**
- *	@brief	卡尔曼滤波器
- */
-float kalman_kYaw_Q = 1;
-float kalman_kYaw_R = 15;
-float kalman_kPitch_Q = 1;
-float kalman_kPitch_R = 10;
-void VISION_init(void)
-{
-	KalmanCreate(&Gimbal_Gyro_Auto_kalmanError[YAW_205], kalman_kYaw_Q, kalman_kYaw_R);
-	KalmanCreate(&Gimbal_Gyro_Auto_kalmanError[PITCH_206], kalman_kPitch_Q, kalman_kPitch_R);
 
-	for(uint16_t z = 0; z < VisionQueue.queueLength; z++) {
-		VisionQueue.queue[z] = 0;
-	}
-	VisionQueue.nowLength = 0;
-	visionYawMathExpect = 0;
-	visionYawStdDevia = 0;
-}
-
+/* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	反馈视觉标志位
  */
-bool VISION_getFlagStatus(Vision_Flag_t flag)
+bool VISION_GetFlagStatus(Vision_Flag_t flag)
 {
 	switch(flag)
 	{
@@ -322,7 +296,7 @@ bool VISION_getFlagStatus(Vision_Flag_t flag)
 /**
  *	@brief	设置视觉标志位
  */
-void VISION_setFlagStatus(Vision_Flag_t flag)
+void VISION_SetFlagStatus(Vision_Flag_t flag)
 {
 	switch(flag)
 	{
@@ -336,7 +310,7 @@ void VISION_setFlagStatus(Vision_Flag_t flag)
 /**
  *	@brief	清除视觉标志位
  */
-void VISION_clearFlagStatus(Vision_Flag_t flag)
+void VISION_ClearFlagStatus(Vision_Flag_t flag)
 {
 	switch(flag)
 	{
@@ -356,99 +330,23 @@ void VISION_clearFlagStatus(Vision_Flag_t flag)
 /**
  *	@brief	设置视觉模式
  */
-void VISION_setMode(Vision_Mode_t mode)
+void VISION_SetMode(Vision_Mode_t mode)
 {
 	Vision.State.mode = mode;
 }
 
 /**
- *	@brief	利用裁判系统的反馈得到自己的颜色
- */
-Vision_Color_t VISION_getMyColor(Judge_Info_t *info)
-{
-	uint8_t my_id;
-	my_id = info->GameRobotStatus.robot_id;
-	if(my_id > 10) {
-		return BLUE;
-	} else {
-		return RED;
-	}
-}
-
-/**
  *	@brief	反馈视觉数据是否可信
  */
-bool VISION_isDataValid(void)
+bool VISION_IsDataValid(void)
 {
-	return VISION_getFlagStatus(VISION_FLAG_DATA_VALID);
-}
-
-/**
- *	@brief	遥控设置视觉模式
- *			S2  上	打符
- *				中	手动
- *				下	自瞄
- */
-void REMOTE_setVisionMode(RC_Ctl_t *remoteInfo)
-{
-	uint8_t	sw2;
-	sw2 = remoteInfo->rc.s2;
-	
-	if(sw2 == RC_SW_UP) {
-		Vision.State.mode = VISION_MODE_BIG_BUFF;
-	} else if(sw2 == RC_SW_MID) {
-		Vision.State.mode = VISION_MODE_MANUAL;
-	} else if(sw2 == RC_SW_DOWN) {
-		Vision.State.mode = VISION_MODE_AUTO;
-	}
-}
-
-/**
- *	@brief	遥控设置自瞄对象颜色
- *	@note	前提是进入自瞄模式
- *			S1  上	红色
- *				中	不识别
- *				下	蓝色
- */
-void REMOTE_setAttackColor(RC_Ctl_t *remoteInfo)
-{
-	uint8_t	sw1;
-	sw1 = remoteInfo->rc.s1;
-	
-	if(Vision.State.mode == VISION_MODE_AUTO) {
-		if(sw1 == RC_SW_UP) {
-			Vision.State.attack_color = RED;
-		} else if(sw1 == RC_SW_DOWN) {
-			Vision.State.attack_color = BLUE;
-		}
-	}
-}
-
-/**
- *	@brief	键盘设置视觉模式
- *	@note	鼠标右键进入自瞄模式
- */
-void KEY_setVisionMode(RC_Ctl_t *remoteInfo)
-{
-	static uint8_t mouseLockRFlag = false;	// 鼠标右键锁定
-	if(IF_MOUSE_PRESSED_RIGH) {
-		if(mouseLockRFlag == false) {	// 进入自瞄模式
-			Vision.State.mode = VISION_MODE_AUTO;
-		}
-		mouseLockRFlag = true;
-	} else {
-		if(mouseLockRFlag == true) {	// 退出自瞄模式
-			//GIMBAL_VISION_AUTO_pidParamsInit(&Gimbal);
-		}
-		Vision.State.mode = VISION_MODE_MANUAL;
-		mouseLockRFlag = false;
-	}
+	return VISION_GetFlagStatus(VISION_FLAG_DATA_VALID);
 }
 
 /**
  *	@brief	反馈视觉距离
  */
-float VISION_getDistance(void)
+float VISION_GetDistance(void)
 {
 	return Vision.RxPacket.RxData.distance;
 }
@@ -461,7 +359,7 @@ float VISION_getDistance(void)
  *					云台左摆 - yaw减小	-> -YAW_DIR -> yaw增大
  *					云台右摆 - yaw增大 -> -YAW_DIR -> yaw减小
  */
-float VISION_MECH_getYawFeedback(void)
+float VISION_MECH_GetYawFeedback(void)
 {
  	float yaw_err = 0.0f;
 	/* 滤波/死区处理 */
@@ -479,7 +377,7 @@ float VISION_MECH_getYawFeedback(void)
  *					云台低头 - pitch增大
  *					云台抬头 - pitch减小
  */
-float VISION_MECH_getPitchFeedback(void)
+float VISION_MECH_GetPitchFeedback(void)
 {
 	float pitch_err = 0.0f;
 	
@@ -500,7 +398,7 @@ float VISION_MECH_getPitchFeedback(void)
  *					云台左摆 - yaw减小	-> -YAW_DIR -> yaw增大
  *					云台右摆 - yaw增大 -> -YAW_DIR -> yaw减小
  */
-float VISION_GYRO_getYawFeedback(void)
+float VISION_GYRO_GetYawFeedback(void)
 {
 	float yaw_err = 0.0f;
 	
@@ -516,7 +414,7 @@ float VISION_GYRO_getYawFeedback(void)
  *					云台低头 - pitch增大
  *					云台抬头 - pitch减小
  */
-float VISION_GYRO_getPitchFeedback(void)
+float VISION_GYRO_GetPitchFeedback(void)
 {
 	float pitch_err = 0.0f;
 	/* 滤波/死区处理 */
@@ -536,7 +434,7 @@ float VISION_GYRO_getPitchFeedback(void)
  *					云台左摆 - yaw减小	-> -YAW_DIR -> yaw增大
  *					云台右摆 - yaw增大 -> -YAW_DIR -> yaw减小
  */
-float VISION_BUFF_getYawFeedback(void)
+float VISION_BUFF_GetYawFeedback(void)
 {
 	float yaw_err = 0.0f;
 	yaw_err = (YAW_DIR) * (Vision.RxPacket.RxData.yaw_angle - VISION_MID_YAW);
@@ -551,68 +449,133 @@ float VISION_BUFF_getYawFeedback(void)
  *					云台低头 - pitch增大
  *					云台抬头 - pitch减小
  */
-float VISION_BUFF_getPitchFeedback(void)
+float VISION_BUFF_GetPitchFeedback(void)
 {
 	float pitch_err = 0.0f;
 	pitch_err = (Vision.RxPacket.RxData.pitch_angle - VISION_MID_PITCH);
 	return pitch_err;
 }
 
-
-/**
- *	@brief	视觉信息记录反馈
- *	@note	失联处理可能存在问题
- */
-void VISION_recordFeedback(void)
-{
-	/* 失联判断 */
-	if(Vision.State.unconnected_cnt >= 50) {	// 500ms没接收到视觉反馈则认为视觉失联
-		Vision.State.rx_data_valid = false;
-		memset(&Vision.RxPacket.RxData, 0, sizeof(Vision_Rx_Data_t));	// 接收数据包清零
-	}
-	/* 裁判系统数据处理 */
-	if(Judge_Info.data_valid == true) {
-		Vision.State.my_color = VISION_getMyColor(&Judge_Info);
-	}
-	/* 失联计数自增，UART4_IRQ 清零*/
-	Vision.State.unconnected_cnt++;
-}
-
 /**
  *	@brief	信息反馈给视觉
  *	@note	
  */
-//int16_t auto_rate_yaw;
 uint8_t mode;
-void VISION_outputInfo(void)
+void VISION_OutputInfo(void)
 {
-//	auto_rate_yaw = (int16_t)Gimbal_PID[GYRO][YAW_205].Speed.feedback;
-//	if(abs(auto_rate_yaw) <= 50) {
-//		auto_rate_yaw = 0;
-//	} else {
-//		if(auto_rate_yaw > 0) { // >25 表明右摆
-//			auto_rate_yaw -= 50;
-//			//Vision.TxPacket.TxData.rate_yaw = 200;
-//		} else {	// <-25 表明左摆
-//			auto_rate_yaw += 50;
-//			//Vision.TxPacket.TxData.rate_yaw = -200;
-//		}
-//	}
-//	auto_rate_yaw = (int16_t)KalmanFilter(&Gimbal_Gyro_Auto_kalmanError[YAW_205], auto_rate_yaw);
-//	Vision.TxPacket.TxData.rate_yaw = auto_rate_yaw;
-
 	//Vision.TxPacket.TxData.fric_speed = Friction_Pwm_Speed[Friction.speedLevel];
 	
 	/* 通信测试函数 */
 //	Vision.TxPacket.FrameHeader.cmd_id = mode;
-//	VISION_sendData(&Vision.TxPacket, 1);
+//	VISION_SendData(&Vision.TxPacket, mode);
+}
+
+/**
+ *	@brief	视觉获取系统信息
+ */
+void VISION_GetSysInfo(System_t *sys, Vision_Info_t *vision)
+{
+	/*----模式修改----*/
+	switch(sys->Action)
+	{
+		case SYS_ACT_NORMAL: 
+			{
+				vision->State.mode = VISION_MODE_MANUAL;
+			}break;
+		case SYS_ACT_AUTO: 
+			{
+				vision->State.mode = VISION_MODE_AUTO;
+			}break;
+		case SYS_ACT_BUFF:
+			{
+				if(sys->BranchAction == BCH_ACT_SMALL_BUFF)
+					vision->State.mode = VISION_MODE_SMALL_BUFF;
+				else if(sys->BranchAction == BCH_ACT_BIG_BUFF)
+					vision->State.mode = VISION_MODE_BIG_BUFF;
+			}break;
+		case SYS_ACT_PARK:
+			{
+				vision->State.mode = VISION_MODE_MANUAL;
+			}break;
+	}	
+}
+
+/**
+ *	@brief	视觉获取系统信息
+ */
+void VISION_GetJudgeInfo(Judge_Info_t *judge, Vision_Info_t *vision)
+{
+	/* 裁判系统数据处理 */
+	if(JUDGE_IfDataValid() == true) {
+		Vision.TxPacket.TxData.my_color = JUDGE_eGeyMyColor();
+		Vision.State.my_color = JUDGE_eGeyMyColor();
+	}	
+}
+
+/**
+ *	@brief	视觉获取摩擦轮射速信息
+ */
+void VISION_GetFrictionInfo(Friction_Info_t *fric, Vision_Info_t *vision)
+{
+	vision->TxPacket.TxData.fric_speed = fric->Speed;
+}
+
+/* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
+ *	@brief	卡尔曼滤波器
+ */
+float kalman_kYaw_Q = 1;
+float kalman_kYaw_R = 15;
+float kalman_kPitch_Q = 1;
+float kalman_kPitch_R = 10;
+void VISION_Init(void)
+{
+	KalmanCreate(&Gimbal_Gyro_Auto_kalmanError[YAW_205], kalman_kYaw_Q, kalman_kYaw_R);
+	KalmanCreate(&Gimbal_Gyro_Auto_kalmanError[PITCH_206], kalman_kPitch_Q, kalman_kPitch_R);
+
+	for(uint16_t z = 0; z < VisionQueue.queueLength; z++) {
+		VisionQueue.queue[z] = 0;
+	}
+	VisionQueue.nowLength = 0;
+	visionYawMathExpect = 0;
+	visionYawStdDevia = 0;
+}
+
+/** 
+ *	@brief	离线状态下清除数据，防止出错
+ */
+void VISION_ClearRxPacket(void)
+{
+	Vision.RxPacket.RxData.pitch_angle = 0;
+	Vision.RxPacket.RxData.yaw_angle = 0;
+	Vision.RxPacket.RxData.distance = 0;
+	Vision.RxPacket.RxData.buff_change_armor_four = 0;
+	Vision.RxPacket.RxData.identify_target = 0;
+	Vision.RxPacket.RxData.identify_buff = 0;
+	Vision.RxPacket.RxData.identify_too_close = 0;
+	Vision.RxPacket.RxData.anti_gyro = 0;
+	Vision.RxPacket.RxData.anti_gyro_change_armor = 0;	
+}
+
+/**
+ *	@brief	视觉离线处理
+ */
+void VISION_LostProc(void)
+{
+	/* 失联计数自增，UART4_IRQ 清零 */
+	Vision.State.unconnected_cnt++;
+	/* 失联判断 */
+	if(Vision.State.unconnected_cnt > 50) {	// 500ms没接收到视觉反馈则认为视觉失联
+		Vision.State.rx_data_valid = false;
+		memset(&Vision.RxPacket.RxData, 0, sizeof(Vision_Rx_Data_t));	// 接收数据包清零
+	}	
 }
 
 /**
  *	@brief	视觉信息更新
  *	@author	LZX	
  */
-void VISION_updateInfo(float input, uint16_t length, QueueObj *queue, float *mathExpect, float *standardDeviation)
+void VISION_UpdateInfo(float input, uint16_t length, QueueObj *queue, float *mathExpect, float *standardDeviation)
 {
 	float sum = 0;
 	
@@ -717,7 +680,7 @@ QueueObj target_speed=
 * @brief 获取目标的速度
 * @param void
 * @return void
-*	以队列的逻辑
+*		以队列的逻辑
 */
 float Get_Target_Speed(uint8_t queue_len,float angle)
 {
@@ -773,7 +736,7 @@ QueueObj target_accel=
 * @brief 获取目标的加速度
 * @param void
 * @return void
-*	以队列的逻辑
+*		以队列的逻辑
 */
 float Get_Target_Accel(uint8_t queue_len,float speed)
 {
@@ -819,91 +782,75 @@ float Get_Target_Accel(uint8_t queue_len,float speed)
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
- *	@brief	视觉遥控控制
+ *	@brief	视觉信息记录反馈
+ *	@note	失联处理可能存在问题
  */
-void VISION_rcControlTask(void)
+void VISION_GetInfo(void)
 {
-//	REMOTE_setVisionMode(&RC_Ctl_Info);
-//	REMOTE_setAttackColor(&RC_Ctl_Info);
-}
-
-/**
- *	@brief	视觉键盘控制
- */
-void VISION_keyControlTask(void)
-{
-	//KEY_setVisionMode(&RC_Ctl_Info);
+	// 视觉获取系统信息
+	VISION_GetSysInfo(&System, &Vision);
+	// 视觉获取裁判系统信息
+	VISION_GetJudgeInfo(&Judge, &Vision);
+	// 视觉获取射速信息
+	VISION_GetFrictionInfo(&Friction, &Vision);
 }
 
 /**
  *	@brief	手动控制
  */
-void VISION_manualControl(void)
+void VISION_ManualCtrl(void)
 {
 	/* 关闭自瞄 */
-	VISION_sendData(&Vision.TxPacket, CMD_AIM_OFF);
+	VISION_SendData(&Vision.TxPacket, CMD_AIM_OFF);
 }
 
 /**
  *	@brief	自动控制
  */
-void VISION_autoControl(void)
+void VISION_AutoCtrl(void)
 {
-	/* 根据自身颜色判断敌军颜色 */
-	if(Vision.State.my_color == RED) {
-		Vision.State.attack_color = BLUE;
-	} else if(Vision.State.my_color == BLUE) {
-		Vision.State.attack_color = RED;
-	}
-	
-	VISION_sendData(&Vision.TxPacket, CMD_AIM_AUTO);
+	VISION_SendData(&Vision.TxPacket, CMD_AIM_AUTO);
 }
 
 /**
  *	@brief	打符控制
  *	@note	Ctrl+V - 击打小符
- *				Ctrl+F - 击打大符
+ *			Ctrl+F - 击打大符
  *			
  */
-void VISION_buffControl(void)
+void VISION_BuffCtrl(void)
 {
-	Vision.State.buff_color = Vision.State.my_color;
-	
 	/* 根据自身颜色判断击打的能量机关颜色 */
 	if(Vision.State.mode == VISION_MODE_BIG_BUFF) {	// 大符模式
-		VISION_sendData(&Vision.TxPacket, CMD_AIM_BIG_BUFF);	
-	} else if(Vision.State.mode == VISION_MODE_SMALL_BUFF) {	// 小符模式
-		VISION_sendData(&Vision.TxPacket, CMD_AIM_SMALL_BUFF);		
+		VISION_SendData(&Vision.TxPacket, CMD_AIM_BIG_BUFF);	
+	} 
+	else if(Vision.State.mode == VISION_MODE_SMALL_BUFF) {	// 小符模式
+		VISION_SendData(&Vision.TxPacket, CMD_AIM_SMALL_BUFF);		
 	}
 }
 
 /**
  *	@brief	视觉控制
  */
-void VISION_control(void)
+void VISION_Ctrl(void)
 {
 	/*----信息读入----*/
-	VISION_recordFeedback();
-	/*----期望修改----*/
-	if(Flag.Remote.FLAG_mode == RC) {
-		VISION_rcControlTask();
-	} else if(Flag.Remote.FLAG_mode == KEY) {
-		VISION_keyControlTask();
-	}
+	VISION_GetInfo();
+	VISION_LostProc();
 	/*----信息输出----*/
-	VISION_outputInfo();
+	//VISION_OutputInfo();
 	/*----最终输出----*/
 	switch(Vision.State.mode)
 	{
 		case VISION_MODE_MANUAL:
-			VISION_manualControl();	// 手动控制
+			VISION_ManualCtrl();// 手动控制
 			break;
 		case VISION_MODE_AUTO:
-			VISION_autoControl();	// 自动控制
+			VISION_AutoCtrl();	// 自动控制
 			break;
 		case VISION_MODE_BIG_BUFF:
 		case VISION_MODE_SMALL_BUFF:
-			VISION_buffControl();	// 打符控制
+			VISION_BuffCtrl();	// 打符控制
 			break;
 		default:
 			break;

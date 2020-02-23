@@ -7,10 +7,10 @@
 #define PWM2  	TIM3->CCR2
 #define SERVO		TIM1->CCR2
 
-void TIM3_init(void);
-void TIM1_init(void);
-void FRICTION_pwmOut(int16_t pwm1, int16_t pwm2);
-void MAGZINE_pwmOut(int16_t pwm);
+void TIM3_Init(void);
+void TIM1_Init(void);
+void FRICTION_PwmOut(int16_t pwm1, int16_t pwm2);
+void MAGZINE_PwmOut(int16_t pwm);
 
 #endif
 

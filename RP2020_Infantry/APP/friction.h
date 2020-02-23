@@ -23,10 +23,12 @@ typedef enum {
 }Friction_State_Names_t;
 
 typedef struct {
-	Friction_State_Names_t state;
-	Friction_Speed_Names_t speedLevel;
-	int16_t	speedTarget;
-	int16_t	speedFeedback;
+	Remote_Mode_Names_t		RemoteMode;
+	Friction_State_Names_t 	State;
+	uint16_t				Speed;
+	Friction_Speed_Names_t 	SpeedLevel;
+	int16_t					SpeedTarget;
+	int16_t					SpeedFeedback;	
 }Friction_Info_t;
 
 /* ## Global Variables Prototypes ## -----------------------------------------*/
@@ -37,19 +39,19 @@ extern uint16_t Friction_Pwm_Speed[FRIC_SPEED_COUNT];
 /* API functions Prototypes --------------------------------------------------*/
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void FRICTION_ParamsInit(Friction_Info_t *fric);
-void FRICTION_stop(Friction_Info_t *fric);
-void FRICTION_pwmCalculate(Friction_Info_t *fric);
-void FRICTION_selfCalibration(void);
+void FRICTION_Stop(Friction_Info_t *fric);
+void FRICTION_PwmCalc(Friction_Info_t *fric);
+void FRICTION_SelfCalibrate(void);
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void FRICTION_reset(void);
-bool FRICTION_ifOpen(void);
-bool FRICTION_ifReady(void);
+void FRICTION_Reset(void);
+bool FRICTION_IfOpen(void);
+bool FRICTION_IfReady(void);
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void FRICTION_rcControlTask(void);
-void FRICTION_keyControlTask(void);
-void FRICTION_selfProtect(void);
-void FRICTION_control(void);
+void FRICTION_RcCtrlTask(void);
+void FRICTION_KeyCtrlTask(void);
+void FRICTION_SelfProtect(void);
+void FRICTION_Ctrl(void);
 
 #endif

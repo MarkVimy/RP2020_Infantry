@@ -50,13 +50,13 @@ int Usart5_Clean_IDLE_Flag = 0;
 uint8_t  Judge_Buffer[ JUDGE_BUFFER_LEN ] = {0};
 
 /* Private function prototypes -----------------------------------------------*/
-static void UART5_DMA_init( void );
+static void UART5_DMA_Init( void );
 
 /* Private functions ---------------------------------------------------------*/
 /**
  *	@brief 串口5 DMA初始化
  */
-static void UART5_DMA_init( void )
+static void UART5_DMA_Init( void )
 {		
 	DMA_InitTypeDef xCom5DMAInit;
 	
@@ -88,7 +88,7 @@ static void UART5_DMA_init( void )
 /**
  *	@brief	裁判系统串口初始化(UART5)
  */
-void UART5_init( void )
+void UART5_Init( void )
 {
 	USART_InitTypeDef  xUsartInit;
 	GPIO_InitTypeDef   xGpioInit;
@@ -126,7 +126,7 @@ void UART5_init( void )
 	USART_DMACmd( UART5, USART_DMAReq_Rx, ENABLE );
 	USART_DMACmd( UART5, USART_DMAReq_Tx, ENABLE );
 	
-	UART5_DMA_init( );//初始化usart5的DMA
+	UART5_DMA_Init( );//初始化usart5的DMA
 	
 	xNvicInit.NVIC_IRQChannel                    = UART5_IRQn;
 	xNvicInit.NVIC_IRQChannelPreemptionPriority  = UART5_IT_PRIO_PRE;
@@ -151,7 +151,7 @@ void UART5_IRQHandler( void )
 		
 		Usart5_Clean_IDLE_Flag = JUDGE_BUFFER_LEN - DMA_GetCurrDataCounter(DMA1_Stream_RX);
 
-		JUDGE_readData(Judge_Buffer);		// 读取裁判系统数据
+		JUDGE_ReadData(Judge_Buffer);		// 读取裁判系统数据
 		memset(Judge_Buffer, 0, JUDGE_BUFFER_LEN);	// 读完之后内容清零
 		DMA_Cmd(DMA1_Stream_RX, ENABLE);
 	}
@@ -164,7 +164,7 @@ void UART5_IRQHandler( void )
   * @retval void
   * @attention  串口移位发送
   */
-void UART5_sendChar(uint8_t cData)
+void UART5_SendChar(uint8_t cData)
 {
 	while (USART_GetFlagStatus( UART5, USART_FLAG_TC ) == RESET);
 	

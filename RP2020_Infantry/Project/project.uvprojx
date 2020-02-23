@@ -14,7 +14,7 @@
         <TargetCommonOption>
           <Device>STM32F407VE</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.1.0.8</PackID>
+          <PackID>Keil.STM32F4xx_DFP.2.9.0</PackID>
           <PackURL>http://www.keil.com/pack</PackURL>
           <Cpu>IROM(0x08000000,0x80000) IRAM(0x20000000,0x20000) IRAM2(0x10000000,0x10000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -424,6 +424,11 @@
           <GroupName>APP</GroupName>
           <Files>
             <File>
+              <FileName>my_app.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\APP\my_app.h</FilePath>
+            </File>
+            <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\APP\main.c</FilePath>
@@ -434,19 +439,14 @@
               <FilePath>..\APP\stm32f4xx_it.c</FilePath>
             </File>
             <File>
-              <FileName>kalman.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\APP\kalman.c</FilePath>
-            </File>
-            <File>
               <FileName>remote.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\APP\remote.c</FilePath>
             </File>
             <File>
-              <FileName>friction.c</FileName>
+              <FileName>imu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\friction.c</FilePath>
+              <FilePath>..\APP\imu.c</FilePath>
             </File>
             <File>
               <FileName>magzine.c</FileName>
@@ -454,14 +454,19 @@
               <FilePath>..\APP\magzine.c</FilePath>
             </File>
             <File>
-              <FileName>crc.c</FileName>
+              <FileName>friction.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\crc.c</FilePath>
+              <FilePath>..\APP\friction.c</FilePath>
             </File>
             <File>
-              <FileName>my_app.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\APP\my_app.h</FilePath>
+              <FileName>ultra.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\ultra.c</FilePath>
+            </File>
+            <File>
+              <FileName>kalman.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\kalman.c</FilePath>
             </File>
             <File>
               <FileName>kalman_filter.c</FileName>
@@ -469,9 +474,9 @@
               <FilePath>..\APP\kalman_filter.c</FilePath>
             </File>
             <File>
-              <FileName>ultra.c</FileName>
+              <FileName>crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\APP\ultra.c</FilePath>
+              <FilePath>..\APP\crc.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -48,13 +48,13 @@
 uint8_t  Ultra_Buffer[ ULTRA_BUFFER_LEN ] = {0};	//视觉发过来的数据暂存在这里
 
 /* Private function prototypes -----------------------------------------------*/
-static void USART3_DMA_init( void );
+static void USART3_DMA_Init( void );
 
 /* Private functions ---------------------------------------------------------*/
 /**
  *	@brief 串口4 DMA初始化
  */
-static void USART3_DMA_init( void )
+static void USART3_DMA_Init( void )
 {		
 	DMA_InitTypeDef xCom3DMAInit;
 	
@@ -86,7 +86,7 @@ static void USART3_DMA_init( void )
 /**
  *	@brief	视觉通信串口初始化(USART3)
  */
-void USART3_init( void )
+void USART3_Init( void )
 {
 	USART_InitTypeDef  xUsartInit;
 	GPIO_InitTypeDef   xGpioInit;
@@ -124,7 +124,7 @@ void USART3_init( void )
 	USART_DMACmd( USART3, USART_DMAReq_Rx, ENABLE );
 	USART_DMACmd( USART3, USART_DMAReq_Tx, ENABLE );
 	
-	USART3_DMA_init( );	// 初始化uart4的DMA
+	USART3_DMA_Init( );	// 初始化uart4的DMA
 	
 	xNvicInit.NVIC_IRQChannel                    = USART3_IRQn;
 	xNvicInit.NVIC_IRQChannelPreemptionPriority  = USART3_IT_PRIO_PRE;
@@ -136,8 +136,6 @@ void USART3_init( void )
 /**
  *	@brief	串口4中断函数
  */
-uint32_t js_ultra_time = 0;
-float 	 js_ultra_dis = 0;
 void USART3_IRQHandler( void )
 {
 	uint8_t res;
@@ -153,8 +151,11 @@ void USART3_IRQHandler( void )
 		
 		res = ULTRA_BUFFER_LEN - DMA_GetCurrDataCounter(DMA1_Stream_RX);
 		
-		js_ultra_time = ULTRA_readData(Ultra_Buffer);		// 读取超声波探测时间(us)
-		js_ultra_dis = 0.34f * js_ultra_time / 2.f;
+		/* 超声波测距数据记录 */
+		Ultra.time = ULTRA_ReadData(Ultra_Buffer);		// 读取超声波探测时间(us)
+		Ultra.dis = 0.34f * Ultra.time / 2.f;
+		Ultra.update = true;
+		
 		memset(Ultra_Buffer, 0, ULTRA_BUFFER_LEN);	// 读完之后内容清零
 		DMA_Cmd(DMA1_Stream_RX, ENABLE);
 	}
@@ -167,7 +168,7 @@ void USART3_IRQHandler( void )
   * @retval void
   * @attention  串口移位发送
   */
-void USART3_sendChar(uint8_t cData)
+void USART3_SendChar(uint8_t cData)
 {
 	while (USART_GetFlagStatus( USART3, USART_FLAG_TC ) == RESET);
 	

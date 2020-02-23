@@ -12,7 +12,7 @@
 extern uint8_t  Judge_Buffer[ JUDGE_BUFFER_LEN ];
 
 /* API functions Prototypes --------------------------------------------------*/
-void UART5_init( void );
-void UART5_sendChar( uint8_t cData );
+void UART5_Init( void );
+void UART5_SendChar( uint8_t cData );
 
 #endif

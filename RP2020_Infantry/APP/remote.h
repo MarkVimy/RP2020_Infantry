@@ -1,10 +1,9 @@
 #ifndef __REMOTE_H
 #define __REMOTE_H
 
-#include "sys.h"
-#include "friction.h"
-#include "magzine.h"
-#include "judge.h"
+#include "stm32f4xx.h" 
+#include "stdbool.h"
+#include "my_include.h"
 #include "my_task.h"
 
 /* ----------------------- RC Setting Definition---------------------------- */
@@ -17,11 +16,11 @@
 #define    RC_GIMBAL_MECH_PITCH_SENSITIVY		0.0175f
 #define	   RC_GIMBAL_GYRO_YAW_SENSITIVY			0.0245f
 #define    RC_GIMBAL_GYRO_PITCH_SENSITIVY		RC_GIMBAL_MECH_PITCH_SENSITIVY	//0.0050f
-#define    RC_CHASSIS_SPEED_RATE						14
+#define    RC_CHASSIS_SPEED_RATE				14
 #define	   RC_CHASSIS_Z_SPEED_SENSITIVY			1.0f
 
 #define	   KEY_GIMBAL_GYRO_YAW_SENSITIVY		0.35f
-#define    KEY_GIMBAL_GYRO_PITCH_SENSITIVY	0.30f
+#define    KEY_GIMBAL_GYRO_PITCH_SENSITIVY		0.30f
 
 
 /* ----------------------- RC Channel Definition---------------------------- */
@@ -58,6 +57,8 @@
 
 /* ----------------------- Function Definition-------------------------------- */
 /* 遥控摇杆通道偏移值 */
+#define		RC_SW1_VALUE				(RC_Ctl_Info.rc.s1)
+#define		RC_SW2_VALUE				(RC_Ctl_Info.rc.s2)
 #define		RC_LEFT_CH_LR_VALUE			(RC_Ctl_Info.rc.ch2 - RC_CH_VALUE_OFFSET)
 #define		RC_LEFT_CH_UD_VALUE			(RC_Ctl_Info.rc.ch3 - RC_CH_VALUE_OFFSET)
 #define		RC_RIGH_CH_LR_VALUE			(RC_Ctl_Info.rc.ch0 - RC_CH_VALUE_OFFSET)
@@ -71,7 +72,6 @@
 #define    IF_RC_SW2_UP      (RC_Ctl_Info.rc.s2 == RC_SW_UP)
 #define    IF_RC_SW2_MID     (RC_Ctl_Info.rc.s2 == RC_SW_MID)
 #define    IF_RC_SW2_DOWN    (RC_Ctl_Info.rc.s2 == RC_SW_DOWN)
-
 
 /* 获取鼠标三轴的移动速度 */
 #define    MOUSE_X_MOVE_SPEED    (RC_Ctl_Info.mouse.x)
@@ -116,7 +116,6 @@ typedef struct
 		uint8_t  s1;
 		uint8_t  s2;
 		uint16_t thumbwheel;
-		uint8_t	 isDataValid;
 	}rc;
 	
 	struct
@@ -138,19 +137,21 @@ typedef struct
 extern RC_Ctl_t RC_Ctl_Info;
 
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void REMOTE_reenableRC(RC_Ctl_t *remoteInfo);
-void REMOTE_resetRCData(RC_Ctl_t *remoteInfo);
-bool REMOTE_isRCChannelReset(RC_Ctl_t *remoteInfo);
-void REMOTE_init(void);
+void REMOTE_Init(void);
+void REMOTE_ResetRcData(RC_Ctl_t *remote);
+void REMOTE_ProcessData(RC_Ctl_t *remote, char *rxBuf);
+
+/* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+bool REMOTE_IsRcDataValid(RC_Ctl_t *remote);
+bool REMOTE_IsRcChannelReset(RC_Ctl_t *remote);
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void REMOTE_processData(RC_Ctl_t *remoteInfo, char *rxBuf);
-void REMOTE_rcLostProcess(void);
-void REMOTE_rcLostReport(void);
-void REMOTE_rcErrReport(void);
-void REMOTE_rcCorrectProcess(void);
+void REMOTE_RcLostProcess(System_t *sys);
+void REMOTE_RcLostReport(System_t *sys);
+void REMOTE_RcErrReport(System_t *sys);
+void REMOTE_RcCorrectProcess(System_t *sys, RC_Ctl_t *remote);
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-void REMOTE_control(void);
+void REMOTE_Ctrl(void);
 
 #endif

@@ -1,6 +1,5 @@
 .\objects\judge.o: ..\AppInfo\judge.c
 .\objects\judge.o: ..\AppInfo\judge.h
-.\objects\judge.o: ..\SYSTEM\sys.h
 .\objects\judge.o: ..\Libraries\cmsis\stm32f4xx.h
 .\objects\judge.o: ..\Libraries\cmsis\Include\core_cm4.h
 .\objects\judge.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
@@ -24,6 +23,8 @@
 .\objects\judge.o: ..\Libraries\inc\stm32f4xx_syscfg.h
 .\objects\judge.o: ..\Libraries\inc\misc.h
 .\objects\judge.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdbool.h
+.\objects\judge.o: ..\BSP\uart5.h
+.\objects\judge.o: ..\SYSTEM\sys.h
 .\objects\judge.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\string.h
 .\objects\judge.o: ..\FreeRTOS\include\FreeRTOS.h
 .\objects\judge.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
@@ -36,7 +37,19 @@
 .\objects\judge.o: ..\FreeRTOS\include\task.h
 .\objects\judge.o: ..\FreeRTOS\include\list.h
 .\objects\judge.o: ..\SYSTEM\my_include.h
+.\objects\judge.o: ..\APP\my_app.h
+.\objects\judge.o: ..\AppInfo\vision.h
 .\objects\judge.o: ..\SYSTEM\sys.h
-.\objects\judge.o: ..\BSP\uart5.h
-.\objects\judge.o: ..\APP\crc.h
+.\objects\judge.o: ..\APP\my_app.h
+.\objects\judge.o: ..\APP\remote.h
+.\objects\judge.o: ..\TASK\my_task.h
+.\objects\judge.o: ..\TASK\Task_Chassis.h
+.\objects\judge.o: ..\TASK\Task_Gimbal.h
 .\objects\judge.o: ..\TASK\Task_Revolver.h
+.\objects\judge.o: ..\TASK\Task_Timing_Report.h
+.\objects\judge.o: ..\FreeRTOS\include\queue.h
+.\objects\judge.o: ..\FreeRTOS\include\timers.h
+.\objects\judge.o: ..\APP\friction.h
+.\objects\judge.o: ..\APP\magzine.h
+.\objects\judge.o: ..\APP\ultra.h
+.\objects\judge.o: ..\APP\crc.h

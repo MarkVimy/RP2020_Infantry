@@ -28,6 +28,7 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 #include "my_include.h"
+#include "my_app.h"
 #endif
 	 
 //位带操作,实现51类似的GPIO控制功能
@@ -114,14 +115,15 @@
 #define    TIME_STAMP_1000MS  1000
 #define    TIME_STAMP_1500MS  1500
 #define    TIME_STAMP_2000MS  2000
+#define	   TIME_STAMP_5000MS  5000
 #define    TIME_STAMP_6000MS  6000
 #define    TIME_STAMP_10S     10000
 
 /* 位运算函数 */
-#define BM_ifSet(var, bm)	((var&bm)?1:0)
-#define BM_ifReset(var, bm)	((var&bm)?0:1)
-#define BM_set(var, bm)		(var |= bm)
-#define BM_reset(var, bm)	(var &= ~bm)
+#define BM_IfSet(var, bm)	((var&bm)?1:0)
+#define BM_IfReset(var, bm)	((var&bm)?0:1)
+#define BM_Set(var, bm)		(var |= bm)
+#define BM_Reset(var, bm)	(var &= ~bm)
 
 /* 单位转换 */
 #define DEGREE_2_RADIAN		(0.0175f)
@@ -136,11 +138,11 @@ void INTX_ENABLE(void);	//开启所有中断
 void MSR_MSP(u32 addr);	//设置堆栈地址 
 
 /* 死区函数 */
-float myDeathZoom(float input, float death);
+float myDeathZoom(float center, float death, float input);
 
 /* 斜坡函数 */
-float RAMP_float(float final, float now, float ramp );
-float STEP_float(float err, float step, uint8_t *stepCnt, float death);
+float RampFloat(float final, float now, float ramp );
+float StepFloat(float err, float step, uint8_t *stepCnt, float death);
 /* 冒泡排序 */
 void  Bubble_sort_float(uint16_t num, float *arr);
 /* 中位值平均浮点滤波器 */

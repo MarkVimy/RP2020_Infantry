@@ -36,15 +36,12 @@
 .\objects\uart4.o: ..\FreeRTOS\include\task.h
 .\objects\uart4.o: ..\FreeRTOS\include\list.h
 .\objects\uart4.o: ..\SYSTEM\my_include.h
-.\objects\uart4.o: ..\SYSTEM\sys.h
-.\objects\uart4.o: ..\AppInfo\vision.h
 .\objects\uart4.o: ..\APP\my_app.h
 .\objects\uart4.o: ..\AppInfo\judge.h
 .\objects\uart4.o: ..\AppInfo\vision.h
-.\objects\uart4.o: ..\APP\remote.h
-.\objects\uart4.o: ..\APP\friction.h
-.\objects\uart4.o: ..\APP\magzine.h
+.\objects\uart4.o: ..\SYSTEM\sys.h
 .\objects\uart4.o: ..\APP\my_app.h
+.\objects\uart4.o: ..\APP\remote.h
 .\objects\uart4.o: ..\TASK\my_task.h
 .\objects\uart4.o: ..\TASK\Task_Chassis.h
 .\objects\uart4.o: ..\TASK\Task_Gimbal.h
@@ -52,4 +49,6 @@
 .\objects\uart4.o: ..\TASK\Task_Timing_Report.h
 .\objects\uart4.o: ..\FreeRTOS\include\queue.h
 .\objects\uart4.o: ..\FreeRTOS\include\timers.h
+.\objects\uart4.o: ..\APP\friction.h
+.\objects\uart4.o: ..\APP\magzine.h
 .\objects\uart4.o: ..\APP\ultra.h

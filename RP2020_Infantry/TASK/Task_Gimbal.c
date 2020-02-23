@@ -44,13 +44,18 @@ int GIMBAL_SPEED_PID_OUT_MAX	= 29999;
 #define LOST	0
 #define FOUND	1
 
+#define K_LEVEL_0	2.5
+#define K_LEVEL_1	2
+#define K_LEVEL_2	1.67
+#define K_LEVEL_3	1
+
 /* Private variables ---------------------------------------------------------*/
 /* 卡尔曼滤波器 */
 extKalman_t Gimbal_kalmanError[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT];
 extKalman_t Mpu_kalmanError[2];
 extKalman_t Gimbal_Auto_kalmanError[GIMBAL_MOTOR_COUNT];
 
-extKalman_t kalman_visionYaw,kalman_cloudYaw,kalman_targetYaw,kalman_speedYaw;
+extKalman_t kalman_visionYaw,kalman_cloudYaw,kalman_targetYaw,kalman_speedYaw, kalman_dist, kalman_accel;
 
 kalman_filter_t yaw_kalman_filter;
 kalman_filter_t pitch_kalman_filter;
@@ -89,6 +94,14 @@ float BUFF_PITCH_MODIFY_TABLE[11] =
 /* 预测到位算法 */
 bool Mobi_Pre_Yaw = false;//预测是否开启标志位
 bool Mobi_Pre_Yaw_Fire = false;//默认预测没到位，禁止开枪
+
+/* 自瞄算法 */
+float start_gyro_yaw=0;
+float now_gyro_yaw=0;
+float last_gyro_yaw=0;
+float delta_gyro_yaw=0;
+
+float k_level;	// 射速影响因子（最高射速时为1）
 
 /* ## Global variables ## ----------------------------------------------------*/
  
@@ -288,7 +301,7 @@ QueueObj LostQueue =
 /**
  *	@brief	云台电机PID参数初始化
  */
-void GIMBAL_pidParamsInit(Gimbal_PID_t *pid, uint8_t motor_cnt)
+void GIMBAL_PidParamsInit(Gimbal_PID_t *pid, uint8_t motor_cnt)
 {
 	uint8_t i;
 	for(i = 0; i < motor_cnt; i++) {
@@ -352,7 +365,7 @@ float normal_pitch_angle_kp = 12.f;	// 8.35			12.50	12		15			14.65
 float normal_pitch_speed_kp = 12.65f;	// 15.10	16.65	14.25		12.85	14.75		14.65
 float normal_pitch_speed_ki = 180.f;	// 39.5		55		100				150		180		180.
 
-void GIMBAL_pidParamsSwitch(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+void GIMBAL_PidParamsSwitch(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
 {
 	switch(gimbal->State.mode)
 	{
@@ -396,7 +409,7 @@ void GIMBAL_pidParamsSwitch(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COU
 
 			break;
 		case GIMBAL_MODE_AUTO:
-			if(VISION_getFlagStatus(VISION_FLAG_LOCK_TARGET) == true) // 锁定目标
+			if(VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET) == true) // 锁定目标
 			{
 				pid[GYRO][YAW_205].Speed.kp = auto_yaw_speed_kp;		
 				pid[GYRO][YAW_205].Speed.ki = auto_yaw_speed_ki;		
@@ -459,7 +472,7 @@ void GIMBAL_pidParamsSwitch(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COU
 /**
  *	@brief	云台电机卸力
  */
-void GIMBAL_stop(Gimbal_PID_t *pid)
+void GIMBAL_Stop(Gimbal_PID_t *pid)
 {
 	static int16_t pid_out[4] = {0, 0, 0, 0};
 	
@@ -469,7 +482,7 @@ void GIMBAL_stop(Gimbal_PID_t *pid)
 	pid[PITCH_206].Speed.out = 0;
 	pid[PITCH_206].Out = 0;
 	
-	CAN1_send(0x1FF, pid_out);	// 云台CAN总线标准标识符
+	CAN1_Send(0x1FF, pid_out);	// 云台CAN总线标准标识符
 }
 
 /**
@@ -483,7 +496,7 @@ float js_gimbal_pitch_speed_target;
 float js_gimbal_pitch_speed_out;
 float js_gimbal_speed_feedback;
 
-void GIMBAL_Speed_pidCalculate(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
+void GIMBAL_Speed_PidCalc(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
 {
 	js_gimbal_yaw_speed_feedback = pid[YAW_205].Speed.feedback;
 	js_gimbal_yaw_speed_target = pid[YAW_205].Speed.target;
@@ -533,7 +546,7 @@ float js_gimbal_pitch_angle_feedback;
 float js_gimbal_pitch_angle_target;
 float js_gimbal_yaw_angle_erro;
 float js_gimbal_pitch_angle_erro;
-void GIMBAL_Angle_pidCalculate(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
+void GIMBAL_Angle_PidCalc(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
 {	
 	js_gimbal_yaw_angle_feedback = pid[YAW_205].Angle.feedback;
 	js_gimbal_yaw_angle_target = pid[YAW_205].Angle.target;
@@ -544,7 +557,7 @@ void GIMBAL_Angle_pidCalculate(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
 	js_gimbal_yaw_angle_erro = pid[YAW_205].Angle.erro;
 	js_gimbal_pitch_angle_erro = pid[PITCH_206].Angle.erro;
 	
-	if((Flag.Gimbal.FLAG_pidMode == MECH) && (MOTORx == YAW_205)) {	// 计算有效误差
+	if((Gimbal.State.pid_mode == MECH) && (MOTORx == YAW_205)) {	// 计算有效误差
 		if(pid[MOTORx].Angle.erro >= 4096.f) {
 			pid[MOTORx].Angle.erro = -8192.f + pid[MOTORx].Angle.erro;
 		} else if(pid[MOTORx].Angle.erro <= -4096.f) {
@@ -560,7 +573,7 @@ void GIMBAL_Angle_pidCalculate(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
 		}
 	}		
 	
-//	if((Flag.Gimbal.FLAG_pidMode == GYRO) && (MOTORx == YAW_205)) {	// 计算有效误差
+//	if((Gimbal.State.pid_mode == GYRO) && (MOTORx == YAW_205)) {	// 计算有效误差
 //		if(pid[MOTORx].Angle.erro >= 180.f*GIMBAL_GYRO_ANGLE_ZOOM_INDEX) {
 //			pid[MOTORx].Angle.erro = -(360.f*GIMBAL_GYRO_ANGLE_ZOOM_INDEX - pid[MOTORx].Angle.erro);
 //		} else if(pid[MOTORx].Angle.erro <= -180.f*GIMBAL_GYRO_ANGLE_ZOOM_INDEX) {
@@ -570,11 +583,11 @@ void GIMBAL_Angle_pidCalculate(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
 	
 	/* 对误差进行卡尔曼滤波，消除低频等幅抖动 */
 	if(Gimbal.State.mode == GIMBAL_MODE_NORMAL) {	// 正常模式下
-		pid[MOTORx].Angle.erro = KalmanFilter(&Gimbal_kalmanError[Flag.Gimbal.FLAG_pidMode][MOTORx], pid[MOTORx].Angle.erro);
+		pid[MOTORx].Angle.erro = KalmanFilter(&Gimbal_kalmanError[Gimbal.State.pid_mode][MOTORx], pid[MOTORx].Angle.erro);
 	}
 	
 	if(Gimbal.State.mode == GIMBAL_MODE_AUTO) {
-		pid[MOTORx].Angle.erro = KalmanFilter(&Gimbal_kalmanError[Flag.Gimbal.FLAG_pidMode][MOTORx], pid[MOTORx].Angle.erro);
+		pid[MOTORx].Angle.erro = KalmanFilter(&Gimbal_kalmanError[Gimbal.State.pid_mode][MOTORx], pid[MOTORx].Angle.erro);
 //		if(abs(pid[MOTORx].Angle.erro) < 0.5f) {
 //			pid[MOTORx].Angle.erro = 0.f;
 //		}
@@ -603,7 +616,7 @@ void GIMBAL_Angle_pidCalculate(Gimbal_PID_t *pid, Gimbal_Motor_Names_t MOTORx)
 /**
  *	@brief	云台电机PID的最终输出
  */
-void GIMBAL_pidOut(Gimbal_PID_t *pid)
+void GIMBAL_PidOut(Gimbal_PID_t *pid)
 {
 	int16_t pidOut[4] = {0, 0, 0, 0};
 	
@@ -622,7 +635,7 @@ void GIMBAL_pidOut(Gimbal_PID_t *pid)
 		pidOut[PITCH_206] = 0;	// 失联后卸力
 	}
 	
-	CAN1_queueSend(0x1FF, pidOut);
+	CAN1_QueueSend(0x1FF, pidOut);
 }
 
 /**
@@ -632,7 +645,7 @@ float k_Auto_Yaw_R = 20;
 float k_Auto_Pitch_R = 10;
 float k_Zx_Yaw_Q = 1;
 float k_Zx_Yaw_R = 1000;
-void GIMBAL_kalmanCreate(void)
+void GIMBAL_KalmanCreate(void)
 {
 	/* 卡尔曼滤波器初始化 */
 	KalmanCreate(&Gimbal_kalmanError[MECH][YAW_205], 1, 40);
@@ -662,7 +675,7 @@ void GIMBAL_kalmanCreate(void)
 /**
  *	@brief	云台设置模式
  */
-void GIMBAL_setMode(Gimbal_Mode_t mode)
+void GIMBAL_SetMode(Gimbal_Mode_t mode)
 {
 	Gimbal.State.mode = mode;
 }
@@ -670,7 +683,7 @@ void GIMBAL_setMode(Gimbal_Mode_t mode)
 /**
  *	@brief	返回云台当前的模式
  */
-Gimbal_Mode_t GIMBAL_getMode(void)
+Gimbal_Mode_t GIMBAL_GetMode(void)
 {
 	return Gimbal.State.mode;
 }
@@ -678,12 +691,12 @@ Gimbal_Mode_t GIMBAL_getMode(void)
 /**
  *	@brief	根据底盘控制逻辑反馈机械中值
  */
-float GIMBAL_getMiddleAngle(void)
+float GIMBAL_GetMiddleAngle(void)
 {
-	if(CHASSIS_getLogic() == CHAS_LOGIC_NORMAL) {
+	if(CHASSIS_GetLogic() == CHAS_LOGIC_NORMAL) {
 		return GIMBAL_TOP_YAW_MID_ANGLE;
 	} 
-	else if(CHASSIS_getLogic() == CHAS_LOGIC_REVERT) {
+	else if(CHASSIS_GetLogic() == CHAS_LOGIC_REVERT) {
 		return GIMBAL_REVERT_YAW_MID_ANGLE;
 	}
 	return GIMBAL_TOP_YAW_MID_ANGLE;
@@ -692,25 +705,25 @@ float GIMBAL_getMiddleAngle(void)
 /**
  *	@brief	云台是否处于机械模式
  */
-bool GIMBAL_ifMechMode(void)
+bool GIMBAL_IfMechMode(void)
 {
-	return (Flag.Gimbal.FLAG_pidMode == MECH);
+	return (Gimbal.State.pid_mode == MECH);
 }
 
 /**
  *	@brief	云台是否处于陀螺仪模式
  */
-bool GIMBAL_ifGyroMode(void)
+bool GIMBAL_IfGyroMode(void)
 {
-	return (Flag.Gimbal.FLAG_pidMode == GYRO);
+	return (Gimbal.State.pid_mode == GYRO);
 }
 
 /**
  *	@brief	判断云台是否处于常规模式
  *	@return true - 常规模式
- *					false - 非常规模式
+ *			false - 非常规模式
  */
-bool GIMBAL_ifNormalMode(void)
+bool GIMBAL_IfNormalMode(void)
 {
 	if(Gimbal.State.mode == GIMBAL_MODE_NORMAL) {
 		return true;
@@ -720,26 +733,11 @@ bool GIMBAL_ifNormalMode(void)
 }
 
 /**
- *	@brief	判断云台是否开启小陀螺
- *	@return true - 小陀螺模式
- *					false - 小陀螺模式
- */
-bool GIMBAL_ifTopGyroOpen(void)
-{
-	if((GIMBAL_ifGyroMode() == true )&& 
-		(Gimbal.State.FLAG_topGyroOpen == true)) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
-/**
  *	@brief	判断云台是否处于自瞄模式
  *	@return true - 自瞄模式
- *					false - 非自瞄模式
+ *			false - 非自瞄模式
  */
-bool GIMBAL_ifAutoMode(void)
+bool GIMBAL_IfAutoMode(void)
 {
 	if(Gimbal.State.mode == GIMBAL_MODE_AUTO) {
 		return true;
@@ -751,9 +749,9 @@ bool GIMBAL_ifAutoMode(void)
 /**
  *	@brief	判断云台是否处于打符模式
  *	@return true - 打符模式
- *					false - 非打符模式
+ *			false - 非打符模式
  */
-bool GIMBAL_ifBuffMode(void)
+bool GIMBAL_IfBuffMode(void)
 {
 	if(Gimbal.State.mode == GIMBAL_MODE_BIG_BUFF || Gimbal.State.mode == GIMBAL_MODE_SMALL_BUFF) {
 		return true;
@@ -765,9 +763,9 @@ bool GIMBAL_ifBuffMode(void)
 /**
  *	@brief	判断云台是否正在瞄准哨兵
  *	@return true - 正在瞄准哨兵
- *					false - 没有瞄准哨兵
+ *			false - 没有瞄准哨兵
  */
-bool GIMBAL_ifAimSentry(void)
+bool GIMBAL_IfAimSentry(void)
 {
 	/* 判断在击打哨兵(抬头pitch减小) */
 	if((Gimbal_PID[GYRO][PITCH_206].Angle.feedback <= GIMBAL_AUTO_LOCK_SENTRY_ANGLE || Gimbal_PID[MECH][PITCH_206].Angle.feedback <= GIMBAL_AUTO_LOCK_SENTRY_ANGLE ) 
@@ -781,9 +779,9 @@ bool GIMBAL_ifAimSentry(void)
 /**
  *	@brief	判断云台是否正在补子弹
  *	@return true - 正在补弹
- *					false - 没有正在补弹
+ *			false - 没有正在补弹
  */
-bool GIMBAL_ifReloadBullet(void)
+bool GIMBAL_IfReloadBullet(void)
 {
 	if(Gimbal.State.mode == GIMBAL_MODE_RELOAD_BULLET) {
 		return true;
@@ -795,25 +793,25 @@ bool GIMBAL_ifReloadBullet(void)
 /**
  *	@brief	打符云台是否跟踪到位
  *	@return true - 跟踪到位可以打弹
- *					false - 跟踪未到位禁止打弹
+ *			false - 跟踪未到位禁止打弹
  */
 float debug_pix_yaw = 0;
 float debug_pix_pitch = 0;
 float debug_pix_yaw_ready = 35;
 float debug_pix_pitch_ready = 35;
-bool GIMBAL_BUFF_chaseReady(void)
+bool GIMBAL_BUFF_IfChaseReady(void)
 {
 	bool res = true;
 	debug_pix_yaw = Gimbal.Buff.Yaw.erro;
 	debug_pix_pitch = Gimbal.Buff.Pitch.erro;
 	
-	if((abs(debug_pix_yaw) < debug_pix_yaw_ready) && (VISION_getFlagStatus(VISION_FLAG_LOCK_BUFF) == true)) {
+	if((abs(debug_pix_yaw) < debug_pix_yaw_ready) && (VISION_GetFlagStatus(VISION_FLAG_LOCK_BUFF) == true)) {
 		res &= true;
 	} else {
 		res &= false;
 	}
 	
-	if((abs(debug_pix_pitch) < debug_pix_pitch_ready) && (VISION_getFlagStatus(VISION_FLAG_LOCK_BUFF) == true)) {
+	if((abs(debug_pix_pitch) < debug_pix_pitch_ready) && (VISION_GetFlagStatus(VISION_FLAG_LOCK_BUFF) == true)) {
 		res &= true;
 	} else {
 		res &= false;
@@ -824,11 +822,11 @@ bool GIMBAL_BUFF_chaseReady(void)
 /**
  *	@brief	是否进入开火预测
  *	@return true - 已开启开火预测
- *					false - 未开启开火预测
+ *			false - 未开启开火预测
  */
-bool GIMBAL_ifAutoMobiPre(void)
+bool GIMBAL_IfAutoMobiPre(void)
 {
-	if(GIMBAL_ifAutoMode() == true) {
+	if(GIMBAL_IfAutoMode() == true) {
 		return Mobi_Pre_Yaw;
 	} else {	// 未开启自瞄不可能有预测
 		return false;
@@ -838,9 +836,9 @@ bool GIMBAL_ifAutoMobiPre(void)
 /**
  *	@brief	预测是否跟踪到位
  *	@return true - 跟踪到位可以打弹
- *					false - 跟踪未到位禁止打弹
+ *			false - 跟踪未到位禁止打弹
  */
-bool GIMBAL_AUTO_chaseReady(void)
+bool GIMBAL_AUTO_IfChaseReady(void)
 {
 	return Mobi_Pre_Yaw_Fire;
 }
@@ -848,9 +846,9 @@ bool GIMBAL_AUTO_chaseReady(void)
 /**
  *	@brief	反馈底盘偏离设定的机械归中值的机械角度(-8191~+8191)
  *	@return 反馈值为机械角度差值(带正负号)
- *	@note		规定：以机械中值为轴，机械角度增加的方向为正方向
+ *	@note	规定：以机械中值为轴，机械角度增加的方向为正方向
  */
-float GIMBAL_getTopGyroAngleOffset(void)
+float GIMBAL_GetTopGyroAngleOffset(void)
 {
 	float delta_angle, feedback;
 
@@ -862,30 +860,102 @@ float GIMBAL_getTopGyroAngleOffset(void)
 }
 
 /**
- *	@brief	云台信息获取函数
+ *	@brief	云台获取系统信息
  */
-void GIMBAL_getInfo(void)
+void GIMBAL_GetSysInfo(System_t *sys, Gimbal_Info_t *gim)
 {
-	GIMBAL_calPredictInfo();
-	
-	if(CHASSIS_ifTopGyroOpen() == true) {
-		Gimbal.State.FLAG_topGyroOpen = true;
-	} else {
-		Gimbal.State.FLAG_topGyroOpen = false;
+	/*----控制方式----*/
+	/* 控制方式 - 遥控器 */
+	if(sys->RemoteMode == RC) {
+		gim->State.remote_mode = RC;
+	} 
+	/* 控制方式 - 键鼠 */
+	else if(sys->RemoteMode == KEY) {
+		gim->State.remote_mode = KEY;
 	}
 	
-//	/* 弹仓打开之后 */
-//	if(MAGZINE_ifOpen() == true) {
-//		GIMBAL_setMode(GIMBAL_MODE_RELOAD_BULLET);
-//	} 
-//	/* 关闭弹仓 */
-//	else {
-//		if(GIMBAL_ifReloadBullet() == true) {
-//			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
-//		}
-//	}
+	/*----模式修改----*/
+	switch(sys->Action)
+	{
+		case SYS_ACT_NORMAL: 
+			{
+				// 刚恢复常规模式
+				if(gim->State.mode != GIMBAL_MODE_NORMAL) {
+					Gimbal_PID[gim->State.pid_mode][YAW_205].Angle.target = Gimbal_PID[gim->State.pid_mode][YAW_205].Angle.feedback;
+					Gimbal_PID[gim->State.pid_mode][PITCH_206].Angle.target = Gimbal_PID[gim->State.pid_mode][PITCH_206].Angle.feedback;
+				}
+				gim->State.mode = GIMBAL_MODE_NORMAL;
+			}break;
+		case SYS_ACT_AUTO: 
+			{
+				// 刚进入自瞄模式
+				if(gim->State.mode != GIMBAL_MODE_AUTO)
+					Gimbal.Auto.FLAG_first_into_auto = true;
+				gim->State.mode = GIMBAL_MODE_AUTO;
+			}break;
+		case SYS_ACT_BUFF:
+			{
+				// 刚进入打符模式
+				if(gim->State.mode != GIMBAL_MODE_SMALL_BUFF
+					|| gim->State.mode != GIMBAL_MODE_BIG_BUFF)
+					Gimbal.Buff.FLAG_first_into_buff = true;
+				
+				if(sys->BranchAction == BCH_ACT_SMALL_BUFF) {
+					gim->State.mode = GIMBAL_MODE_SMALL_BUFF;
+				}
+				else if(sys->BranchAction == BCH_ACT_BIG_BUFF) {
+					gim->State.mode = GIMBAL_MODE_BIG_BUFF;
+				}
+			}break;
+		case SYS_ACT_PARK:
+			{
+				gim->State.mode = GIMBAL_MODE_RELOAD_BULLET;
+			}break;
+	}
 	
+	/*----Pid模式----*/
+	if(sys->PidMode != gim->State.pid_mode)
+	{
+		/* GYRO -> MECH */
+		if(sys->PidMode == MECH)
+		{
+			Gimbal_PID[MECH][YAW_205].Angle.target = Gimbal_PID[MECH][YAW_205].Angle.feedback;
+			Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
+		}
+		/* MECH -> GYRO*/
+		else if(sys->PidMode == GYRO)
+		{
+			Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
+			Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;			
+		}
+	}
+	gim->State.pid_mode = sys->PidMode;
 }
+
+/**
+ *	@brief	云台获取裁判系统信息
+ */
+void GIMBAL_GetJudgeInfo(Judge_Info_t *judge, Gimbal_Info_t *gim)
+{
+	/* 根据射速等级修改自瞄参数 */
+	switch(judge->GameRobotStatus.robot_level)
+	{
+		case 0:
+			k_level = K_LEVEL_0;	// 1/(12/30) = 2.5
+		case 1:	
+			k_level = K_LEVEL_1;	// 1/(15/30) = 2
+			break;
+		case 2:
+			k_level = K_LEVEL_2;	// 1/(18/30) = 1.67
+			break;
+		case 3:
+			k_level = K_LEVEL_3;	// 1/(30/30) = 1
+			break;
+		default:
+			break;
+	}
+}
+
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /* #遥控# -----------------------------------------------------------------------------------------------------------------------------------------*/
@@ -893,23 +963,23 @@ void GIMBAL_getInfo(void)
  *	@brief	根据遥控值设置云台YAW位置环的期望值(累加值)
  *	@note	
  */
-void REMOTE_setGimbalAngle(void)
+void REMOTE_SetGimbalAngle(void)
 {
 	float targetAngle;
 	/* 机械模式 */
-	if(GIMBAL_ifMechMode() == true) {	
+	if(GIMBAL_IfMechMode() == true) {	
 		/* Yaw */
 		/* 云台跟随底盘运动 */
-		targetAngle = GIMBAL_getMiddleAngle();
+		targetAngle = GIMBAL_GetMiddleAngle();
 		Gimbal_PID[MECH][YAW_205].Angle.target = targetAngle;
 		/* Pitch */
 		targetAngle = RC_RIGH_CH_UD_VALUE * RC_GIMBAL_MECH_PITCH_SENSITIVY; // Pitch机械角为绝对角度
 		Gimbal_PID[MECH][PITCH_206].Angle.target = constrain(Gimbal_PID[MECH][PITCH_206].Angle.target - targetAngle, // 抬头机械角度减小
-																													GIMBAL_MECH_PITCH_UP_ANGLE, 
-																													GIMBAL_MECH_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)
+																						GIMBAL_MECH_PITCH_UP_ANGLE, 
+																						GIMBAL_MECH_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)
 	} 
 	/* 陀螺仪模式 */
-	else if(GIMBAL_ifGyroMode() == true) {	
+	else if(GIMBAL_IfGyroMode() == true) {	
 		/* Yaw */
 		targetAngle = RC_RIGH_CH_LR_VALUE * RC_GIMBAL_GYRO_YAW_SENSITIVY * (YAW_DIR);
 		Gimbal_PID[GYRO][YAW_205].Angle.target += targetAngle;
@@ -917,31 +987,10 @@ void REMOTE_setGimbalAngle(void)
 		/* Pitch */		
 		targetAngle = RC_RIGH_CH_UD_VALUE * RC_GIMBAL_GYRO_PITCH_SENSITIVY;
 		Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-																													GIMBAL_GYRO_PITCH_UP_ANGLE, 
-																													GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)		
+																						GIMBAL_GYRO_PITCH_UP_ANGLE, 
+																						GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)		
 	}
 }
-
-///**
-// *	@brief	根据遥控值设置云台的小陀螺模式
-// *	@note	
-// */
-//void REMOTE_setTopGyro(void)
-//{
-//	/* 处于陀螺仪模式可以开启 */
-//	if(GIMBAL_ifGyroMode() == true) {
-//		/* 拨轮向上开启 */
-//		if((RC_THUMB_WHEEL_VALUE < -650)) {
-//			if(Gimbal.State.FLAG_topGyroOpen == false) {
-//				Gimbal.State.FLAG_topGyroOpen = true;
-//			}
-//		}		
-//		/* 拨轮向下关闭 */
-//		else if(RC_THUMB_WHEEL_VALUE > 650) {
-//			Gimbal.State.FLAG_topGyroOpen = false;
-//		}
-//	}
-//}
 
 /* #键盘鼠标# -------------------------------------------------------------------------------------------------------------------------------------*/
 /**
@@ -951,7 +1000,7 @@ void REMOTE_setGimbalAngle(void)
  */
 float js_targetYaw;
 float js_targetPitch;
-void KEY_setGimbalAngle(void)
+void KEY_SetGimbalAngle(void)
 {
 	float targetAngle;
 	
@@ -965,14 +1014,14 @@ void KEY_setGimbalAngle(void)
 	/* Pitch */		
 	targetAngle = -MOUSE_Y_MOVE_SPEED * KEY_GIMBAL_GYRO_PITCH_SENSITIVY;// 鼠标Y反馈速度*灵敏度
 	Gimbal_PID[GYRO][PITCH_206].Angle.target = constrain(Gimbal_PID[GYRO][PITCH_206].Angle.target - targetAngle, // 抬头Pitch角度减小
-																												GIMBAL_GYRO_PITCH_UP_ANGLE, 
-																												GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)	
+																					GIMBAL_GYRO_PITCH_UP_ANGLE, 
+																					GIMBAL_GYRO_PITCH_DOWN_ANGLE);	// 设置Pitch轴(绝对值)	
 }
 
 /**
  *	@brief	根据按键值设置云台转头
  */
-void KEY_setGimbalTurn(void)
+void KEY_SetGimbalTurn(void)
 {
 	float targetAngle = 0;
 	static uint8_t keyQLockFlag = false;
@@ -1025,7 +1074,7 @@ void KEY_setGimbalTurn(void)
 			keyVLockTime = keyCurrentTime + TIME_STAMP_500MS;
 			
 			/* 扭头就跑标志位 */
-			Flag.Chassis.FLAG_goHome = true;
+			Flag.Chassis.GoHome = true;
 			
 			if(keyVLockFlag == false) {
 				if(IF_KEY_PRESSED_A) {
@@ -1045,23 +1094,23 @@ void KEY_setGimbalTurn(void)
 	}
 	
 	/* 斜坡函数给累加期望，防止突然增加很大的期望值 */
-	Gimbal_PID[GYRO][YAW_205].AngleRampFeedback = RAMP_float(Gimbal_PID[GYRO][YAW_205].AngleRampTarget, 
-																														Gimbal_PID[GYRO][YAW_205].AngleRampFeedback, 
-																														GIMBAL_GYRO_ANGLE_ZOOM_INDEX/1.5f);
+	Gimbal_PID[GYRO][YAW_205].AngleRampFeedback = RampFloat(Gimbal_PID[GYRO][YAW_205].AngleRampTarget, 
+															Gimbal_PID[GYRO][YAW_205].AngleRampFeedback, 
+															GIMBAL_GYRO_ANGLE_ZOOM_INDEX/1.5f);
 	if(Gimbal_PID[GYRO][YAW_205].AngleRampFeedback < Gimbal_PID[GYRO][YAW_205].AngleRampTarget) // 正向累加
 	{
-		Gimbal_PID[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_yawTargetBoundaryProcess(&Gimbal_PID[GYRO][YAW_205], 
-																																									GIMBAL_GYRO_ANGLE_ZOOM_INDEX/1.5f);
+		Gimbal_PID[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_YawBoundaryProc(&Gimbal_PID[GYRO][YAW_205], 
+																			GIMBAL_GYRO_ANGLE_ZOOM_INDEX/1.5f);
 	} 
 	else if(Gimbal_PID[GYRO][YAW_205].AngleRampFeedback > Gimbal_PID[GYRO][YAW_205].AngleRampTarget) // 反向累加
 	{
-		Gimbal_PID[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_yawTargetBoundaryProcess(&Gimbal_PID[GYRO][YAW_205], 
-																																									-GIMBAL_GYRO_ANGLE_ZOOM_INDEX/1.5f);
+		Gimbal_PID[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_YawBoundaryProc(&Gimbal_PID[GYRO][YAW_205], 
+																			-GIMBAL_GYRO_ANGLE_ZOOM_INDEX/1.5f);
 	} 
 	else // 缓冲池清零
 	{
 		/* 扭头到位标志位清零 */
-		Flag.Chassis.FLAG_goHome = false;
+		Flag.Chassis.GoHome = false;
 		
 		Gimbal_PID[GYRO][YAW_205].AngleRampTarget = 0;
 		Gimbal_PID[GYRO][YAW_205].AngleRampFeedback = 0;
@@ -1071,7 +1120,7 @@ void KEY_setGimbalTurn(void)
 /**
  *	@brief	根据按键值设置云台快速抬头
  */
-void KEY_setQuickPickUp(void)
+void KEY_SetQuickPickUp(void)
 {
 	float targetAngle;
 	static uint8_t keyGLockFlag = false;
@@ -1089,186 +1138,14 @@ void KEY_setQuickPickUp(void)
 	}
 }
 
-///**
-// *	@brief	根据按键值设置云台小陀螺模式
-// */
-//void KEY_setTopGyro(void)
-//{
-//	static uint8_t keyFLockFlag = false;
-//	
-//	if(IF_KEY_PRESSED_F) {
-//		if(keyFLockFlag == false) {
-//			if(GIMBAL_ifGyroMode() == true) {
-//				if(Gimbal.State.FLAG_topGyroOpen == false) {
-//					Gimbal.State.FLAG_topGyroOpen = true;
-//				}
-//				else {
-//					Gimbal.State.FLAG_topGyroOpen = false;
-//				}
-//			}
-//		}
-//		keyFLockFlag = true;
-//	} else {
-//		keyFLockFlag = false;
-//	}	
-//}
-
-/**
- *	@brief	鼠标右键进入自瞄模式
- *			松开右键退出自瞄模式
- */
-uint8_t test_auto_pid = 0;
-static uint8_t mouseRLockFlag = false;	// 鼠标右键锁定
-static uint8_t rcSw1LockFlag = false;
-static uint8_t keyCtrlLockFlag = false;
-static portTickType  keyCurrentTime = 0;	
-static uint32_t keyCtrlFLockTime = 0;
-static uint32_t keyCtrlVLockTime = 0;
-void KEY_setGimbalMode(RC_Ctl_t *remoteInfo)
-{
-	keyCurrentTime = xTaskGetTickCount();
-	
-	if(test_auto_pid == 0) {
-		/* 鼠标右键 */
-		if(IF_MOUSE_PRESSED_RIGH) {
-			if(mouseRLockFlag == false && GIMBAL_ifBuffMode() == false) {
-				/* 云台模式调整 */
-				GIMBAL_setMode(GIMBAL_MODE_AUTO);
-				Gimbal.Auto.FLAG_first_into_auto = true;
-				/* 视觉模式调整 */
-				VISION_setMode(VISION_MODE_AUTO);
-				/* 拨盘模式调整 */
-				REVOLVER_setAction(SHOOT_AUTO);		// 变成常规控制模式
-			}
-			mouseRLockFlag = true;
-		} else {
-			if(GIMBAL_ifAutoMode() == true) { // 退出自瞄模式
-				/* 云台模式调整 */
-				GIMBAL_setMode(GIMBAL_MODE_NORMAL);
-				Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-				Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-				/* 视觉模式调整 */
-				VISION_setMode(VISION_MODE_MANUAL);	// 手动模式
-				/* 拨盘模式调整 */
-				REVOLVER_setAction(SHOOT_NORMAL);		// 变成常规控制模式
-			}
-			mouseRLockFlag = false;
-		}
-	} else {
-		if(IF_RC_SW1_MID) {
-			if(rcSw1LockFlag == false) {
-				/* 云台模式调整 */
-				GIMBAL_setMode(GIMBAL_MODE_AUTO);
-				Gimbal.Auto.FLAG_first_into_auto = true;
-				/* 视觉模式调整 */
-				VISION_setMode(VISION_MODE_AUTO);
-			}
-			rcSw1LockFlag = true;
-		} else {
-			if(GIMBAL_ifAutoMode() == true) { // 退出自瞄模式
-				/* 云台模式调整 */
-				GIMBAL_setMode(GIMBAL_MODE_NORMAL);
-				Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-				Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-				/* 视觉模式调整 */
-				VISION_setMode(VISION_MODE_MANUAL);	// 手动模式
-			}
-			rcSw1LockFlag = false;
-		}
-	}
-	
-	/* Ctrl */
-	if(IF_KEY_PRESSED_CTRL) {
-		
-		if(keyCtrlLockFlag == false) {
-			/* 云台模式调整 */
-			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
-			Flag.Gimbal.FLAG_pidMode = MECH;	// 强制进入机械模式
-			GIMBAL_keyGyro_To_keyMech();
-			/* 视觉模式调整 */
-			VISION_setMode(VISION_MODE_MANUAL);	// 手动模式
-			/* 拨盘模式调整 */
-			REVOLVER_setAction(SHOOT_NORMAL);	
-		}
-		
-		/* Ctrl+V */
-		if(keyCurrentTime > keyCtrlVLockTime) {	
-			keyCtrlVLockTime = keyCurrentTime + TIME_STAMP_400MS;
-			if(IF_KEY_PRESSED_V) {	// Ctrl+V
-				if(Gimbal.State.mode != GIMBAL_MODE_SMALL_BUFF) {
-					/* 云台->小符 */
-					GIMBAL_setMode(GIMBAL_MODE_SMALL_BUFF);
-					Gimbal.Buff.FLAG_first_into_buff = true;
-					Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
-					GIMBAL_keyMech_To_keyGyro();
-					/* 视觉->小符 */
-					VISION_setMode(VISION_MODE_SMALL_BUFF);	// 击打小符
-					/* 拨盘->打符 */
-					REVOLVER_setAction(SHOOT_BUFF);
-					/* 底盘模式调整 */
-					CHASSIS_setMode(CHAS_MODE_BUFF);
-				}
-			}
-		}
-		
-		/* Ctrl+F */
-		if(keyCurrentTime > keyCtrlFLockTime) {
-			keyCtrlFLockTime = keyCurrentTime + TIME_STAMP_400MS;
-			if(IF_KEY_PRESSED_F) {	// Ctrl+F
-				if(Gimbal.State.mode != GIMBAL_MODE_BIG_BUFF) {
-					/* 云台模式调整 */
-					GIMBAL_setMode(GIMBAL_MODE_BIG_BUFF);
-					Gimbal.Buff.FLAG_first_into_buff = true;
-					Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
-					GIMBAL_keyMech_To_keyGyro();
-					/* 视觉模式调整 */
-					VISION_setMode(VISION_MODE_BIG_BUFF);	// 击打大符
-					/* 底盘模式调整 */
-					CHASSIS_setMode(CHAS_MODE_BUFF);
-				}
-			}
-		}
-		
-		/* Ctrl+R */
-		if(IF_KEY_PRESSED_R) {
-			/* 云台模式调整 */
-			GIMBAL_setMode(GIMBAL_MODE_RELOAD_BULLET);
-			Flag.Gimbal.FLAG_pidMode = MECH;	// 强制进入机械模式
-			GIMBAL_keyGyro_To_keyMech();
-			/* 视觉模式调整 */
-			VISION_setMode(VISION_MODE_MANUAL);
-			/* 底盘模式调整 */
-			CHASSIS_setMode(CHAS_MODE_RELOAD_BULLET);
-		}
-		
-		keyCtrlLockFlag = true;
-	} else {
-		//松开Ctrl键
-		if(keyCtrlLockFlag == true && Gimbal.State.mode == GIMBAL_MODE_NORMAL) {
-			/* 云台模式调整 */
-			GIMBAL_setMode(GIMBAL_MODE_NORMAL);
-			Flag.Gimbal.FLAG_pidMode = GYRO;	// 强制进入陀螺仪模式
-			GIMBAL_keyMech_To_keyGyro();
-			/* 视觉模式调整 */
-			VISION_setMode(VISION_MODE_MANUAL);	// 手动模式
-			/* 底盘模式调整 */
-			CHASSIS_setMode(CHAS_MODE_NORMAL);
-		}
-		keyCtrlLockFlag = false;
-	}
-	
-	
-}
-
 /* #云台# -----------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	云台电机初始化
  *	@note		
  */
-void GIMBAL_init(void)
+void GIMBAL_Init(void)
 {
-	GIMBAL_kalmanCreate();	// 创建卡尔曼滤波器
-	GIMBAL_GYRO_calAverageOffset(Mpu_Info);	// 陀螺仪角速度误差补偿值计算	
+	GIMBAL_KalmanCreate();	// 创建卡尔曼滤波器
 }
 
 /**
@@ -1276,107 +1153,89 @@ void GIMBAL_init(void)
  *	@note	# 先用机械模式归中
  *				# 具备5s的超时退出机制，防止云台没有复位到位一直卡死	
  */
-void GIMBAL_reset(void)
+void GIMBAL_Reset(void)
 {
-	static uint8_t reset_start = 1;
-	static uint32_t resetTime = 0;
-	static portTickType tickTime_prev = 0;
-	static portTickType tickTime_now = 0;
-	
 	float delta_angle;
 	float target_angle;
+	static portTickType time_prev;
+	static portTickType time_now;
 	
-	target_angle = GIMBAL_getMiddleAngle();
+	target_angle = GIMBAL_GetMiddleAngle();
 	
-	tickTime_now = xTaskGetTickCount();
-	if(tickTime_now  - tickTime_prev > TIME_STAMP_100MS) {	// 保证不断电情况下，下次可用
-		Flag.Gimbal.FLAG_resetOK = false;
-		Cnt.Gimbal.CNT_resetOK = 0;
-		Flag.Gimbal.FLAG_angleRecordStart = 0;	// 重新记录
-		//..feedback值是否需要清零?
-	}
-	tickTime_prev = tickTime_now;
-	
-	if(Flag.Gimbal.FLAG_angleRecordStart == 0) {	// 记录上电时云台机械角度和陀螺仪反馈值
+	/* 刚进入复位 */
+	if(Flag.Gimbal.AngleRecordStart == true) {	
+		// 记录上电时云台机械角度反馈值
 		Gimbal_PID[MECH][YAW_205].Angle.target = Gimbal_PID[MECH][YAW_205].Angle.feedback;
 		Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
-		Flag.Gimbal.FLAG_angleRecordStart = 1;
+		// 复位完成标志位和计数器清零
+		Flag.Gimbal.ResetOk = false;
+		Cnt.Gimbal.ResetOk = 0;
+		// 开始计时
+		time_now = xTaskGetTickCount();
+		time_prev = time_now;
+		
+		/* 就近移动算法 */
+		delta_angle = target_angle - Gimbal_PID[MECH][YAW_205].Angle.feedback;
+		/* 没有越界取最近 */
+		if(abs(delta_angle) < 4096) {
+			Gimbal_PID[MECH][YAW_205].AngleRampTarget = delta_angle;
+		} 
+		/* 越界后作边界处理 */
+		else {
+			if(delta_angle >= 4096) {
+				Gimbal_PID[MECH][YAW_205].AngleRampTarget = -8192 + delta_angle;
+			} 
+			else if(delta_angle <= -4096) {
+				Gimbal_PID[MECH][YAW_205].AngleRampTarget = 8192 + delta_angle;
+			}
+		}		
+		
+		// 清除刚进入的标志位
+		Flag.Gimbal.AngleRecordStart = false;
 	}	
 	
-	if(Flag.Gimbal.FLAG_resetOK == false) {	// 云台复位未完成
-		resetTime++;	// 复位计时
-		if(reset_start) {	// 刚进入复位
-			reset_start = 0;
-			/* 就近移动算法 */
-			delta_angle = target_angle - g_Gimbal_Motor_Info[YAW_205].angle;
-			/* 没有越界取最近 */
-			if(abs(delta_angle) < 4096) {
-				Gimbal_PID[MECH][YAW_205].AngleRampTarget = delta_angle;
-			} 
-			/* 越界后作边界处理 */
-			else {
-				if(delta_angle >= 4096) {
-					Gimbal_PID[MECH][YAW_205].AngleRampTarget = -8192 + delta_angle;
-				} 
-				else if(delta_angle <= -4096) {
-					Gimbal_PID[MECH][YAW_205].AngleRampTarget = 8192 + delta_angle;
-				}
-			}
-		}
+	/* 云台复位未完成 */
+	if(Flag.Gimbal.ResetOk == false) {
 		
-		Flag.Gimbal.FLAG_pidMode = MECH;
+		time_now = xTaskGetTickCount();	// 复位计时
+
+		// 强制用机械模式复位
+		Gimbal.State.pid_mode = MECH;
 
 		/* 平缓地让云台移动到中间，防止上电狂甩
 			 斜坡函数给累加期望，防止突然增加很大的期望值 */
-		if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback < Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 正向累加
-		{
-			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], GIMBAL_RAMP_BEGIN_YAW);
+		if(Gimbal_PID[MECH][YAW_205].AngleRampTarget > 0) {
+			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_YawBoundaryProc(&Gimbal_PID[MECH][YAW_205], GIMBAL_RAMP_BEGIN_YAW);
 		} 
-		else if(Gimbal_PID[MECH][YAW_205].AngleRampFeedback > Gimbal_PID[MECH][YAW_205].AngleRampTarget) // 反向累加
-		{
-			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_yawTargetBoundaryProcess(&Gimbal_PID[MECH][YAW_205], -GIMBAL_RAMP_BEGIN_YAW);
-		} 
-		else // 缓冲池清零
-		{
-			Gimbal_PID[MECH][YAW_205].AngleRampTarget = 0;
-			Gimbal_PID[MECH][YAW_205].AngleRampFeedback = 0;
+		else if(Gimbal_PID[MECH][YAW_205].AngleRampTarget < 0) {
+			Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_MECH_YawBoundaryProc(&Gimbal_PID[MECH][YAW_205], -GIMBAL_RAMP_BEGIN_YAW);
 		}
-		Gimbal_PID[MECH][YAW_205].AngleRampFeedback = RAMP_float(Gimbal_PID[MECH][YAW_205].AngleRampTarget, Gimbal_PID[MECH][YAW_205].AngleRampFeedback, GIMBAL_RAMP_BEGIN_YAW);
+		
+		Gimbal_PID[MECH][YAW_205].AngleRampTarget = RampFloat(0, Gimbal_PID[MECH][YAW_205].AngleRampTarget, GIMBAL_RAMP_BEGIN_YAW);
 		
 		/* 平缓地让云台移动到中间，防止上电狂甩 */
-		Gimbal_PID[MECH][PITCH_206].Angle.target = RAMP_float(GIMBAL_MECH_PITCH_MID_ANGLE, Gimbal_PID[MECH][PITCH_206].Angle.target, GIMBAL_RAMP_BEGIN_PITCH);
+		Gimbal_PID[MECH][PITCH_206].Angle.target = RampFloat(GIMBAL_MECH_PITCH_MID_ANGLE, Gimbal_PID[MECH][PITCH_206].Angle.target, GIMBAL_RAMP_BEGIN_PITCH);
 		
 		/* 等待云台归中 */
 		if(abs(Gimbal_PID[MECH][YAW_205].Angle.feedback - target_angle) <= 1 
 			&& abs(Gimbal_PID[MECH][PITCH_206].Angle.feedback - GIMBAL_MECH_PITCH_MID_ANGLE) <= 1) {
-			Cnt.Gimbal.CNT_resetOK++;
+			Cnt.Gimbal.ResetOk++;
 		}
 			
 		/* 复位成功或者超时强制退出(5s) */
-		if(Cnt.Gimbal.CNT_resetOK > 250 || resetTime >= 2500) {	
-			Cnt.Gimbal.CNT_resetOK = 0;
-			Flag.Gimbal.FLAG_resetOK = true;// 云台复位成功
-			resetTime = 0;	// 复位计时清零
+		if(Cnt.Gimbal.ResetOk > 250 || (time_now - time_prev) >= TIME_STAMP_5000MS) {	
+			Cnt.Gimbal.ResetOk = 0;
+			Flag.Gimbal.ResetOk = true;// 云台复位成功
+			/* 记录起始陀螺仪角度 */
+			start_gyro_yaw = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
+			last_gyro_yaw = start_gyro_yaw;
+			delta_gyro_yaw = 0;
 		}		
-	} else if(Flag.Gimbal.FLAG_resetOK == true) {	// 云台复位完成
-		Flag.Gimbal.FLAG_resetOK = false;	// 清除状态标志位
-		reset_start = 1;	// 等待下次调用复位云台函数
-		BM_reset(BitMask.System.BM_reset, BM_RESET_GIMBAL);
-		/* 模式切换(刚上电太快切成陀螺仪模式会因为反馈角度还未稳定造成云台甩头) */			
-		if(RC_Ctl_Info.rc.s2 == RC_SW_UP) {
-			Flag.Remote.FLAG_mode = KEY;
-			Flag.Gimbal.FLAG_pidMode = GYRO;
-			GIMBAL_rcMech_To_keyGyro();
-		} 
-		else if(RC_Ctl_Info.rc.s2 == RC_SW_MID) {
-			Flag.Remote.FLAG_mode = RC;
-			Flag.Gimbal.FLAG_pidMode = MECH;					
-		} 
-		else if(RC_Ctl_Info.rc.s2 == RC_SW_DOWN) {
-			Flag.Remote.FLAG_mode = RC;
-			Flag.Gimbal.FLAG_pidMode = GYRO;
-			GIMBAL_rcMech_To_rcGyro();					
-		}
+	} 
+	/* 云台复位完成 */
+	else if(Flag.Gimbal.ResetOk == true) {
+		Flag.Gimbal.ResetOk = false;	// 清除状态标志位
+		BM_Reset(BitMask.System.BM_Reset, BM_RESET_GIMBAL);
 	}	
 }
 
@@ -1443,14 +1302,10 @@ float pitch;
 float yaw;
 float rateYaw;
 float ratePitch;
-void GIMBAL_IMU_recordFeedback(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT])
+void GIMBAL_GetImuInfo(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT])
 {	
 	static float last_yaw = 0.f;
 	float delta_yaw;
-	
-	/* 读取MPU6050传感器数据 */
-	mpu_dmp_get_data( &Mpu_Info.roll, &Mpu_Info.pitch, &Mpu_Info.yaw);
-	MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);		
 	
 	/* # Yaw # */
 	yaw = Mpu_Info.yaw;
@@ -1487,31 +1342,9 @@ void GIMBAL_IMU_recordFeedback(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_
 }
 
 /**
- *	@brief	云台电机IMU计算误差补偿值
- */
-void GIMBAL_GYRO_calAverageOffset(Mpu_Info_t mpuInfo)
-{
-	uint16_t i;
-	for(i = 0; i < 50; i++) {
-		delay_us(100);
-		// 读取陀螺仪角度和角速度
-		mpu_dmp_get_data( &Mpu_Info.roll, &Mpu_Info.pitch, &Mpu_Info.yaw);
-		MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);		
-	}
-	for(i = 0; i < 500; i++) {
-		delay_us(200);
-		MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
-		Mpu_Info.ratePitchOffset += Mpu_Info.ratePitch;
-		Mpu_Info.rateYawOffset   += Mpu_Info.rateYaw;
-	}
-	Mpu_Info.ratePitchOffset = (Mpu_Info.ratePitchOffset/500);
-	Mpu_Info.rateYawOffset   = (Mpu_Info.rateYawOffset/500);
-}
-
-/**
  *	@brief	机械模式下云台YAW期望值(累加值)边界处理
  */
-float GIMBAL_MECH_yawTargetBoundaryProcess(Gimbal_PID_t *pid, float delta_target)
+float GIMBAL_MECH_YawBoundaryProc(Gimbal_PID_t *pid, float delta_target)
 {
 	float target;
 	target = pid->Angle.target + delta_target;
@@ -1528,7 +1361,7 @@ float GIMBAL_MECH_yawTargetBoundaryProcess(Gimbal_PID_t *pid, float delta_target
 /**
  *	@brief	陀螺仪模式下云台YAW期望值(累加值)边界处理
  */
-float GIMBAL_GYRO_yawTargetBoundaryProcess(Gimbal_PID_t *pid, float delta_target)
+float GIMBAL_GYRO_YawBoundaryProc(Gimbal_PID_t *pid, float delta_target)
 {
 	float target;
 	target = pid->Angle.target + delta_target;
@@ -1538,73 +1371,6 @@ float GIMBAL_GYRO_yawTargetBoundaryProcess(Gimbal_PID_t *pid, float delta_target
 //		target = (+360.f*GIMBAL_GYRO_ANGLE_ZOOM_INDEX + target);
 //	}
 	return target;
-}
-
-/**
- *	@brief	遥控机械模式 -> 遥控陀螺仪模式
- *	@note		异步切换
- */
-void GIMBAL_rcMech_To_rcGyro(void)
-{
-	Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-	Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
-}
-
-/**
- *	@brief	遥控陀螺仪模式 -> 遥控机械模式
- *	@note		异步切换
- */
-void GIMBAL_rcGyro_To_rcMech(void)
-{
-	Gimbal_PID[MECH][YAW_205].Angle.target = Gimbal_PID[MECH][YAW_205].Angle.feedback;
-	Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
-	Gimbal.State.FLAG_topGyroOpen = false;
-	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
-}
-
-/**
- *	@brief	遥控机械模式 -> 键盘模式
- *	@note		异步切换
- */
-void GIMBAL_rcMech_To_keyGyro(void)
-{
-	Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-	Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
-	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
-}
-
-/**
- *	@brief	键盘模式 -> 遥控机械模式
- *	@note		异步切换
- */
-void GIMBAL_keyGyro_To_rcMech(void)
-{
-	Gimbal_PID[MECH][YAW_205].Angle.target = Gimbal_PID[MECH][YAW_205].Angle.feedback;
-	Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
-	Gimbal.State.FLAG_topGyroOpen = false;
-	Gimbal.State.mode = GIMBAL_MODE_NORMAL;
-}
-
-/**
- *	@brief	键盘陀螺仪模式 -> 键盘机械模式
- *	@note		异步切换
- */
-void GIMBAL_keyGyro_To_keyMech(void)
-{
-	Gimbal_PID[MECH][YAW_205].Angle.target = GIMBAL_getMiddleAngle();
-	Gimbal_PID[MECH][PITCH_206].Angle.target = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
-	Gimbal.State.FLAG_topGyroOpen = false;
-}
-
-/**
- *	@brief	键盘机械模式 -> 键盘陀螺仪模式
- *	@note		异步切换
- */
-void GIMBAL_keyMech_To_keyGyro(void)
-{
-	Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-	Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
 }
 
 /**
@@ -1651,7 +1417,7 @@ float GIMBAL_AUTO_YAW_COMPENSATION = 0.f;	// 调试的时候用的
 float GIMBAL_AUTO_PITCH_COMPENSATION = (0.f/360.0f*8192.0f);
 float auto_yaw_ramp = 260;
 float auto_pitch_ramp = 80;
-void GIMBAL_VISION_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+void GIMBAL_VISION_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
 {
 	/* 计算自瞄帧率 */
 	gimbal->Auto.Time[NOW] = xTaskGetTickCount();
@@ -1670,17 +1436,17 @@ void GIMBAL_VISION_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_
 	}
 	
 	/* 数据更新 */
-	if(VISION_getFlagStatus(VISION_FLAG_DATA_UPDATE) == true) {
+	if(VISION_GetFlagStatus(VISION_FLAG_DATA_UPDATE) == true) {
 		/* 清除数据更新标志位，防止未接收到新数据的情况下重复进入 */
-		VISION_clearFlagStatus(VISION_FLAG_DATA_UPDATE);	
+		VISION_ClearFlagStatus(VISION_FLAG_DATA_UPDATE);	
 
-		if(VISION_getFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {
+		if(VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {
 			/* Yaw 误差计算 */
-			gimbal->Auto.Yaw.erro = gimbal->Auto.Yaw.kp * VISION_GYRO_getYawFeedback();
+			gimbal->Auto.Yaw.erro = gimbal->Auto.Yaw.kp * VISION_GYRO_GetYawFeedback();
 			//gimbal->Auto.Yaw.erro = KalmanFilter(&Gimbal_Auto_kalmanError[YAW_205], gimbal->Auto.Yaw.erro);
 			gimbal->Auto.Yaw.target = pid[GYRO][YAW_205].Angle.feedback + gimbal->Auto.Yaw.erro;
 			/* Pitch 误差计算 */
-			gimbal->Auto.Pitch.erro = (gimbal->Auto.Pitch.kp * VISION_MECH_getPitchFeedback()) - GIMBAL_AUTO_PITCH_COMPENSATION;
+			gimbal->Auto.Pitch.erro = (gimbal->Auto.Pitch.kp * VISION_MECH_GetPitchFeedback()) - GIMBAL_AUTO_PITCH_COMPENSATION;
 			//gimbal->Auto.Pitch.erro = KalmanFilter(&Gimbal_Auto_kalmanError[PITCH_206], gimbal->Auto.Pitch.erro);
 			gimbal->Auto.Pitch.target = pid[GYRO][PITCH_206].Angle.feedback + gimbal->Auto.Pitch.erro;
 		} else {
@@ -1693,14 +1459,16 @@ void GIMBAL_VISION_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_
 	}
 	
 	/*----期望修改----*/
-	pid[GYRO][YAW_205].Angle.target = RAMP_float(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
-	pid[GYRO][PITCH_206].Angle.target = RAMP_float(gimbal->Auto.Pitch.target, pid[GYRO][PITCH_206].Angle.feedback, auto_pitch_ramp);	
+	pid[GYRO][YAW_205].Angle.target = RampFloat(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
+	pid[GYRO][PITCH_206].Angle.target = RampFloat(gimbal->Auto.Pitch.target, pid[GYRO][PITCH_206].Angle.feedback, auto_pitch_ramp);	
 //	pid[GYRO][YAW_205].Angle.target = pid[GYRO][YAW_205].Angle.feedback;
-//	pid[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_yawTargetBoundaryProcess(&pid[GYRO][YAW_205], gimbal->Auto.Yaw.erro);
+//	pid[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_YawBoundaryProc(&pid[GYRO][YAW_205], gimbal->Auto.Yaw.erro);
 //	pid[GYRO][PITCH_206].Angle.target = pid[GYRO][PITCH_206].Angle.feedback + gimbal->Auto.Pitch.erro;	
 	
 	gimbal->Auto.Time[PREV] = gimbal->Auto.Time[NOW];
 }
+
+#define AUTO_CTRL_WAY	2
 
 /**
  *	@brief	自瞄模式电控预测版
@@ -1790,7 +1558,8 @@ float last_distance = 0.f;
 float last_speed = 0.f;
 float lost_compensation = 0.f;
 
-void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+#if (AUTO_CTRL_WAY == 1)
+void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
 {
 	static float avrCalAngle,nowCalAngle=0;
 	float none=0;
@@ -1806,9 +1575,9 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 	}
 	
 	/*----数据更新----*/
-	if(VISION_getFlagStatus(VISION_FLAG_DATA_UPDATE) == true) {
+	if(VISION_GetFlagStatus(VISION_FLAG_DATA_UPDATE) == true) {
 		/* 清除数据更新标志位，防止未接收到新数据的情况下重复进入 */
-		VISION_clearFlagStatus(VISION_FLAG_DATA_UPDATE);	
+		VISION_ClearFlagStatus(VISION_FLAG_DATA_UPDATE);	
 
 		/* 计算自瞄帧率 */
 		gimbal->Auto.Time[NOW] = xTaskGetTickCount();
@@ -1816,11 +1585,11 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		gimbal->Auto.Time[PREV] = gimbal->Auto.Time[NOW];
 		
 		/* 识别到目标 */
-		if(VISION_getFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {
+		if(VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {
 			/* Yaw 误差放大 */
-			gimbal->Auto.Yaw.erro = gimbal->Auto.Yaw.kp * VISION_GYRO_getYawFeedback() + GIMBAL_AUTO_YAW_COMPENSATION;
+			gimbal->Auto.Yaw.erro = gimbal->Auto.Yaw.kp * VISION_GYRO_GetYawFeedback() + GIMBAL_AUTO_YAW_COMPENSATION;
 			/* Pitch 误差放大 */
-			gimbal->Auto.Pitch.erro = (gimbal->Auto.Pitch.kp * VISION_MECH_getPitchFeedback()) + GIMBAL_AUTO_PITCH_COMPENSATION;
+			gimbal->Auto.Pitch.erro = (gimbal->Auto.Pitch.kp * VISION_MECH_GetPitchFeedback()) + GIMBAL_AUTO_PITCH_COMPENSATION;
 			/* 掉帧处理 */
 			cQueue_in(&LostQueue, lost_num, FOUND);
 		} 
@@ -1851,7 +1620,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 	
 	/*----更新二阶卡尔曼预测值----*/
 	/* 识别到目标 */
-	if(VISION_getFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {	
+	if(VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {	
 		/* 更新二阶卡尔曼速度先验估计值 */
 		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, gimbal->Auto.Time[NOW], gimbal->Auto.Yaw.target);
 		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, gimbal->Auto.Time[NOW], gimbal->Auto.Pitch.target);
@@ -1863,7 +1632,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		/* ↓ ZX预测速度 ↓ */
 		nowCalAngle = yaw_kf_result[KF_ANGLE];	// gimbal->Auto.Yaw.target
 		
-		VISION_updateInfo(nowCalAngle, queue_num, &VisionQueue, &avrCalAngle, &none);
+		VISION_UpdateInfo(nowCalAngle, queue_num, &VisionQueue, &avrCalAngle, &none);
 		
 		targetYawSpeedRaw = (nowCalAngle - avrCalAngle)*ksc;
 		
@@ -1873,7 +1642,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		targetYawSpeedKF = KalmanFilter(&kalman_speedYaw, targetYawSpeedRaw);
 		/* ↑ ZX预测速度 ↑ */
 		last_speed = targetYawSpeedKF;
-		last_distance = VISION_getDistance()/1000.f;	//换算成(m)
+		last_distance = VISION_GetDistance()/1000.f;	//换算成(m)
 	} 
 	/* 未识别到目标 */
 	else {
@@ -1888,7 +1657,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		/* ↓ ZX预测速度 ↓ */
 		nowCalAngle = yaw_kf_result[KF_ANGLE];	// gimbal->Auto.Yaw.target
 		
-		VISION_updateInfo(nowCalAngle, queue_num, &VisionQueue, &avrCalAngle, &none);
+		VISION_UpdateInfo(nowCalAngle, queue_num, &VisionQueue, &avrCalAngle, &none);
 		
 		targetYawSpeedRaw = (nowCalAngle - avrCalAngle)*ksc;
 		
@@ -1903,11 +1672,11 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 	js_yaw_angle = yaw_kf_result[KF_ANGLE];
 	
 	/*----加上距离补偿(假定是线性关系)----*/
-	distance = VISION_getDistance()/1000.f;	//换算成(m)
+	distance = VISION_GetDistance()/1000.f;	//换算成(m)
 	
 	pitch_compensation = distance * kPitch;
 	
-	if(myDeathZoom(distance, distance_death) > 0.f) {
+	if(myDeathZoom(0, distance_death, distance) > 0.f) {
 		dis_temp -= distance_death;
 	} else {
 		dis_temp = 0.f;
@@ -1915,7 +1684,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 	
 	/*----预测量计算----*/
 	/* 识别到目标 */
-	if(VISION_getFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {	
+	if(VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET) == true) {	
 		auto_predict_start_delay++;	// 滤波延时开启
 		
 		/* zx预测 */
@@ -1927,6 +1696,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 					&& abs(targetYawSpeedKF) > auto_yaw_speed_predict_low
 					&& abs(targetYawSpeedKF) < auto_yaw_speed_predict_high)
 			{
+				auto_predict_start_delay = auto_predict_start_delay_boundary + 1;
 				
 				/* 计算距离补偿 */
 				dis_compensation = dis_temp*kDis;
@@ -1940,9 +1710,9 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 				
 				/* 预测量缓慢变化 */
 				if(test_ramp_step == 0)
-					yaw_angle_predict = RAMP_float(yaw_predict_temp, yaw_angle_predict, auto_yaw_angle_predict_ramp);	// STEP_float();
+					yaw_angle_predict = RampFloat(yaw_predict_temp, yaw_angle_predict, auto_yaw_angle_predict_ramp);	// StepFloat();
 				else 
-					yaw_angle_predict = STEP_float(yaw_predict_temp, step, &step_cnt, step_death);
+					yaw_angle_predict = StepFloat(yaw_predict_temp, step, &step_cnt, step_death);
 				/* 预测量限幅 */
 				yaw_angle_predict = constrain(yaw_angle_predict, -auto_yaw_angle_predict_limit, auto_yaw_angle_predict_limit);
 				
@@ -1990,7 +1760,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 			}
 			/* 未达到预测开启条件 */
 			else {
-				pid[GYRO][YAW_205].Angle.target = gimbal->Auto.Yaw.target;//RAMP_float(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
+				pid[GYRO][YAW_205].Angle.target = gimbal->Auto.Yaw.target;//RampFloat(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
 				
 				Mobi_Pre_Yaw = false;	// 标记未开启移动预测
 				mobpre_yaw_left_delay = 0;
@@ -2018,6 +1788,8 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 					&& abs(yaw_kf_result[KF_SPEED]) > auto_yaw_speed_predict_low
 					&& abs(yaw_kf_result[KF_SPEED]) < auto_yaw_speed_predict_high)
 			{
+				auto_predict_start_delay = auto_predict_start_delay_boundary + 1;
+				
 				/* 计算距离补偿 */
 				dis_compensation = dis_temp*kDis;
 				
@@ -2030,9 +1802,9 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 				
 				/* 预测量缓慢变化 */
 				if(test_ramp_step == 0)
-					yaw_angle_predict = RAMP_float(yaw_predict_temp, yaw_angle_predict, auto_yaw_angle_predict_ramp);	// STEP_float();
+					yaw_angle_predict = RampFloat(yaw_predict_temp, yaw_angle_predict, auto_yaw_angle_predict_ramp);	// StepFloat();
 				else 
-					yaw_angle_predict = STEP_float(yaw_predict_temp, step, &step_cnt, step_death);
+					yaw_angle_predict = StepFloat(yaw_predict_temp, step, &step_cnt, step_death);
 				/* 预测量限幅 */
 				yaw_angle_predict = constrain(yaw_angle_predict, -auto_yaw_angle_predict_limit, auto_yaw_angle_predict_limit);
 				
@@ -2081,7 +1853,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 			/* 未达到预测开启条件 */
 			else {
 				/*----期望修改----*/
-				pid[GYRO][YAW_205].Angle.target = gimbal->Auto.Yaw.target;//RAMP_float(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
+				pid[GYRO][YAW_205].Angle.target = gimbal->Auto.Yaw.target;//RampFloat(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
 
 				Mobi_Pre_Yaw = false;	// 标记未开启预测
 				mobpre_yaw_left_delay = 0;
@@ -2127,7 +1899,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		/* 未达到预测开启的条件 */
 		else {
 			/*----期望修改----*/
-			pid[GYRO][PITCH_206].Angle.target = gimbal->Auto.Pitch.target;//RAMP_float(gimbal->Auto.Pitch.target, pid[GYRO][PITCH_206].Angle.feedback, auto_pitch_ramp);
+			pid[GYRO][PITCH_206].Angle.target = gimbal->Auto.Pitch.target;//RampFloat(gimbal->Auto.Pitch.target, pid[GYRO][PITCH_206].Angle.feedback, auto_pitch_ramp);
 		}
 	}
 	/* 未识别到目标可以随意移动云台 */
@@ -2138,7 +1910,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		mobpre_yaw_right_delay = 0;		// 重置右预测开火延迟
 		mobpre_yaw_stop_delay = 0;		// 重置停止预测开火延迟
 		
-		KEY_setGimbalAngle();
+		KEY_SetGimbalAngle();
 		
 //		if(vision_truly_lost == LOST) {
 //			last_speed = 0;
@@ -2146,7 +1918,7 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 //			lost_compensation = 0;
 //			/* # 这里先简化成普通的键盘移动，后续再优化 */
 //			/*----期望修改----*/
-//			KEY_setGimbalAngle();
+//			KEY_SetGimbalAngle();
 //		} else {
 //			/* 掉帧补偿 */
 //			if(last_distance != 0)
@@ -2159,33 +1931,501 @@ void GIMBAL_AUTO_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 //		}
 	}
 }
+#endif
 
 /**
  *	@brief	云台自瞄预测
  *	@author	Lzx
  */
-void GIMBAL_AutoPredict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+uint8_t RAMP_MAX_CNT		= 10;
+uint8_t ACTIVE_MAX_CNT		= 10;
+uint8_t PREDICT_DELAY_CNT	= 100;
+uint8_t LOST_MAX_CNT		= 10;
+
+float cloud_yaw_raw;
+float cloud_yaw_kf;
+float cloud_degree;
+float vision_yaw;
+float vision_degree;
+float vision_yaw_raw;
+float update_cloud_yaw;
+float vision_yaw_kf;
+float vision_dis_raw;
+float vision_dis_kf;
+float target_yaw_raw;
+float k_scale_vision;
+float target_yaw_kf;
+float now_cal_yaw;
+float target_speed_raw;
+float target_degree;
+uint8_t queue_speed_length = 10;
+uint8_t queue_accel_length = 10;
+float k_speed;
+float target_speed_kf;
+float target_accel_raw;
+float target_accel_kf;
+float predict_angle_raw;
+float predict_angle_degree;
+float k_ff;
+float feedforward_angle;
+float k_pre;
+float predict_angle;
+uint8_t use_ff;
+uint8_t predict_ramp_cnt = 10;
+uint8_t vision_online_flag;
+uint16_t vision_update_fps;
+
+uint16_t predict_delay=0;/*预测的延时函数*/		
+
+
+void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
 {
+	static uint16_t ramp_cnt=0;/*斜坡计数 -- 用于缓和掉帧影响*/			
+	
+	static bool judge_flag=false;/*丢失标志位激活标志位,用于一次性操作*/
+	
+	
+	static uint16_t active_cnt=0,lost_cnt=0;/*激活计数/丢失计数--用于识别和未识别到相互切换的过程*/
+	
+	static uint32_t vision_this_time,vision_last_time;/*视觉接受的时间*/					
+	
+	static uint8_t vision_identify_target=0, last_identify_flag=0;/*上一次的接收标志位*/
+	
+	static float now_vision_yaw=0;/*当前获得的视觉yaw角度--相对坐标角度*/				
+	
+	uint32_t outline_cnt=0;	/*离线计数*/
+	
+//	float now_gyro_yaw=0;/*当前和上次的机械yaw角度 -- 云台角度*/
+
+//	static bool init=true;/*初始化标志位*/		
+//	
+//	if(init == true)
+//	{
+//		start_gyro_yaw = pid[GYRO][YAW_205].Angle.feedback;
+//		last_gyro_yaw = start_gyro_yaw;
+//		init = false;
+//		//初始化过程
+//	}	
+	
+	if(Gimbal.Auto.FLAG_first_into_auto == true)
+	{
+		//start_gyro_yaw = pid[GYRO][YAW_205].Angle.feedback;
+		//last_gyro_yaw = start_gyro_yaw;
+		//delta_gyro_yaw = 0;
+		last_identify_flag = 0;
+		predict_delay = PREDICT_DELAY_CNT;	/*刚进自瞄的时候延时预测超前，防止云台晃动*/
+		Gimbal.Auto.FLAG_first_into_auto = false;
+		//初始化过程		
+	}
+	
+	now_gyro_yaw = pid[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
+	/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
+
+	delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
+	/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
+	
+	
+	cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
+	/*这里是为了将差值进行卡尔曼滤波*/
+	 
+	last_gyro_yaw = now_gyro_yaw; /*记录上一次的角度值*/
+	/*更新记录上一次采样的陀螺仪角度*/ 
+
+	cloud_yaw_kf = KalmanFilter(&kalman_cloudYaw,cloud_yaw_raw)+start_gyro_yaw;	/*滤波*/       
+	
+	cloud_degree = cloud_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
+	/*这里是将前后两次采样的差值进行卡尔曼滤波后再加上起始角度，来作为滤波后的云台陀螺仪角度*/ 
+	
+	/*
+		这里这么做是为了避开机械角度的边界问题，这个方法同样可以解决陀螺仪产生的边界而导致无法直接对角度数据进行滤波的问题。 你细细品 
+	*/	
+	
+	/*以上是对视觉原始数据的处理*/
+
+	if(VISION_GetFlagStatus(VISION_FLAG_DATA_UPDATE) == true)
+	{
+		vision_identify_target = VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET);
+			
+		vision_yaw = VISION_GYRO_GetYawFeedback();
+
+		
+//		/*当视觉数据更新后进来*/	
+//		if(last_identify_flag != vision_identify_target)	/*识别的状态发生了切换*/
+//		{
+//			/*若发生了掉帧或刚识别到目标或丢失了目标，则进到这里*/ 
+//			
+//			ramp_cnt = RAMP_MAX_CNT;	/*切换后斜坡过渡*/
+//			/*这里原本的ramp_cnt为0.现在赋值为不为0的数，表示要对数据进行斜坡处理*/ 
+//			
+//			judge_flag = true;			/*进入判定过程*/
+//			/*触发识别状态的判定条件，即当出现识别模式的切换时，开始进入判断过程，判断是否真的跟丢或者只是掉帧或者刚识别到目标*/ 
+//			
+
+//			//掉帧后重新判断识别状态
+//		}		
+
+//		if(judge_flag == true)		/*识别的状态发生了切换*/
+//		{
+//			/*
+//				这里的内容是哨兵侦察和识别之间的切换代码，实际上其他兵种可以不看，根据需要写上自己的切换过程代码。不过也可以看一下 参考一下思路，你细细品。 
+//			*/ 
+//			
+//			if(vision_identify_target == 1)		/*表示为发生了掉帧重新进入状态判定过程--这里不影响继续跟踪识别-因为模式没有改变*/
+//			{
+//				active_cnt++; 	/*活跃计数*/
+//				
+//				lost_cnt = 0;
+//				
+//				if(active_cnt >= ACTIVE_MAX_CNT) /*达到阈值，认定为识别到*/
+//				{
+//					judge_flag = false;
+//					
+//					//gimbal_mode = ATTACK;
+//				
+//					predict_delay = PREDICT_DELAY_CNT;  /*用于延迟超前角的加入时间*/
+//					
+//					active_cnt = 0;
+//					
+//					/*重新确认进来的判断*/
+//				}	
+//			}
+//			else
+//			{
+//				lost_cnt++;	 		/*丢失计数*/
+//				
+//				active_cnt = 0;
+
+//				if(lost_cnt >= LOST_MAX_CNT) /*达到阈值，认定为丢失*/
+//				{
+//					judge_flag = false;
+//					
+//					//gimbal_mode = SCOUT; 	
+//					
+//					
+//					lost_cnt = 0;					
+//					/*侦察模式的切换*/
+//				}
+//			}
+//			/*进入判定后不侦察*/	
+//			 
+//			/*到这里是侦察和识别的切换*/ 
+//		}	
+
+		/*↑↑↑ 模式判定过程 ↑↑↑*/
+		
+		/*
+			下面就是斜坡的过程了
+			如果发生了切换的情况，则这里会进入斜坡并持续一小段时间，来缓和由于掉帧带来的冲击。具体的根据实际情况采用，可不用， 
+		*/ 
+//		if(ramp_cnt > 0)
+//		{
+//			/*斜坡过渡*/
+//			now_vision_yaw = RampFloat(vision_yaw, now_vision_yaw, abs(vision_yaw - now_vision_yaw)/ramp_cnt);
+//			ramp_cnt--;
+//		}
+//		else
+			now_vision_yaw = vision_yaw;                          
+		
+		vision_degree = now_vision_yaw / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
+		/* ↑↑↑获取当前的视觉角度↑↑↑ */ 
+		
+		update_cloud_yaw = cloud_yaw_raw+start_gyro_yaw; 			/*视觉数据更新时的云台角度*/
+		/*视觉数据更新时的云台数据*/ 
+		
+		vision_yaw_raw = now_vision_yaw;	/*与陀螺仪数据尺度相同*/    
+		/*视觉的最新数据，转换成和陀螺仪角度的同一个尺度*/ 
+		
+		
+		vision_yaw_kf = KalmanFilter(&kalman_visionYaw,vision_yaw_raw); 	/*对视觉角度数据做卡尔曼滤波*/  
+		/*视觉数据的卡尔曼滤波*/ 
+		
+		
+		vision_dis_raw = VISION_GetDistance()/1000.f;	/*计算距离*/
+		/*获取距离数据*/  
+	
+	
+		vision_dis_kf = KalmanFilter(&kalman_dist,vision_dis_raw);	/*滤波*/
+		/*距离数据卡尔曼滤波器*/ 
+		
+		
+		vision_this_time = xTaskGetTickCount();		/*获取当前时间*/
+		/*更新视觉更新的时间 -- 在最后有用到*/ 
+		
+		VISION_ClearFlagStatus(VISION_FLAG_DATA_UPDATE);	/*清除标志位*/	
+
+		/*
+			之所以将数据更新的内容放在更新标志位里，是为了保证预测数据可以不受云台自身运动的影响。
+			仔细说了就是因为数据的更新频率远小于云台的角度数据，在视觉没更新的时间点里，云台的数据一直在更新。
+			这导致了云台的运动会给预测的速度带来扰动数据。这里的处理就是为了尽可能地避免这里地噪声 
+		*/ 
+	}
+	/*↑↑↑数据更新的处理↑↑↑*/
+		
+	target_yaw_raw = -vision_yaw_kf*k_scale_vision + cloud_yaw_kf;		/*对目标的期望角度*/
+	/*目标的位置的yaw角度预测，这里的符号是因为器件安装包括云台和摄像头的安装之间的关系。具体看自己的安装关系。*/ 
+
+
+	target_yaw_kf = KalmanFilter(&kalman_targetYaw,target_yaw_raw);		/*对目标的yaw角度进行定位*/   
+	
+	target_degree=target_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
+	/*对目标角度进行滤波*/ 
+	
+	
+	now_cal_yaw = -vision_yaw_raw*k_scale_vision + update_cloud_yaw;	 /*目标的角度 -- 用于计算目标速度*/
+	/*开始预测速度，这里的k_scale_vision是摄像头角度变化的转化系数。
+	
+		举个例子，摄像头的视觉数据变化了10°，但是实际上云台转过了15°，那这个时候就需要给视觉的数据乘上一个1.5，此时的k_scale_vision就为1.5 
+	*/
+
+	
+	
+	target_speed_raw = Get_Target_Speed(queue_speed_length,now_cal_yaw)*k_speed; 	/*计算出对目标速度的预测*/
+	/*开始对目标的速度进行预测，这个函数直接参考我给的代码。k_speed是缩放系数，因为得到的速度数据比较小，因此放大后放到卡尔曼比较合适*/ 
+	
+	
+	if(vision_identify_target == 1)				/*计算速度值*/
+		target_speed_kf = KalmanFilter(&kalman_speedYaw,target_speed_raw);
+	else
+		target_speed_kf = KalmanFilter(&kalman_speedYaw,0);			
+	
+	/*参考去年的做法。*/ 
+	
+	
+	target_accel_raw = Get_Target_Accel(queue_accel_length,target_speed_kf);	 /*获取加速度*/
+	
+	target_accel_raw = myDeathZoom(0,0.1,target_accel_raw);		/*死区处理 - 滤除0点附近的噪声*/
+	
+	target_accel_kf = KalmanFilter(&kalman_accel,target_accel_raw);		/*卡尔曼滤波*/
+
+	/*上面三行是解算加速度的数据，跟速度的解算原理一样，不多做解释*/		
+		
+	if(predict_delay>0)
+	{
+		/*预测的延时*/
+		predict_delay--;
+		predict_angle_raw=0;
+		
+		/*这里predict的延时跟去年的代码有点像，都是为了让云台先摆到目标附近在进行预测用的，
+		否则会导致云台晃动，原因就是因为云台晃动会给预测的速度带来影响，从而形成正反馈的数据震荡过程。 */ 
+	}
+	else
+	{
+		/*延时结束后，进入预测过程*/
+		float tmp1;	 /*临时变量*/
+		
+		if((target_accel_kf*target_speed_kf)>=0)
+		{
+			/*加速度和速度同向时*/
+			tmp1 = 0.8f; 
+		}
+		else
+		{
+			tmp1 = -1.2f;
+		}
+		
+		/*这里用来判断加速度和速度关系，来决定加速度得作用方向
+			
+			例如 加速度和速度反向时，说明减速运动
+				加速度和速度同向时，说明加速运动。 
+		*/ 
+		
+		feedforward_angle = k_ff * target_accel_kf; 	/*计算前馈角*/
+		
+		feedforward_angle = constrain(feedforward_angle,-4.f,4.f);	 /*前馈角*/
+		
+		/*前馈角度时通过加速度来对目标运动的提前反应。*/ 
+		
+		predict_angle_raw = k_level*(k_pre*target_speed_kf*vision_dis_kf + tmp1*feedforward_angle*use_ff);	/*计算预测角度*/
+	}
+	predict_angle_raw = constrain(predict_angle_raw,-8*GIMBAL_GYRO_ANGLE_ZOOM_INDEX,8*GIMBAL_GYRO_ANGLE_ZOOM_INDEX);	/*限幅*/
+	
+	predict_angle_degree = predict_angle_raw / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
+	
+	predict_angle = RampFloat(predict_angle_raw, predict_angle, (abs(predict_angle_raw - predict_angle)/predict_ramp_cnt)); 	/*斜坡处理*/
+	
+	/*这里是对预测的滤波*/ 
+	
+	//attack_pitch_offset = k_pitch * vision_dis_kf; 	/*抬头距离补偿*/
+	/*对于距离的pitch角度抬头，但是没有加入对pitch方向的预测。后续补充上。*/ 
+	
+	
+	/*以上是控制所需要的角度计算过程*/
+	
+	outline_cnt = xTaskGetTickCount() - vision_this_time; 	/*离线计数*/
+	/*计算视觉最近一帧的更新时间，来判断是否已经离线*/ 
+
+	if(outline_cnt >= 1000)
+	{
+		/*离线*/
+		VISION_ClearRxPacket();
+		vision_online_flag = false;		
+	}
+	else
+	{
+		vision_online_flag=true;
+	}
+	/*判定是否离线*/
+	/*离线要有对应的处理，否则云台暴走。*/ 	
+	
+	
+	if(vision_this_time != vision_last_time)
+	{
+		/*计算帧率*/
+		vision_update_fps = vision_this_time - vision_last_time;
+		
+		vision_last_time = vision_this_time;
+		
+		/*计算帧率*/ 
+	}
+	
+	last_identify_flag = vision_identify_target;
+	//记录上一次标志位	
 	
 }
+
+#if (AUTO_CTRL_WAY == 2)
+void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+{
+	VISION_AUTO_Predict(pid, gimbal);
+	
+	mobpre_yaw_boundary = (k_level/K_LEVEL_3) * (target_speed_kf/auto_yaw_speed_predict_high) * auto_yaw_predict_max;	// 
+	
+	
+	if(VISION_GetFlagStatus(VISION_FLAG_LOCK_TARGET) == true)
+	{
+		pid[GYRO][YAW_205].Angle.target = target_yaw_kf + predict_angle;
+		
+		//pid[GYRO][PITCH_206].Angle.target = target_pitch_kf;
+		
+		/*----预测到位判断----*/
+		if(predict_delay == 0 
+				&& abs(vision_yaw_kf) < auto_yaw_predict_max 
+				&& abs(target_speed_kf) > auto_yaw_speed_predict_low
+				&& abs(target_speed_kf) < auto_yaw_speed_predict_high)
+		{			
+			/* 目标右移而且视觉误差表明目标在左边(表示已超前) */
+			if(target_speed_kf < 0 
+				&& vision_yaw_kf > mobpre_yaw_boundary)
+			{
+				mobpre_yaw_left_delay = 0;	// 向左预测开火延时重置
+				
+				mobpre_yaw_right_delay++;	// 累加向右移动预测
+				if(mobpre_yaw_right_delay > 0) {
+					Mobi_Pre_Yaw_Fire = true;
+				} else {
+					Mobi_Pre_Yaw_Fire = false;
+				}
+			}
+			/* 目标左移而且视觉误差表明目标在右边(表示已超前) */
+			else if(target_speed_kf > 0
+				&& vision_yaw_kf < -mobpre_yaw_boundary)
+			{
+				mobpre_yaw_right_delay = 0;	// 向右预测开火延时重置
+				
+				mobpre_yaw_left_delay++;		// 累加向左移动预测
+				if(mobpre_yaw_left_delay > 0) {
+					Mobi_Pre_Yaw_Fire = true;
+				} else {
+					Mobi_Pre_Yaw_Fire = false;
+				}		
+			}
+			/* 预测未到位 */
+			else {
+				Mobi_Pre_Yaw_Fire = false;
+				
+				mobpre_yaw_left_delay = 0;
+				mobpre_yaw_right_delay = 0;
+			}
+			
+			Mobi_Pre_Yaw = true;	// 标记已开启移动预测
+			mobpre_yaw_stop_delay = 0;	// 重置静止时的开火延迟
+		
+		}
+		/* 未达到预测开启条件 */
+		else {
+			pid[GYRO][YAW_205].Angle.target = target_yaw_kf;//RampFloat(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
+			
+			Mobi_Pre_Yaw = false;	// 标记未开启移动预测
+			mobpre_yaw_left_delay = 0;
+			mobpre_yaw_right_delay = 0;
+			
+			if(abs(vision_yaw_kf) < stoppre_yaw_boundary) 
+			{
+				mobpre_yaw_stop_delay++;
+				if(mobpre_yaw_stop_delay > 25) {// 稳定50ms
+					Mobi_Pre_Yaw_Fire = true;
+				} else {
+					Mobi_Pre_Yaw_Fire = false;
+				}
+			}
+		}		
+	}
+	else
+	{
+		mobpre_yaw_left_delay = 0;		// 重置左预测开火延迟
+		mobpre_yaw_right_delay = 0;		// 重置右预测开火延迟
+		mobpre_yaw_stop_delay = 0;		// 重置停止预测开火延迟
+		
+		KEY_SetGimbalAngle();		
+	}
+}
+#endif
 
 /**
  *	@brief	计算速度和预测角度
  */
-void GIMBAL_calPredictInfo(void)
+void GIMBAL_CalPredictInfo(void)
 {
-	/* 非自瞄模式下也更新 */
-	if(!GIMBAL_ifAutoMode()) {
-		/* 更新二阶卡尔曼速度先验估计值 */
-		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][YAW_205].Angle.feedback);	
-		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][PITCH_206].Angle.feedback);
+//	/* 非自瞄模式下也更新 */
+//	if(!GIMBAL_IfAutoMode()) {
+//		/* 更新二阶卡尔曼速度先验估计值 */
+//		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][YAW_205].Angle.feedback);	
+//		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][PITCH_206].Angle.feedback);
 
-		/* 对角度和速度进行二阶卡尔曼滤波融合,0位置,1速度 */
-		yaw_kf_result = kalman_filter_calc(&yaw_kalman_filter, Gimbal_PID[GYRO][YAW_205].Angle.feedback, 0);		// 识别不到时认为目标速度为0
-		pitch_kf_result = kalman_filter_calc(&pitch_kalman_filter, Gimbal_PID[GYRO][PITCH_206].Angle.feedback, 0);	// 识别不到时认为目标速度为0
+//		/* 对角度和速度进行二阶卡尔曼滤波融合,0位置,1速度 */
+//		yaw_kf_result = kalman_filter_calc(&yaw_kalman_filter, Gimbal_PID[GYRO][YAW_205].Angle.feedback, 0);		// 识别不到时认为目标速度为0
+//		pitch_kf_result = kalman_filter_calc(&pitch_kalman_filter, Gimbal_PID[GYRO][PITCH_206].Angle.feedback, 0);	// 识别不到时认为目标速度为0
 
-		js_yaw_speed = yaw_kf_result[KF_SPEED];
-		js_yaw_angle = yaw_kf_result[KF_ANGLE];
+//		js_yaw_speed = yaw_kf_result[KF_SPEED];
+//		js_yaw_angle = yaw_kf_result[KF_ANGLE];
+//	}
+
+	
+	if( !GIMBAL_IfAutoMode() ) 
+	{
+		now_gyro_yaw = Gimbal_PID[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
+		/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
+
+		delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
+		/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
+		
+		cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
+		/*这里是为了将差值进行卡尔曼滤波*/
+		 
+		last_gyro_yaw = now_gyro_yaw; /*记录上一次的角度值*/
+		/*更新记录上一次采样的陀螺仪角度*/ 
+
+		cloud_yaw_kf = KalmanFilter(&kalman_cloudYaw,cloud_yaw_raw)+start_gyro_yaw;	/*滤波*/       
+		
+		cloud_degree = cloud_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
+		/*这里是将前后两次采样的差值进行卡尔曼滤波后再加上起始角度，来作为滤波后的云台陀螺仪角度*/ 
+		
+		target_speed_raw = Get_Target_Speed(queue_speed_length,now_cal_yaw)*k_speed; 	/*计算出对目标速度的预测*/
+		/*开始对目标的速度进行预测，这个函数直接参考我给的代码。k_speed是缩放系数，因为得到的速度数据比较小，因此放大后放到卡尔曼比较合适*/ 
+		
+		target_speed_kf = KalmanFilter(&kalman_speedYaw,0);			
+		
+		/*参考去年的做法。*/ 
+		
+		
+		target_accel_raw = Get_Target_Accel(queue_accel_length,target_speed_kf);	 /*获取加速度*/
+		
+		target_accel_raw = myDeathZoom(0,0.1,target_accel_raw);		/*死区处理 - 滤除0点附近的噪声*/
+		
+		target_accel_kf = KalmanFilter(&kalman_accel,target_accel_raw);		/*卡尔曼滤波*/
+
+		/*上面三行是解算加速度的数据，跟速度的解算原理一样，不多做解释*/		
+		
 	}
 }
 
@@ -2219,7 +2459,7 @@ void GIMBAL_calPredictInfo(void)
  */
 float buff_yaw_ramp;
 float buff_pitch_ramp;
-void GIMBAL_BUFF_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
+void GIMBAL_BUFF_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
 {
 	static float yaw_gyro_mid, yaw_mech_mid;
 	static float pitch_gyro_mid, pitch_mech_mid;
@@ -2241,11 +2481,11 @@ void GIMBAL_BUFF_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 		gimbal->Buff.FLAG_first_into_buff = false;
 		into_buff_time = 0;
 		/* 记录刚进入打符模式时的陀螺仪角度 */
-		yaw_gyro_mid = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
-		pitch_gyro_mid = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;
+		yaw_gyro_mid = pid[GYRO][YAW_205].Angle.feedback;
+		pitch_gyro_mid = pid[GYRO][PITCH_206].Angle.feedback;
 		/* 记录刚进入打符模式时的机械角度 */
-		yaw_mech_mid = Gimbal_PID[MECH][YAW_205].Angle.feedback;
-		pitch_mech_mid = Gimbal_PID[MECH][PITCH_206].Angle.feedback;
+		yaw_mech_mid = pid[MECH][YAW_205].Angle.feedback;
+		pitch_mech_mid = pid[MECH][PITCH_206].Angle.feedback;
 	} else {
 		/* 防止加得太大 */
 		if(into_buff_time < 250)	
@@ -2253,21 +2493,21 @@ void GIMBAL_BUFF_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 	}
 	
 	/* 数据更新 */
-	if(VISION_getFlagStatus(VISION_FLAG_DATA_UPDATE) == true) {
+	if(VISION_GetFlagStatus(VISION_FLAG_DATA_UPDATE) == true) {
 		/* 清除数据更新标志位，防止未接收到新数据的情况下重复进入 */
-		VISION_clearFlagStatus(VISION_FLAG_DATA_UPDATE);	
-		if(VISION_getFlagStatus(VISION_FLAG_LOCK_BUFF) == true) {	// 识别到目标则更新误差
+		VISION_ClearFlagStatus(VISION_FLAG_DATA_UPDATE);	
+		if(VISION_GetFlagStatus(VISION_FLAG_LOCK_BUFF) == true) {	// 识别到目标则更新误差
 			lost_cnt = 0;
 			if(into_buff_time > 100) {
 				/* Yaw 误差计算 */
-				gimbal->Buff.Yaw.erro = gimbal->Buff.Yaw.kp * VISION_BUFF_getYawFeedback() + GIMBAL_BUFF_YAW_COMPENSATION;
+				gimbal->Buff.Yaw.erro = gimbal->Buff.Yaw.kp * VISION_BUFF_GetYawFeedback() + GIMBAL_BUFF_YAW_COMPENSATION;
 				gimbal->Buff.Yaw.target = pid[GYRO][YAW_205].Angle.feedback + gimbal->Buff.Yaw.erro;
 				/* Pitch 误差计算 */
-				gimbal->Buff.Pitch.erro = (gimbal->Buff.Pitch.kp * VISION_BUFF_getPitchFeedback()) + GIMBAL_BUFF_PITCH_COMPENSATION;
+				gimbal->Buff.Pitch.erro = (gimbal->Buff.Pitch.kp * VISION_BUFF_GetPitchFeedback()) + GIMBAL_BUFF_PITCH_COMPENSATION;
 				gimbal->Buff.Pitch.target = pid[GYRO][PITCH_206].Angle.feedback + gimbal->Buff.Pitch.erro;
 				/*----期望修改----*/
-				pid[GYRO][YAW_205].Angle.target = RAMP_float(gimbal->Buff.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, GIMBAL_BUFF_YAW_RAMP);
-				pid[GYRO][PITCH_206].Angle.target = RAMP_float(gimbal->Buff.Pitch.target, pid[GYRO][PITCH_206].Angle.feedback, GIMBAL_BUFF_PITCH_RAMP);				
+				pid[GYRO][YAW_205].Angle.target = RampFloat(gimbal->Buff.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, GIMBAL_BUFF_YAW_RAMP);
+				pid[GYRO][PITCH_206].Angle.target = RampFloat(gimbal->Buff.Pitch.target, pid[GYRO][PITCH_206].Angle.feedback, GIMBAL_BUFF_PITCH_RAMP);				
 			} else {
 				/*----期望修改----*/
 				pid[GYRO][YAW_205].Angle.target = yaw_gyro_mid;
@@ -2280,8 +2520,8 @@ void GIMBAL_BUFF_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 				if(lost_cnt == 51) {	// 只赋值一次
 					/*----期望修改----*/
 					pid[GYRO][YAW_205].Angle.target = pid[GYRO][YAW_205].Angle.feedback;
-					pid[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_yawTargetBoundaryProcess(&Gimbal_PID[GYRO][YAW_205], 
-													((yaw_mech_mid - Gimbal_PID[MECH][YAW_205].Angle.feedback)*360/8192.f));
+					pid[GYRO][YAW_205].Angle.target = GIMBAL_GYRO_YawBoundaryProc(&Gimbal_PID[GYRO][YAW_205], 
+													((yaw_mech_mid - pid[MECH][YAW_205].Angle.feedback)*360/8192.f));
 					pid[GYRO][PITCH_206].Angle.target = pitch_mech_mid;	// Pitch采用机械模式
 					lost_cnt++;
 				}
@@ -2300,26 +2540,26 @@ void GIMBAL_BUFF_pidCalculate(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_C
 /**
  *	@brief	云台常规控制
  */
-void GIMBAL_normalControl(void)
+void GIMBAL_NormalCtrl(void)
 {
-	KEY_setGimbalAngle();
-	KEY_setGimbalTurn();
-	KEY_setQuickPickUp();	
+	KEY_SetGimbalAngle();
+	KEY_SetGimbalTurn();
+	KEY_SetQuickPickUp();	
 }
 
 /**
  *	@brief	云台自瞄控制
  */
-void GIMBAL_autoControl(void)
+void GIMBAL_AutoCtrl(void)
 {
 	/* 视觉数据可用 && 键盘模式下 */
-	if( VISION_isDataValid() ) 
+	if( VISION_IsDataValid() ) 
 	{
 		/*----期望修改----*/
 		/* 视觉预测版 */
-		//GIMBAL_VISION_AUTO_pidCalculate(Gimbal_PID, &Gimbal);
+		//GIMBAL_VISION_AUTO_PidCalc(Gimbal_PID, &Gimbal);
 		/* 电控预测版 */
-		GIMBAL_AUTO_pidCalculate(Gimbal_PID, &Gimbal);
+		GIMBAL_AUTO_PidCalc(Gimbal_PID, &Gimbal);
 	}	
 }
 
@@ -2340,32 +2580,32 @@ void GIMBAL_autoControl(void)
  *	
  *	7.pid调试心得：pitch和yaw都要特别硬，可以加很大的积分ki（注释掉反向积分清零的操作会稳定一点）
  */
-void GIMBAL_buffControl(void)
+void GIMBAL_BuffCtrl(void)
 {
 	/* 按下WSADQEV(任意方向键)则退出打符模式 */
 	if((IF_KEY_PRESSED_W || IF_KEY_PRESSED_S || IF_KEY_PRESSED_A || IF_KEY_PRESSED_D
 		|| IF_KEY_PRESSED_Q || IF_KEY_PRESSED_E || IF_KEY_PRESSED_V)&&(!IF_KEY_PRESSED_CTRL)) 
 	{
 		Gimbal.State.mode = GIMBAL_MODE_NORMAL;	// 进入正常模式
-		Flag.Gimbal.FLAG_pidMode = GYRO;		// 进入陀螺仪模式
+		Gimbal.State.pid_mode = GYRO;		// 进入陀螺仪模式
 		
 		Gimbal_PID[GYRO][YAW_205].Angle.target = Gimbal_PID[GYRO][YAW_205].Angle.feedback;
 		Gimbal_PID[GYRO][PITCH_206].Angle.target = Gimbal_PID[GYRO][PITCH_206].Angle.feedback;	// GIMBAL_GYRO_PITCH_MID_ANGLE
 
 		/* 拨盘模式调整 */
-		REVOLVER_setAction(SHOOT_NORMAL);		// 变成常规控制模式
+		REVOLVER_SetAction(SHOOT_NORMAL);		// 变成常规控制模式
 		/* 视觉模式调整 */
-		VISION_setMode(VISION_MODE_MANUAL);	// 手动模式
+		VISION_SetMode(VISION_MODE_MANUAL);	// 手动模式
 		/* 底盘模式调整 */
-		CHASSIS_setMode(CHAS_MODE_NORMAL);
+		CHASSIS_SetMode(CHAS_MODE_NORMAL);
 		return;
 	}
 	
 	/* 视觉数据可用 && 键盘模式下 */
-	if( VISION_isDataValid() ) 
+	if( VISION_IsDataValid() ) 
 	{
 		/*----期望修改----*/
-		GIMBAL_BUFF_pidCalculate(Gimbal_PID, &Gimbal);	
+		GIMBAL_BUFF_PidCalc(Gimbal_PID, &Gimbal);	
 	}
 }
 
@@ -2373,23 +2613,38 @@ void GIMBAL_buffControl(void)
  *	@brief	云台自动补弹
  *	@note		
  */
-void GIMBAL_reloadBulletControl(void)
+void GIMBAL_ReloadBulletCtrl(void)
 {
-	/* 按下WSADQEV(任意方向键)则退出自动补弹模式 */
-	if((IF_KEY_PRESSED_W || IF_KEY_PRESSED_S || IF_KEY_PRESSED_A || IF_KEY_PRESSED_D
-		|| IF_KEY_PRESSED_Q || IF_KEY_PRESSED_E || IF_KEY_PRESSED_V))
-	{
-		GIMBAL_setMode(GIMBAL_MODE_NORMAL);
-		Flag.Gimbal.FLAG_pidMode = GYRO;
-		GIMBAL_keyMech_To_keyGyro();
-		return;
-	}
-	
+//	/* 按下WSADQEV(任意方向键)则退出自动补弹模式 */
+//	if((IF_KEY_PRESSED_W || IF_KEY_PRESSED_S || IF_KEY_PRESSED_A || IF_KEY_PRESSED_D
+//		|| IF_KEY_PRESSED_Q || IF_KEY_PRESSED_E || IF_KEY_PRESSED_V))
+//	{
+//		GIMBAL_SetMode(GIMBAL_MODE_NORMAL);
+//		Gimbal.State.pid_mode = GYRO;
+//		GIMBAL_keyMech_To_keyGyro();
+//		return;
+//	}
+//	
 	/* 头定在中间 */
-	Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE;
+	Gimbal_PID[Gimbal.State.pid_mode][PITCH_206].Angle.target = GIMBAL_MECH_PITCH_MID_ANGLE;
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
+ *	@brief	云台信息获取函数
+ */
+void GIMBAL_GetInfo(void)
+{
+	// 获取系统信息
+	GIMBAL_GetSysInfo(&System, &Gimbal);
+	// 获取裁判系统信息
+	GIMBAL_GetJudgeInfo(&Judge, &Gimbal);
+	// 获取IMU信息
+	GIMBAL_GetImuInfo(Gimbal_PID);	
+	// 计算自瞄预测信息
+	GIMBAL_CalPredictInfo();
+}
+
 /**
  *	@brief	pid控制器最终输出
  */
@@ -2397,67 +2652,65 @@ uint8_t test_yaw_pid = 0;
 uint8_t test_pitch_pid = 0;
 float   test_yaw_speed_max_target = 8000;
 float   test_pitch_speed_max_target = 4000;
-void GIMBAL_pidControlTask(void)
+void GIMBAL_PidCtrlTask(void)
 {
 	/* YAW 角度环 */
-	GIMBAL_Angle_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], YAW_205);
+	GIMBAL_Angle_PidCalc(Gimbal_PID[Gimbal.State.pid_mode], YAW_205);
 	/* YAW 速度环 */
 	if(test_yaw_pid == 0) 
 	{
-		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Speed.target = Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Angle.out;
+		Gimbal_PID[Gimbal.State.pid_mode][YAW_205].Speed.target = Gimbal_PID[Gimbal.State.pid_mode][YAW_205].Angle.out;
 	} 
 	else 
 	{
-		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][YAW_205].Speed.target = (RC_Ctl_Info.rc.ch0 - 1024)/660.f * test_yaw_speed_max_target;
+		Gimbal_PID[Gimbal.State.pid_mode][YAW_205].Speed.target = (RC_Ctl_Info.rc.ch0 - 1024)/660.f * test_yaw_speed_max_target;
 	}
-	GIMBAL_Speed_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], YAW_205);
+	GIMBAL_Speed_PidCalc(Gimbal_PID[Gimbal.State.pid_mode], YAW_205);
 	
 	/* PITCH 角度环 */
-	GIMBAL_Angle_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], PITCH_206);
+	GIMBAL_Angle_PidCalc(Gimbal_PID[Gimbal.State.pid_mode], PITCH_206);
 	/* PITCH 速度环 */
 	if(test_pitch_pid == 0) 
 	{
-		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Speed.target = Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Angle.out;
+		Gimbal_PID[Gimbal.State.pid_mode][PITCH_206].Speed.target = Gimbal_PID[Gimbal.State.pid_mode][PITCH_206].Angle.out;
 	} 
 	else 
 	{
-		Gimbal_PID[Flag.Gimbal.FLAG_pidMode][PITCH_206].Speed.target = -RC_RIGH_CH_UD_VALUE/660.f * test_pitch_speed_max_target;
+		Gimbal_PID[Gimbal.State.pid_mode][PITCH_206].Speed.target = -RC_RIGH_CH_UD_VALUE/660.f * test_pitch_speed_max_target;
 	}
-	GIMBAL_Speed_pidCalculate(Gimbal_PID[Flag.Gimbal.FLAG_pidMode], PITCH_206);
+	GIMBAL_Speed_PidCalc(Gimbal_PID[Gimbal.State.pid_mode], PITCH_206);
 	
-	GIMBAL_pidOut(Gimbal_PID[Flag.Gimbal.FLAG_pidMode]);	
+	GIMBAL_PidOut(Gimbal_PID[Gimbal.State.pid_mode]);	
 }
 
 /**
  *	@brief	遥控控制云台
  */
-void GIMBAL_rcControlTask(void)
+void GIMBAL_RcCtrlTask(void)
 {
-	REMOTE_setGimbalAngle();	
-	//REMOTE_setTopGyro();
+	REMOTE_SetGimbalAngle();	
+	REMOTE_SetTopGyro();
 }
 
 /**
  *	@brief	键盘控制云台
  */
-void GIMBAL_keyControlTask(void)
+void GIMBAL_KeyCtrlTask(void)
 {
-	/* 设置云台的模式 */
-	KEY_setGimbalMode(&RC_Ctl_Info);
 	switch(Gimbal.State.mode)
 	{
 		case GIMBAL_MODE_NORMAL:	
-			GIMBAL_normalControl();
+			GIMBAL_NormalCtrl();
 			break;
 		case GIMBAL_MODE_AUTO:
-			GIMBAL_autoControl();
+			GIMBAL_AutoCtrl();
 			break;
 		case GIMBAL_MODE_BIG_BUFF:
 		case GIMBAL_MODE_SMALL_BUFF:
-			GIMBAL_buffControl();
+			GIMBAL_BuffCtrl();
 			break;
 		case GIMBAL_MODE_RELOAD_BULLET:
-			GIMBAL_reloadBulletControl();
+			GIMBAL_ReloadBulletCtrl();
 			break;
 		default:
 			break;
@@ -2467,43 +2720,39 @@ void GIMBAL_keyControlTask(void)
 /**
  *	@brief	云台失控保护
  */
-void GIMBAL_selfProtect(void)
+void GIMBAL_SelfProtect(void)
 {	
-	GIMBAL_stop(Gimbal_PID[MECH]);
-	GIMBAL_stop(Gimbal_PID[GYRO]);
-	GIMBAL_pidParamsInit(Gimbal_PID[MECH], GIMBAL_MOTOR_COUNT);
-	GIMBAL_pidParamsInit(Gimbal_PID[GYRO], GIMBAL_MOTOR_COUNT);	
+	GIMBAL_Stop(Gimbal_PID[MECH]);
+	GIMBAL_Stop(Gimbal_PID[GYRO]);
+	GIMBAL_PidParamsInit(Gimbal_PID[MECH], GIMBAL_MOTOR_COUNT);
+	GIMBAL_PidParamsInit(Gimbal_PID[GYRO], GIMBAL_MOTOR_COUNT);	
 	
-	GIMBAL_calPredictInfo();
+	GIMBAL_CalPredictInfo();
 }
 
 /**
  *	@brief	云台控制
  */
-void GIMBAL_control(void)
+void GIMBAL_Ctrl(void)
 {
 	/*----信息读入----*/
-	//GIMBAL_IMU_recordFeedback(Gimbal_PID);
-	GIMBAL_getInfo();
+	GIMBAL_GetInfo();
 	/*----期望修改----*/
-	if(BM_ifSet(BitMask.System.BM_reset, BM_RESET_GIMBAL)) 
-	{	// 复位状态
-		Gimbal.State.mode = GIMBAL_MODE_NORMAL;
-		GIMBAL_reset(); // 云台复位
+	if(BM_IfSet(BitMask.System.BM_Reset, BM_RESET_GIMBAL)) {	// 复位状态
+		GIMBAL_Reset(); // 云台复位
 	} 
-	else 
-	{
-		if(Flag.Remote.FLAG_mode == RC) {
-			GIMBAL_rcControlTask();
+	else {
+		if(Gimbal.State.remote_mode == RC) {
+			GIMBAL_RcCtrlTask();
 		} 
-		else if(Flag.Remote.FLAG_mode == KEY) {
-			GIMBAL_keyControlTask();
+		else if(Gimbal.State.remote_mode == KEY) {
+			GIMBAL_KeyCtrlTask();
 		}
 	}
 
 	/* 根据云台模式切换PID参数 */
-	GIMBAL_pidParamsSwitch(Gimbal_PID, &Gimbal);
+	GIMBAL_PidParamsSwitch(Gimbal_PID, &Gimbal);
 
 	/*----最终输出----*/
-	GIMBAL_pidControlTask();
+	GIMBAL_PidCtrlTask();
 }

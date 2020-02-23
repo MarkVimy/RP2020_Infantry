@@ -15,8 +15,8 @@
 QueueHandle_t CAN1_Queue;	// CAN1消息队列句柄
 QueueHandle_t CAN2_Queue;	// CAN2消息队列句柄
 
-TimerHandle_t	CAN1_Timer_Handle; 			//周期定时器句柄					
-TimerHandle_t	CAN2_Timer_Handle; 			//周期定时器句柄
+TimerHandle_t CAN1_Timer_Handle; 			//周期定时器句柄					
+TimerHandle_t CAN2_Timer_Handle; 			//周期定时器句柄
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -92,10 +92,10 @@ void Timer_Send_Create(void)
 	
 	/* 创建CAN1发送定时器 */
 	CAN1_Timer_Handle = xTimerCreate((const char*)"CAN1_Timer",
-																	 (TickType_t)TIME_STAMP_2MS,	// 2ms
-																	 (UBaseType_t)pdTRUE,					// 周期执行
-																	 (void*)0,										// 编号0
-																	 (TimerCallbackFunction_t)CAN1_Timer_Callback);	// 回调函数
+									(TickType_t)TIME_STAMP_2MS,	// 2ms
+									(UBaseType_t)pdTRUE,		// 周期执行
+									(void*)0,					// 编号0
+									(TimerCallbackFunction_t)CAN1_Timer_Callback);	// 回调函数
 																
 	/* 创建成功
 		 开启CAN1定时器，仅且仅能开启一次，否则会出错，不开启则不会发数据 */
@@ -106,10 +106,10 @@ void Timer_Send_Create(void)
 
 	/* 创建CAN2发送定时器 */
 	CAN2_Timer_Handle = xTimerCreate((const char*)"CAN2_Timer",
-																	 (TickType_t)TIME_STAMP_1MS,	// 1ms
-																	 (UBaseType_t)pdTRUE,					// 周期执行
-																	 (void*)0,										// 编号1
-																	 (TimerCallbackFunction_t)CAN2_Timer_Callback);	// 回调函数
+									(TickType_t)TIME_STAMP_1MS,	// 1ms
+									(UBaseType_t)pdTRUE,		// 周期执行
+									(void*)0,					// 编号1
+									(TimerCallbackFunction_t)CAN2_Timer_Callback);	// 回调函数
 																
 	/* 创建成功
 		 开启CAN2定时器，仅且仅能开启一次，否则会出错，不开启则不会发数据 */

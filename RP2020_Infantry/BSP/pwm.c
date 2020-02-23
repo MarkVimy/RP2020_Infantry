@@ -27,8 +27,8 @@
 /* Private variables ---------------------------------------------------------*/
 /* ## Global variables ## ----------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
-static void TIM3_GPIO_init(void);
-static void TIM1_GPIO_init(void);
+static void TIM3_GPIO_Init(void);
+static void TIM1_GPIO_Init(void);
 
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -36,7 +36,7 @@ static void TIM1_GPIO_init(void);
  *	@note	PWM1 - PA6
  *			PWM2 - PA7
  */
-static void TIM3_GPIO_init(void)
+static void TIM3_GPIO_Init(void)
 {
 	GPIO_InitTypeDef	GPIO_InitStructure;
 	
@@ -55,7 +55,7 @@ static void TIM3_GPIO_init(void)
  *	@brief	舵机GPIO配置
  *	@note	SERVO - PE11
  */
-static void TIM1_GPIO_init(void)
+static void TIM1_GPIO_Init(void)
 {
 	GPIO_InitTypeDef	GPIO_InitStructure;
 	
@@ -74,13 +74,13 @@ static void TIM1_GPIO_init(void)
  *	@brief	摩擦轮
  */
 uint8_t test_fric_cali = 0;
-void TIM3_init(void)
+void TIM3_Init(void)
 {
 	TIM_TimeBaseInitTypeDef	tim;
 	TIM_OCInitTypeDef		oc;
 	
 	/* GPIO初始化 */
-	TIM3_GPIO_init();
+	TIM3_GPIO_Init();
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 	
@@ -134,13 +134,13 @@ void TIM3_init(void)
 /**
  *	@brief	舵机
  */
-void TIM1_init(void)
+void TIM1_Init(void)
 {
 	TIM_TimeBaseInitTypeDef	tim;
 	TIM_OCInitTypeDef		oc;
 	
 	/* GPIO初始化 */
-	TIM1_GPIO_init();
+	TIM1_GPIO_Init();
 	
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
 	
@@ -176,7 +176,7 @@ void TIM1_init(void)
  *	@brief	摩擦轮PWM输出函数
  *	@note	左右都是正,以后接线的时候注意三条线的接法	
  */
-void FRICTION_pwmOut(int16_t pwm1, int16_t pwm2)
+void FRICTION_PwmOut(int16_t pwm1, int16_t pwm2)
 {
 	PWM1 = pwm1+1000;
 	PWM2 = pwm2+1000;
@@ -186,7 +186,7 @@ void FRICTION_pwmOut(int16_t pwm1, int16_t pwm2)
  *	@brief	舵机PWM输出函数
  *	@note	
  */
-void MAGZINE_pwmOut(int16_t pwm)
+void MAGZINE_PwmOut(int16_t pwm)
 {
 	SERVO = pwm;
 }

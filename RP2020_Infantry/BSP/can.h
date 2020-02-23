@@ -24,11 +24,11 @@ extern MOTOR_Info_t g_Revolver_Motor_Info;
 /* API functions Prototypes --------------------------------------------------*/
 void CAN_ParamsInit(CAN_InitTypeDef* CAN_InitStructure);
 void CAN_Filter_ParamsInit(CAN_FilterInitTypeDef* CAN_FilterInitStructure);
-void CAN1_init(void);
-void CAN2_init(void);
-void CAN1_send(uint32_t stdID, int16_t *dat);
-void CAN1_queueSend(uint32_t stdID, int16_t *dat);
-void CAN2_send(uint32_t stdID, int16_t *dat);
-void CAN2_queueSend(uint32_t stdID, int16_t *dat);
+void CAN1_Init(void);
+void CAN2_Init(void);
+void CAN1_Send(uint32_t stdID, int16_t *dat);
+void CAN1_QueueSend(uint32_t stdID, int16_t *dat);
+void CAN2_Send(uint32_t stdID, int16_t *dat);
+void CAN2_QueueSend(uint32_t stdID, int16_t *dat);
 
 #endif

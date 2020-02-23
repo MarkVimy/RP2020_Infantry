@@ -36,14 +36,12 @@
 .\objects\task_gimbal.o: ..\FreeRTOS\include\task.h
 .\objects\task_gimbal.o: ..\FreeRTOS\include\list.h
 .\objects\task_gimbal.o: ..\SYSTEM\my_include.h
-.\objects\task_gimbal.o: ..\SYSTEM\sys.h
 .\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\AppInfo\judge.h
 .\objects\task_gimbal.o: ..\AppInfo\vision.h
+.\objects\task_gimbal.o: ..\SYSTEM\sys.h
 .\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\APP\remote.h
-.\objects\task_gimbal.o: ..\APP\friction.h
-.\objects\task_gimbal.o: ..\APP\magzine.h
 .\objects\task_gimbal.o: ..\TASK\my_task.h
 .\objects\task_gimbal.o: ..\TASK\Task_Chassis.h
 .\objects\task_gimbal.o: ..\TASK\Task_Gimbal.h
@@ -51,6 +49,8 @@
 .\objects\task_gimbal.o: ..\TASK\Task_Timing_Report.h
 .\objects\task_gimbal.o: ..\FreeRTOS\include\queue.h
 .\objects\task_gimbal.o: ..\FreeRTOS\include\timers.h
+.\objects\task_gimbal.o: ..\APP\friction.h
+.\objects\task_gimbal.o: ..\APP\magzine.h
 .\objects\task_gimbal.o: ..\APP\ultra.h
 .\objects\task_gimbal.o: ..\BSP\laser.h
 .\objects\task_gimbal.o: ..\BSP\can.h

@@ -22,14 +22,12 @@
 #include "magzine.h"
 #include "ultra.h"
 #include "crc.h"
+#include "imu.h"
 /* Includes HARDWARE Header Files ----------------------------------- */
 #include "led.h"
 #include "laser.h"
 #include "can.h"
 #include "pwm.h"
-#include "mpu6050.h"
-#include "inv_mpu.h"
-#include "inv_mpu_dmp_motion_driver.h"
 //#include "MPU_Temperature.h"
 /* Includes DRIVER Header Files ------------------------------------- */
 #include "usart3.h"

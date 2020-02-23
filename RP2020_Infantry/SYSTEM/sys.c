@@ -43,10 +43,10 @@ __asm void MSR_MSP(u32 addr)
 	BX r14
 }
 
-float myDeathZoom(float input, float death)
+float myDeathZoom(float center, float death, float input)
 {
-	if(abs(input) < death)
-		return 0.f;
+	if(abs(input - center) < death)
+		return center;
 	return input;
 }
 
@@ -56,7 +56,7 @@ float myDeathZoom(float input, float death)
   * @retval 当前输出
   * @attention  
   */
-float RAMP_float(float final, float now, float ramp )
+float RampFloat(float final, float now, float ramp )
 {
 	  float buffer = 0;
 	
@@ -92,7 +92,7 @@ float RAMP_float(float final, float now, float ramp )
 /**
  *	@brief	等步数增量算法
  */
-float STEP_float(float err, float step, uint8_t *stepCnt, float death)
+float StepFloat(float err, float step, uint8_t *stepCnt, float death)
 {
 	if(*stepCnt>0) {
 		(*stepCnt)--;

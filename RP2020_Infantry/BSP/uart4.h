@@ -10,7 +10,7 @@
 /* ## Global Variables Prototypes ## -----------------------------------------*/
 
 /* API functions Prototypes --------------------------------------------------*/
-void UART4_init( void );
-void UART4_sendChar( uint8_t cData );
+void UART4_Init( void );
+void UART4_SendChar( uint8_t cData );
 
 #endif

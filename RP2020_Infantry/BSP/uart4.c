@@ -49,13 +49,13 @@
 uint8_t  Vision_Buffer[ VISION_BUFFER_LEN ] = {0};	//视觉发过来的数据暂存在这里
 
 /* Private function prototypes -----------------------------------------------*/
-static void UART4_DMA_init( void );
+static void UART4_DMA_Init( void );
 
 /* Private functions ---------------------------------------------------------*/
 /**
  *	@brief 串口4 DMA初始化
  */
-static void UART4_DMA_init( void )
+static void UART4_DMA_Init( void )
 {		
 	DMA_InitTypeDef xCom4DMAInit;
 	
@@ -87,7 +87,7 @@ static void UART4_DMA_init( void )
 /**
  *	@brief	视觉通信串口初始化(UART4)
  */
-void UART4_init( void )
+void UART4_Init( void )
 {
 	USART_InitTypeDef  xUsartInit;
 	GPIO_InitTypeDef   xGpioInit;
@@ -125,7 +125,7 @@ void UART4_init( void )
 	USART_DMACmd( UART4, USART_DMAReq_Rx, ENABLE );
 	USART_DMACmd( UART4, USART_DMAReq_Tx, ENABLE );
 	
-	UART4_DMA_init( );	// 初始化uart4的DMA
+	UART4_DMA_Init( );	// 初始化uart4的DMA
 	
 	xNvicInit.NVIC_IRQChannel                    = UART4_IRQn;
 	xNvicInit.NVIC_IRQChannelPreemptionPriority  = UART4_IT_PRIO_PRE;
@@ -152,7 +152,7 @@ void UART4_IRQHandler( void )
 		
 		res = VISION_BUFFER_LEN - DMA_GetCurrDataCounter(DMA1_Stream_RX);
 		
-		VISION_readData(Vision_Buffer);		// 读取视觉数据
+		VISION_ReadData(Vision_Buffer);		// 读取视觉数据
 		memset(Vision_Buffer, 0, VISION_BUFFER_LEN);	// 读完之后内容清零
 		DMA_Cmd(DMA1_Stream_RX, ENABLE);
 	}
@@ -165,7 +165,7 @@ void UART4_IRQHandler( void )
   * @retval void
   * @attention  串口移位发送
   */
-void UART4_sendChar(uint8_t cData)
+void UART4_SendChar(uint8_t cData)
 {
 	while (USART_GetFlagStatus( UART4, USART_FLAG_TC ) == RESET);
 	

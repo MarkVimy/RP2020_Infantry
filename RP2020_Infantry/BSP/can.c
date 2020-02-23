@@ -246,9 +246,9 @@
  *				0x1FF - 电调ID 1 - 4
  *				0x2FF	- 电调ID 5 - 7
  *				电调电压值范围： -30000 ~ 0 ~ 30000
- *													 -24V  ~ 0 ~  24V
+ *								-24V  ~ 0 ~  24V
  *	
- *																			0x1FF	0x2FF
+ *											0x1FF	0x2FF
  *				DATA[0] - 电压给定值高8位 - 	ID1		ID5
  *				DATA[1] - 电压给定值低8位 - 	ID1		ID5
  *				DATA[2] - 电压给定值高8位 - 	ID2		ID6
@@ -272,7 +272,7 @@
  *
  *				发送频率 - 1Khz(RoboMaster Assistant软件中修改)	
  *				转子机械角度范围: 0 ~ 8191(0°~ 360°) 
- *										精度: 0.0439453125° = 0.044
+ *				精度: 0.0439453125° = 0.044
  *				转子转速值单位: RPM
  *
  *		③电调校准
@@ -281,7 +281,7 @@
  *			□□□□
  *			■■■■
  *			1	2	3	4
- *			1	- Bit0	标定设备ID
+ *			1 - Bit0	标定设备ID
  *			2 - Bit1	标定设备ID
  *			3 - Bit2	标定设备ID
  *			4 - Bit3	是否接入CAN总线120Ω终端电阻
@@ -318,11 +318,11 @@
  *			1. 电调接收报文格式(标准帧)
  *				- 控制指令(主控 -> 电调) - 电压驱动
  *				0x200 - 电调ID 1 - 4
- *				0x1FF	- 电调ID 5 - 7
+ *				0x1FF - 电调ID 5 - 7
  *				电调电流值范围： -10000 ~ 0 ~ 10000
  *								-10A ~ 0 ~  	10A
  *	
- *																			0x200	0x1FF
+ *											0x200	0x1FF
  *				DATA[0] - 控制电流值高8位 - 	ID1		ID5
  *				DATA[1] - 控制电流值低8位 - 	ID1		ID5
  *				DATA[2] - 控制电流值高8位 - 	ID2		ID6
@@ -346,7 +346,7 @@
  *
  *				发送频率 - 1Khz(RoboMaster Assistant软件中修改)	
  *				转子机械角度范围: 0 ~ 8191(0°~ 360°) 
- *										精度: 0.0439453125° = 0.044
+ *				精度: 0.0439453125° = 0.044
  *				转子转速值单位: RPM
  *
  *		③电调校准
@@ -384,11 +384,11 @@ static CAN_InitTypeDef CAN_DefaultParams =
 
 static CAN_FilterInitTypeDef CAN_Filter_DefaultParams =
 {
-	.CAN_FilterNumber = 0,  										// 过滤器0
+	.CAN_FilterNumber = 0,  					// 过滤器0
 	.CAN_FilterMode = CAN_FilterMode_IdMask,   	// 屏蔽模式
 	.CAN_FilterScale = CAN_FilterScale_32bit,   // 32位宽
 	.CAN_FilterFIFOAssignment = 0,              // 过滤器0关联到FIFO0
-	.CAN_FilterActivation = ENABLE,   					// 激活过滤器
+	.CAN_FilterActivation = ENABLE,   			// 激活过滤器
 	.CAN_FilterIdHigh = 0x0000,                 // 32位ID
 	.CAN_FilterIdLow = 0x0000,
 	.CAN_FilterMaskIdHigh = 0x0000,             // 32位Mask
@@ -404,13 +404,13 @@ extern QueueHandle_t CAN1_Queue;
 extern QueueHandle_t CAN2_Queue;
 	
 /* Private function prototypes -----------------------------------------------*/
-static void CAN1_GPIO_init(void);
-static void CAN2_GPIO_init(void);
-static int16_t getMotorAngle(CanRxMsg *rxMsg);
-static int16_t getMotorSpeed(CanRxMsg *rxMsg);
-//static int16_t getMotorCurrent(CanRxMsg *rxMsg);
-static uint8_t getMotorTemperature(CanRxMsg *rxMsg);
-static void calMotorAngleSum(int16_t angle_now, int16_t angle_pre, int32_t *angle_sum);
+static void CAN1_GPIO_Init(void);
+static void CAN2_GPIO_Init(void);
+static int16_t CAN_GetMotorAngle(CanRxMsg *rxMsg);
+static int16_t CAN_GetMotorSpeed(CanRxMsg *rxMsg);
+//static int16_t CAN_GetMotorCurrent(CanRxMsg *rxMsg);
+static uint8_t CAN_GetMotorTemperature(CanRxMsg *rxMsg);
+static void CalcMotorAngleSum(int16_t angle_now, int16_t angle_pre, int32_t *angle_sum);
 
 /* Private functions ---------------------------------------------------------*/
 /**
@@ -418,7 +418,7 @@ static void calMotorAngleSum(int16_t angle_now, int16_t angle_pre, int32_t *angl
  *	@note	PA11 - CAN1_RX
  *			PA12 - CAN1_TX
  */
-static void CAN1_GPIO_init(void)
+static void CAN1_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
@@ -442,7 +442,7 @@ static void CAN1_GPIO_init(void)
  *	@note	PB12 - CAN2_RX
  *			PB13 - CAN2_TX
  */
-static void CAN2_GPIO_init(void)
+static void CAN2_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
@@ -464,7 +464,7 @@ static void CAN2_GPIO_init(void)
 /**
  *	@brief	从CAN报文中反馈电机的机械角度
  */
-static int16_t getMotorAngle(CanRxMsg *rxMsg)
+static int16_t CAN_GetMotorAngle(CanRxMsg *rxMsg)
 {
 	int16_t angle;
 	angle = ((int16_t)rxMsg->Data[0] << 8 | rxMsg->Data[1]);
@@ -474,7 +474,7 @@ static int16_t getMotorAngle(CanRxMsg *rxMsg)
 /**
  *	@brief	从CAN报文中反馈电机的转子转速
  */
-static int16_t getMotorSpeed(CanRxMsg *rxMsg)
+static int16_t CAN_GetMotorSpeed(CanRxMsg *rxMsg)
 {
 	int16_t speed;
 	speed = ((int16_t)rxMsg->Data[2] << 8 | rxMsg->Data[3]);
@@ -484,7 +484,7 @@ static int16_t getMotorSpeed(CanRxMsg *rxMsg)
 /**
  *	@brief	从CAN报文中反馈电机的电流
  */
-//static int16_t getMotorCurrent(CanRxMsg *rxMsg)
+//static int16_t CAN_GetMotorCurrent(CanRxMsg *rxMsg)
 //{
 //	int16_t current;
 //	current = ((int16_t)rxMsg->Data[4] << 8 | rxMsg->Data[5]);
@@ -494,7 +494,7 @@ static int16_t getMotorSpeed(CanRxMsg *rxMsg)
 /**
  *	@brief	从CAN报文中反馈电机的温度
  */
-static uint8_t getMotorTemperature(CanRxMsg *rxMsg)
+static uint8_t CAN_GetMotorTemperature(CanRxMsg *rxMsg)
 {
 	uint8_t temperature;
 	temperature = (rxMsg->Data[6]);
@@ -504,7 +504,7 @@ static uint8_t getMotorTemperature(CanRxMsg *rxMsg)
 /**
  *	@brief	计算电机机械角度的累加值
  */
-static void calMotorAngleSum(int16_t angle_now, int16_t angle_pre, int32_t *angle_sum)
+static void CalcMotorAngleSum(int16_t angle_now, int16_t angle_pre, int32_t *angle_sum)
 {
 	if(abs(angle_now - angle_pre) > 4095) {	// 转过半圈
 		if(angle_now < angle_pre) {	// 转过半圈 + 转过零点(正方向)
@@ -558,14 +558,14 @@ void CAN_Filter_ParamsInit(CAN_FilterInitTypeDef* CAN_FilterInitStructure)
  *	@brief	CAN1初始化
  *	@note		只配置中断接收
  */
-void CAN1_init(void)
+void CAN1_Init(void)
 {
 	CAN_InitTypeDef CAN_InitStructure;
 	CAN_FilterInitTypeDef CAN_FilterInitStructure;
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);	// 使能CAN1时钟
 	
-	CAN1_GPIO_init();
+	CAN1_GPIO_Init();
 
 	/* CAN NVIC 中断配置 */
 	NVICx_init(CAN1_RX0_IRQn, CAN1_RX0_PRIO_PRE, CAN1_RX0_PRIO_SUB);
@@ -586,14 +586,14 @@ void CAN1_init(void)
  *	@brief	CAN2初始化
  *	@note		配置中断收发
  */
-void CAN2_init(void)
+void CAN2_Init(void)
 {
 	CAN_InitTypeDef CAN_InitStructure;
 	CAN_FilterInitTypeDef CAN_FilterInitStructure;
 	
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, ENABLE);	// 使能CAN2时钟
 	
-	CAN2_GPIO_init();
+	CAN2_GPIO_Init();
 
 	/* CAN NVIC 中断配置 */
 	NVICx_init(CAN2_RX0_IRQn, CAN2_RX0_PRIO_PRE, CAN2_RX0_PRIO_SUB);
@@ -621,7 +621,7 @@ void CAN2_init(void)
  *	@debug	2019/09/22
  *						手头上的设备ID为0x203
  */
-void CAN1_send(uint32_t stdID, int16_t *dat)
+void CAN1_Send(uint32_t stdID, int16_t *dat)
 {
 	CanTxMsg	txMsg;
 	
@@ -650,7 +650,7 @@ void CAN1_send(uint32_t stdID, int16_t *dat)
  *					int16_t* dat - 数据缓冲区
  *	@note		默认8个字节的数据
  */
-void CAN1_queueSend(uint32_t stdID, int16_t *dat)
+void CAN1_QueueSend(uint32_t stdID, int16_t *dat)
 {
 	CanTxMsg	txMsg;
 	
@@ -680,7 +680,7 @@ void CAN1_queueSend(uint32_t stdID, int16_t *dat)
  *	@note		默认8个字节的数据
  *	@debug	
  */
-void CAN2_send(uint32_t stdID, int16_t *dat)
+void CAN2_Send(uint32_t stdID, int16_t *dat)
 {
 	CanTxMsg	txMsg;
 	
@@ -710,7 +710,7 @@ void CAN2_send(uint32_t stdID, int16_t *dat)
  *	@note		默认8个字节的数据
  *	@debug	
  */
-void CAN2_queueSend(uint32_t stdID, int16_t *dat)
+void CAN2_QueueSend(uint32_t stdID, int16_t *dat)
 {
 	CanTxMsg	txMsg;
 	
@@ -749,87 +749,87 @@ void CAN1_RX0_IRQHandler(void)
 		
 		if(rxMsg.StdId == 0x201) {	// 左前
 			/* 机械角度记录 */
-			g_Chassis_Motor_Info[LEFT_FRON_201].angle = getMotorAngle(&rxMsg);
+			g_Chassis_Motor_Info[LEFT_FRON_201].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
-			calMotorAngleSum(g_Chassis_Motor_Info[LEFT_FRON_201].angle, g_Chassis_Motor_Info[LEFT_FRON_201].angle_prev, &g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum);
+			CalcMotorAngleSum(g_Chassis_Motor_Info[LEFT_FRON_201].angle, g_Chassis_Motor_Info[LEFT_FRON_201].angle_prev, &g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum);
 			g_Chassis_Motor_Info[LEFT_FRON_201].angle_prev = g_Chassis_Motor_Info[LEFT_FRON_201].angle;
 			Chassis_PID[LEFT_FRON_201].Angle.feedback = g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum;
 			/* 速度环实时速度记录 */
-			g_Chassis_Motor_Info[LEFT_FRON_201].speed = getMotorSpeed(&rxMsg);
-			Chassis_PID[LEFT_FRON_201].Speed.feedback = getMotorSpeed(&rxMsg);
+			g_Chassis_Motor_Info[LEFT_FRON_201].speed = CAN_GetMotorSpeed(&rxMsg);
+			Chassis_PID[LEFT_FRON_201].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 			
 			bm |= BM_RX_REPORT_201;
 		}
 		
 		if(rxMsg.StdId == 0x202) {	// 右前
 			/* 机械角度记录 */
-			g_Chassis_Motor_Info[RIGH_FRON_202].angle = getMotorAngle(&rxMsg);
+			g_Chassis_Motor_Info[RIGH_FRON_202].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
-			calMotorAngleSum(g_Chassis_Motor_Info[RIGH_FRON_202].angle, g_Chassis_Motor_Info[RIGH_FRON_202].angle_prev, &g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum);
+			CalcMotorAngleSum(g_Chassis_Motor_Info[RIGH_FRON_202].angle, g_Chassis_Motor_Info[RIGH_FRON_202].angle_prev, &g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum);
 			g_Chassis_Motor_Info[RIGH_FRON_202].angle_prev = g_Chassis_Motor_Info[RIGH_FRON_202].angle;
 			Chassis_PID[RIGH_FRON_202].Angle.feedback = g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum;
 			/* 速度环实时速度记录 */
-			g_Chassis_Motor_Info[RIGH_FRON_202].speed = getMotorSpeed(&rxMsg);
-			Chassis_PID[RIGH_FRON_202].Speed.feedback = getMotorSpeed(&rxMsg);
+			g_Chassis_Motor_Info[RIGH_FRON_202].speed = CAN_GetMotorSpeed(&rxMsg);
+			Chassis_PID[RIGH_FRON_202].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 			
 			bm |= BM_RX_REPORT_202;
 		}
 		
 		if(rxMsg.StdId == 0x203) {	// 左后
 			/* 机械角度记录 */
-			g_Chassis_Motor_Info[LEFT_BACK_203].angle = getMotorAngle(&rxMsg);
+			g_Chassis_Motor_Info[LEFT_BACK_203].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
-			calMotorAngleSum(g_Chassis_Motor_Info[LEFT_BACK_203].angle, g_Chassis_Motor_Info[LEFT_BACK_203].angle_prev, &g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum);
+			CalcMotorAngleSum(g_Chassis_Motor_Info[LEFT_BACK_203].angle, g_Chassis_Motor_Info[LEFT_BACK_203].angle_prev, &g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum);
 			g_Chassis_Motor_Info[LEFT_BACK_203].angle_prev = g_Chassis_Motor_Info[LEFT_BACK_203].angle;
 			Chassis_PID[LEFT_BACK_203].Angle.feedback = g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum;
 			/* 速度环实时速度记录 */
-			g_Chassis_Motor_Info[LEFT_BACK_203].speed = getMotorSpeed(&rxMsg);
-			Chassis_PID[LEFT_BACK_203].Speed.feedback = getMotorSpeed(&rxMsg);
+			g_Chassis_Motor_Info[LEFT_BACK_203].speed = CAN_GetMotorSpeed(&rxMsg);
+			Chassis_PID[LEFT_BACK_203].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 			
 			bm |= BM_RX_REPORT_203;
 		}
 		
 		if(rxMsg.StdId == 0x204) {	// 右后
 			/* 机械角度记录 */
-			g_Chassis_Motor_Info[RIGH_BACK_204].angle = getMotorAngle(&rxMsg);
+			g_Chassis_Motor_Info[RIGH_BACK_204].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
-			calMotorAngleSum(g_Chassis_Motor_Info[RIGH_BACK_204].angle, g_Chassis_Motor_Info[RIGH_BACK_204].angle_prev, &g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum);
+			CalcMotorAngleSum(g_Chassis_Motor_Info[RIGH_BACK_204].angle, g_Chassis_Motor_Info[RIGH_BACK_204].angle_prev, &g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum);
 			g_Chassis_Motor_Info[RIGH_BACK_204].angle_prev = g_Chassis_Motor_Info[RIGH_BACK_204].angle;
 			Chassis_PID[RIGH_BACK_204].Angle.feedback = g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum;
 			/* 速度环实时速度记录 */
-			g_Chassis_Motor_Info[RIGH_BACK_204].speed = getMotorSpeed(&rxMsg);
-			Chassis_PID[RIGH_BACK_204].Speed.feedback = getMotorSpeed(&rxMsg);
+			g_Chassis_Motor_Info[RIGH_BACK_204].speed = CAN_GetMotorSpeed(&rxMsg);
+			Chassis_PID[RIGH_BACK_204].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 
 			bm |= BM_RX_REPORT_204;
 		}
 		
 		if(rxMsg.StdId == 0x205) {	// Yaw轴云台电机
 			/* 电机温度记录 */
-			g_Gimbal_Motor_Info[YAW_205].temperature = getMotorTemperature(&rxMsg);
+			g_Gimbal_Motor_Info[YAW_205].temperature = CAN_GetMotorTemperature(&rxMsg);
 			/* 速度环实时记录 */			
 			// ..修改成用IMU的反馈值
-			// Gimbal_PID[MECH][YAW_205].Speed.feedback = getMotorSpeed(&rxMsg);
-			g_Gimbal_Motor_Info[YAW_205].speed = getMotorSpeed(&rxMsg);
+			// Gimbal_PID[MECH][YAW_205].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
+			g_Gimbal_Motor_Info[YAW_205].speed = CAN_GetMotorSpeed(&rxMsg);
 			
 			/* 位置环角度记录 */
-			g_Gimbal_Motor_Info[YAW_205].angle = getMotorAngle(&rxMsg);			
-			Gimbal_PID[MECH][YAW_205].Angle.feedback = getMotorAngle(&rxMsg);	// 机械模式 YAW 
-			Chassis_Z_PID.Angle.feedback = getMotorAngle(&rxMsg);
+			g_Gimbal_Motor_Info[YAW_205].angle = CAN_GetMotorAngle(&rxMsg);			
+			Gimbal_PID[MECH][YAW_205].Angle.feedback = CAN_GetMotorAngle(&rxMsg);	// 机械模式 YAW 
+			Chassis_Z_PID.Angle.feedback = CAN_GetMotorAngle(&rxMsg);
 			
 			bm|= BM_RX_REPORT_205;
 		}
 		
 		if(rxMsg.StdId == 0x206) {	// Pitch轴云台电机
 			/* 电机温度记录 */
-			g_Gimbal_Motor_Info[PITCH_206].temperature = getMotorTemperature(&rxMsg);
+			g_Gimbal_Motor_Info[PITCH_206].temperature = CAN_GetMotorTemperature(&rxMsg);
 			/* 速度环实时记录 */
 			// ..修改成用IMU的反馈值
-			// Gimbal_PID[MECH][PITCH_206].Speed.feedback = getMotorSpeed(&rxMsg);			
-			g_Gimbal_Motor_Info[PITCH_206].speed = getMotorSpeed(&rxMsg);
+			// Gimbal_PID[MECH][PITCH_206].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);			
+			g_Gimbal_Motor_Info[PITCH_206].speed = CAN_GetMotorSpeed(&rxMsg);
 			
 			/* 位置环角度记录 */
-			g_Gimbal_Motor_Info[PITCH_206].angle = getMotorAngle(&rxMsg);
-			Gimbal_PID[MECH][PITCH_206].Angle.feedback = getMotorAngle(&rxMsg);			
+			g_Gimbal_Motor_Info[PITCH_206].angle = CAN_GetMotorAngle(&rxMsg);
+			Gimbal_PID[MECH][PITCH_206].Angle.feedback = CAN_GetMotorAngle(&rxMsg);			
 			
 			bm |= BM_RX_REPORT_206;
 		}
@@ -861,12 +861,12 @@ void CAN2_RX0_IRQHandler(void)
 		if(rxMsg.StdId == REVOLVER_ID)	// 0x207
 		{
 			/* 拨弹电机实时转速反馈记录 */
-			g_Revolver_Motor_Info.speed = getMotorSpeed(&rxMsg);
-			Revolver_PID.Speed.feedback = getMotorSpeed(&rxMsg);
+			g_Revolver_Motor_Info.speed = CAN_GetMotorSpeed(&rxMsg);
+			Revolver_PID.Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 
 			/* 拨弹电机累加角度反馈记录 */			
-			g_Revolver_Motor_Info.angle = getMotorAngle(&rxMsg);
-			calMotorAngleSum(g_Revolver_Motor_Info.angle, g_Revolver_Motor_Info.angle_prev, &g_Revolver_Motor_Info.angle_sum);
+			g_Revolver_Motor_Info.angle = CAN_GetMotorAngle(&rxMsg);
+			CalcMotorAngleSum(g_Revolver_Motor_Info.angle, g_Revolver_Motor_Info.angle_prev, &g_Revolver_Motor_Info.angle_sum);
 			g_Revolver_Motor_Info.angle_prev = g_Revolver_Motor_Info.angle;
 			Revolver_PID.Angle.feedback = g_Revolver_Motor_Info.angle_sum;
 			

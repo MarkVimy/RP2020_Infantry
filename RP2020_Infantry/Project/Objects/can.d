@@ -39,15 +39,15 @@
 .\objects\can.o: ..\FreeRTOS\include\task.h
 .\objects\can.o: ..\FreeRTOS\include\list.h
 .\objects\can.o: ..\SYSTEM\my_include.h
-.\objects\can.o: ..\SYSTEM\sys.h
 .\objects\can.o: ..\APP\my_app.h
 .\objects\can.o: ..\AppInfo\judge.h
 .\objects\can.o: ..\AppInfo\vision.h
+.\objects\can.o: ..\SYSTEM\sys.h
 .\objects\can.o: ..\APP\my_app.h
 .\objects\can.o: ..\APP\remote.h
+.\objects\can.o: ..\TASK\my_task.h
 .\objects\can.o: ..\APP\friction.h
 .\objects\can.o: ..\APP\magzine.h
-.\objects\can.o: ..\TASK\my_task.h
 .\objects\can.o: ..\APP\ultra.h
 .\objects\can.o: ..\TASK\Task_Gimbal.h
 .\objects\can.o: ..\TASK\Task_Revolver.h

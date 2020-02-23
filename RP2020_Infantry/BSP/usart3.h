@@ -10,7 +10,7 @@
 /* ## Global Variables Prototypes ## -----------------------------------------*/
 
 /* API functions Prototypes --------------------------------------------------*/
-void USART3_init( void );
-void USART3_sendChar( uint8_t cData );
+void USART3_Init( void );
+void USART3_SendChar( uint8_t cData );
 
 #endif

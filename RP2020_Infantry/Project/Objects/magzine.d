@@ -36,14 +36,12 @@
 .\objects\magzine.o: ..\FreeRTOS\include\task.h
 .\objects\magzine.o: ..\FreeRTOS\include\list.h
 .\objects\magzine.o: ..\SYSTEM\my_include.h
-.\objects\magzine.o: ..\SYSTEM\sys.h
 .\objects\magzine.o: ..\APP\my_app.h
 .\objects\magzine.o: ..\AppInfo\judge.h
 .\objects\magzine.o: ..\AppInfo\vision.h
+.\objects\magzine.o: ..\SYSTEM\sys.h
 .\objects\magzine.o: ..\APP\my_app.h
 .\objects\magzine.o: ..\APP\remote.h
-.\objects\magzine.o: ..\APP\friction.h
-.\objects\magzine.o: ..\APP\magzine.h
 .\objects\magzine.o: ..\TASK\my_task.h
 .\objects\magzine.o: ..\TASK\Task_Chassis.h
 .\objects\magzine.o: ..\TASK\Task_Gimbal.h
@@ -51,5 +49,7 @@
 .\objects\magzine.o: ..\TASK\Task_Timing_Report.h
 .\objects\magzine.o: ..\FreeRTOS\include\queue.h
 .\objects\magzine.o: ..\FreeRTOS\include\timers.h
+.\objects\magzine.o: ..\APP\friction.h
+.\objects\magzine.o: ..\APP\magzine.h
 .\objects\magzine.o: ..\APP\ultra.h
 .\objects\magzine.o: ..\BSP\pwm.h

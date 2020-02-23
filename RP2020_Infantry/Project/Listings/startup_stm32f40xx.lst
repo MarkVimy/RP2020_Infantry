@@ -871,11 +871,11 @@ ARM Macro Assembler    Page 14
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=.\objects\startup_stm32f40xx.d -o.\objects\startup_stm32f40xx.o
- -IC:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\RTE -IC
-:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\1.0.8\Device\Include -IC:\Keil_v5\ARM\CMS
-IS\Include --predefine="__UVISION_VERSION SETA 514" --predefine="STM32F40_41xxx
- SETA 1" --list=.\listings\startup_stm32f40xx.lst ..\Libraries\startup\startup_
-stm32f40xx.s
+ -ID:\2020RobotPiolts\程序代码\备份区\RP2020_InfantryV2.0(200219)\Project\RTE -
+IC:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.9.0 -IC:\Keil_v5\ARM\CMSIS\Include -I
+C:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.9.0\Device\Include --predefine="__UVIS
+ION_VERSION SETA 514" --predefine="STM32F407xx SETA 1" --list=.\listings\startu
+p_stm32f40xx.lst ..\Libraries\startup\startup_stm32f40xx.s
 
 
 

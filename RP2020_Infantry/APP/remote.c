@@ -98,22 +98,22 @@ static char  sbus_rx_buffer[2][USART2_RX_MAX_LEN];	// 双SBUS接收缓冲区(接收数据)
 static uint16_t sbus_rx_len = 0;
 
 /* ## Global variables ## ----------------------------------------------------*/
-RC_Ctl_t RC_Ctl_Info = {.rc.isDataValid = 1};	// 默认遥控数据可靠
+RC_Ctl_t RC_Ctl_Info;
 
 /* Private function prototypes -----------------------------------------------*/
-static void USART2_GPIO_init(void);
+static void USART2_GPIO_Init(void);
 static void USART2_ParamsInit(uint32_t baudrate);
-static void USART2_DMA_init(void);
-static void USART2_init(uint32_t baudrate);
-static bool REMOTE_isRCDataValid(RC_Ctl_t *rcInfo);
+static void USART2_DMA_Init(void);
+static void USART2_Init(uint32_t baudrate);
 
 /* Private functions ---------------------------------------------------------*/
+/* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	USART2 GPIO 初始化(遥控器-只收)
  *	@note		PA2	- USART2_TX
  *					PA3	- USART2_RX
  */
-static void USART2_GPIO_init(void)
+static void USART2_GPIO_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
@@ -166,7 +166,7 @@ static void USART2_ParamsInit(uint32_t baudrate)
 /**
  *	@brief	遥控器串口DMA初始化(不定长接收)
  */
-static void USART2_DMA_init(void)
+static void USART2_DMA_Init(void)
 {
 	DMA_InitTypeDef DMA_InitStructure;
 	
@@ -202,100 +202,14 @@ static void USART2_DMA_init(void)
  *	@brief	遥控器串口初始化(串口空闲中断+DMA - 只读)
  *	@param	(u32)baudrate	串口波特率
  */
-static void USART2_init(uint32_t baudrate)
+static void USART2_Init(uint32_t baudrate)
 {
 	/* USART2 NVIC Configuration */
 	NVICx_init(USART2_IRQn, USART2_IT_PRIO_PRE, USART2_IT_PRIO_SUB);
 	
-	USART2_GPIO_init();
+	USART2_GPIO_Init();
 	USART2_ParamsInit(baudrate);
-	USART2_DMA_init();
-}
-
-/**
- *	@brief	判断遥控数据是否出错
- */
-static bool REMOTE_isRCDataValid(RC_Ctl_t *rcInfo)
-{
-	if((rcInfo->rc.s1 != RC_SW_UP && rcInfo->rc.s1 != RC_SW_MID && rcInfo->rc.s1 != RC_SW_DOWN)
-		|| (rcInfo->rc.s2 != RC_SW_UP  && rcInfo->rc.s2 != RC_SW_MID && rcInfo->rc.s2 != RC_SW_DOWN)
-	  || (rcInfo->rc.ch0 > RC_CH_VALUE_MAX || rcInfo->rc.ch0 < RC_CH_VALUE_MIN)
-		|| (rcInfo->rc.ch1 > RC_CH_VALUE_MAX || rcInfo->rc.ch1 < RC_CH_VALUE_MIN)
-		|| (rcInfo->rc.ch2 > RC_CH_VALUE_MAX || rcInfo->rc.ch2 < RC_CH_VALUE_MIN)
-		|| (rcInfo->rc.ch3 > RC_CH_VALUE_MAX || rcInfo->rc.ch3 < RC_CH_VALUE_MIN) 
-		|| (rcInfo->rc.thumbwheel  > RC_CH_VALUE_MAX || rcInfo->rc.thumbwheel  < RC_CH_VALUE_MIN)) 
-	{
-		return false;
-	} 
-	else 
-	{
-		return true;
-	}
-}
-
-/* API functions -------------------------------------------------------------*/
-/* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
-/**
- *	@brief	重新使能RC遥控
- */
-void REMOTE_reenableRC(RC_Ctl_t *remoteInfo)
-{
-	remoteInfo->rc.isDataValid = 1;
-}
-
-/**
- *	@brief	将遥控数据强行复位成安全状态
- */
-void REMOTE_resetRCData(RC_Ctl_t *remoteInfo)
-{
-	/* 通道值强行设置成中间值(不拨动摇杆的状态) */
-	remoteInfo->rc.ch0 = RC_CH_VALUE_OFFSET;
-	remoteInfo->rc.ch1 = RC_CH_VALUE_OFFSET;
-	remoteInfo->rc.ch2 = RC_CH_VALUE_OFFSET;
-	remoteInfo->rc.ch3 = RC_CH_VALUE_OFFSET;	
-	
-	/* 左右开关选择强行设置成中间值状态 */
-	remoteInfo->rc.s1 = RC_SW_MID;
-	remoteInfo->rc.s2 = RC_SW_MID;
-	
-	/* 鼠标 */
-	remoteInfo->mouse.x = 0;
-	remoteInfo->mouse.y = 0;
-	remoteInfo->mouse.z = 0;
-	
-	/* 左右鼠标是否点击 */
-	remoteInfo->mouse.press_l = 0;
-	remoteInfo->mouse.press_r = 0;
-		
-	/* 键盘键值 */
-	remoteInfo->key.v= 0;
-	
-	/* 左拨轮 */
-	remoteInfo->rc.thumbwheel = RC_CH_VALUE_OFFSET;
-}
-
-/**
- *	@brief	判断遥控是否复位到中值
- */
-bool REMOTE_isRCChannelReset(RC_Ctl_t *remoteInfo)
-{
-	if(  remoteInfo->rc.ch0 == RC_CH_VALUE_OFFSET && 
-		 remoteInfo->rc.ch1 == RC_CH_VALUE_OFFSET && 
-		 remoteInfo->rc.ch2 == RC_CH_VALUE_OFFSET && 
-		 remoteInfo->rc.ch3 == RC_CH_VALUE_OFFSET   )
-	
-	{
-		return true;
-	}
-	return false;	
-}
-
-/**
- *	@brief	遥控初始化
- */
-void REMOTE_init(void)
-{
-	USART2_init(RC_BAUDRATE);
+	USART2_DMA_Init();
 }
 
 /**
@@ -309,7 +223,7 @@ void USART2_IRQHandler(void)
 	res = res;
 	
 	if(USART_GetITStatus(USART2, USART_IT_IDLE) != RESET) {
-		/* 清楚空闲中断标志位 */
+		/* 清除空闲中断标志位 */
 		res = USART2->SR;
 		res = USART2->DR;
 		
@@ -322,7 +236,7 @@ void USART2_IRQHandler(void)
 			/* 数据长度判断 */
 			if(sbus_rx_len == RC_DBUS_FRAME_LEN) {
 				/* RC 数据处理 */
-				REMOTE_processData(&RC_Ctl_Info, sbus_rx_buffer[0]);
+				REMOTE_ProcessData(&RC_Ctl_Info, sbus_rx_buffer[0]);
 			}
 		}	else {	// Memory 1
 			DMA_Cmd(DMA1_Stream5, DISABLE);
@@ -333,23 +247,60 @@ void USART2_IRQHandler(void)
 			/* 数据长度判断 */
 			if(sbus_rx_len == RC_DBUS_FRAME_LEN) {
 				/* RC 数据处理 */
-				REMOTE_processData(&RC_Ctl_Info, sbus_rx_buffer[1]);
+				REMOTE_ProcessData(&RC_Ctl_Info, sbus_rx_buffer[1]);
 			}
 		}
 	}
 }
 
+/**
+ *	@brief	遥控初始化
+ */
+void REMOTE_Init(void)
+{
+	USART2_Init(RC_BAUDRATE);
+}
 
-/* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
+ *	@brief	将遥控数据强行复位成安全状态
+ */
+void REMOTE_ResetRcData(RC_Ctl_t *remote)
+{
+	/* 通道值强行设置成中间值(不拨动摇杆的状态) */
+	remote->rc.ch0 = RC_CH_VALUE_OFFSET;
+	remote->rc.ch1 = RC_CH_VALUE_OFFSET;
+	remote->rc.ch2 = RC_CH_VALUE_OFFSET;
+	remote->rc.ch3 = RC_CH_VALUE_OFFSET;	
+	
+	/* 左右开关选择强行设置成中间值状态 */
+	remote->rc.s1 = RC_SW_MID;
+	remote->rc.s2 = RC_SW_MID;
+	
+	/* 鼠标 */
+	remote->mouse.x = 0;
+	remote->mouse.y = 0;
+	remote->mouse.z = 0;
+	
+	/* 左右鼠标是否点击 */
+	remote->mouse.press_l = 0;
+	remote->mouse.press_r = 0;
+		
+	/* 键盘键值 */
+	remote->key.v= 0;
+	
+	/* 左拨轮 */
+	remote->rc.thumbwheel = RC_CH_VALUE_OFFSET;
+}
+
 /**
  *	@brief	处理接收到的遥控数据
  */
-void REMOTE_processData(RC_Ctl_t *remoteInfo, char *rxBuf)
+void REMOTE_ProcessData(RC_Ctl_t *remote, char *rxBuf)
 {
 	if(rxBuf == NULL) {
 		return;
 	} else {
-	/* 模仿19步兵代码(参考RM遥控手册) 新遥控可以使用拨轮 */
+	/* 模仿19步兵代码(参考RM遥控手册) 新遥控可以使用拨轮(可刷固件升级) */
 	/* 字节位数与数据的对应关系：
 		 字节    数据
 		 第0个   0000 0000    0：ch0        uint16_t  实际有效位数 11 位
@@ -375,60 +326,140 @@ void REMOTE_processData(RC_Ctl_t *remoteInfo, char *rxBuf)
 	*/
 
 		/* Channel 0, 1, 2, 3 */
-		remoteInfo->rc.ch0 = (  rxBuf[0]       | (rxBuf[1] << 8 ) ) & 0x07ff;
-		remoteInfo->rc.ch1 = ( (rxBuf[1] >> 3) | (rxBuf[2] << 5 ) ) & 0x07ff;
-		remoteInfo->rc.ch2 = ( (rxBuf[2] >> 6) | (rxBuf[3] << 2 ) | (rxBuf[4] << 10) ) & 0x07ff;
-		remoteInfo->rc.ch3 = ( (rxBuf[4] >> 1) | (rxBuf[5] << 7 ) ) & 0x07ff;
+		remote->rc.ch0 = (  rxBuf[0]       | (rxBuf[1] << 8 ) ) & 0x07ff;
+		remote->rc.ch1 = ( (rxBuf[1] >> 3) | (rxBuf[2] << 5 ) ) & 0x07ff;
+		remote->rc.ch2 = ( (rxBuf[2] >> 6) | (rxBuf[3] << 2 ) | (rxBuf[4] << 10) ) & 0x07ff;
+		remote->rc.ch3 = ( (rxBuf[4] >> 1) | (rxBuf[5] << 7 ) ) & 0x07ff;
 
 		/* Switch left, right */
-		remoteInfo->rc.s1  = ( (rxBuf[5] >> 4) & 0x000C ) >> 2;
-		remoteInfo->rc.s2  = ( (rxBuf[5] >> 4) & 0x0003 );
+		remote->rc.s1  = ( (rxBuf[5] >> 4) & 0x000C ) >> 2;
+		remote->rc.s2  = ( (rxBuf[5] >> 4) & 0x0003 );
 
 		/* Mouse axis: X, Y, Z */
-		remoteInfo->mouse.x = rxBuf[6]  | (rxBuf[7 ] << 8);
-		remoteInfo->mouse.y = rxBuf[8]  | (rxBuf[9 ] << 8);
-		remoteInfo->mouse.z = rxBuf[10] | (rxBuf[11] << 8);
+		remote->mouse.x = rxBuf[6]  | (rxBuf[7 ] << 8);
+		remote->mouse.y = rxBuf[8]  | (rxBuf[9 ] << 8);
+		remote->mouse.z = rxBuf[10] | (rxBuf[11] << 8);
 
 		/* Mouse Left, Right Is Press ? */
-		remoteInfo->mouse.press_l = rxBuf[12];
-		remoteInfo->mouse.press_r = rxBuf[13];
+		remote->mouse.press_l = rxBuf[12];
+		remote->mouse.press_r = rxBuf[13];
 
 		/* KeyBoard value */
-		remoteInfo->key.v = rxBuf[14] | (rxBuf[15] << 8);	
+		remote->key.v = rxBuf[14] | (rxBuf[15] << 8);	
 		
 		/* Thumb Wheel */
-		remoteInfo->rc.thumbwheel = ((int16_t)rxBuf[16] | ((int16_t)rxBuf[17] << 8)) & 0x07ff;
+		remote->rc.thumbwheel = ((int16_t)rxBuf[16] | ((int16_t)rxBuf[17] << 8)) & 0x07ff;
 	}
 	
 	/* 数据出错，防止暴走 */
-	if(REMOTE_isRCDataValid(remoteInfo) == false) {
-		remoteInfo->rc.isDataValid = 0;
-		REMOTE_resetRCData(remoteInfo);	// 强行将遥控值复位
-		Flag.Remote.FLAG_rcErr = 1;
+	if(REMOTE_IsRcDataValid(remote) == false) {
+		Flag.Remote.RcErr = true;
+		REMOTE_ResetRcData(remote);	// 强行将遥控值复位
 	}
 	
-	Cnt.Remote.CNT_rcLost = 0;	// 请除失联计数
+	Cnt.Remote.RcLost = 0;	// 请除失联计数
+}
+
+/* API functions -------------------------------------------------------------*/
+/* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
+ *	@brief	判断遥控数据是否出错
+ */
+bool REMOTE_IsRcDataValid(RC_Ctl_t *remote)
+{
+	if((remote->rc.s1 != RC_SW_UP && remote->rc.s1 != RC_SW_MID && remote->rc.s1 != RC_SW_DOWN)
+		|| (remote->rc.s2 != RC_SW_UP  && remote->rc.s2 != RC_SW_MID && remote->rc.s2 != RC_SW_DOWN)
+		|| (remote->rc.ch0 > RC_CH_VALUE_MAX || remote->rc.ch0 < RC_CH_VALUE_MIN)
+		|| (remote->rc.ch1 > RC_CH_VALUE_MAX || remote->rc.ch1 < RC_CH_VALUE_MIN)
+		|| (remote->rc.ch2 > RC_CH_VALUE_MAX || remote->rc.ch2 < RC_CH_VALUE_MIN)
+		|| (remote->rc.ch3 > RC_CH_VALUE_MAX || remote->rc.ch3 < RC_CH_VALUE_MIN) 
+		|| (remote->rc.thumbwheel  > RC_CH_VALUE_MAX || remote->rc.thumbwheel  < RC_CH_VALUE_MIN)) 
+	{
+		return false;
+	} 
+	else 
+	{
+		return true;
+	}
 }
 
 /**
+ *	@brief	判断遥控是否复位到中值
+ */
+bool REMOTE_IsRcChannelReset(RC_Ctl_t *remote)
+{
+	if(  (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch0) == 0) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch1) == 0) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch2) == 0) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch3) == 0)   )	
+	{
+		return true;
+	}
+	return false;	
+}
+
+/**
+ *	@brief	更新遥控信息
+ *	@note	防止出错
+ */
+static int8_t  prev_sw2 = RC_SW_MID;
+static uint8_t change_pid_mode = false;
+
+static uint8_t MouseLockFlag_R = false;
+static uint8_t RcLockFlag_Sw1 = false;
+static uint8_t KeyLockFlag_Ctrl = false;
+
+void REMOTE_RcUpdateInfo(System_t *sys, RC_Ctl_t *remote)
+{
+	if(Flag.Remote.RcLost || Flag.Remote.RcErr)
+	{
+		prev_sw2 = RC_SW_MID;	
+		change_pid_mode = false;
+		
+		MouseLockFlag_R = false;
+		RcLockFlag_Sw1 = false;
+		KeyLockFlag_Ctrl = false;
+	}
+	else
+	{
+		if(sys->RemoteMode == RC) {
+			MouseLockFlag_R = false;
+			RcLockFlag_Sw1 = false;
+			KeyLockFlag_Ctrl = false;			
+		}
+	}
+}
+
+/* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
  *	@brief	遥控失联处理
  */
-void REMOTE_rcLostProcess(void)
+void REMOTE_RcLostProcess(System_t *sys)
 {
-	Cnt.Remote.CNT_rcLost++;
-	if(Cnt.Remote.CNT_rcLost > 2) {	// 40ms遥控失联容限(不能太小，遥控数据 帧/14ms，需要预留处理时间)
-		Cnt.Remote.CNT_rcLost = 2;	 // 防止溢出
-		Flag.Remote.FLAG_rcLost = 1;
-	} else {	// 具有恢复的弹性(遥控重新连接)
-		Flag.Remote.FLAG_rcLost = 0;
-		if(System_State == SYSTEM_STATE_RCLOST) {	// 系统目前处于遥控失联状态
-			if(REMOTE_isRCChannelReset(&RC_Ctl_Info)) {	// 外部遥控通道已复位
-				Cnt.Remote.CNT_rcLostRecover++;	// 恢复确认计数
-				if(Cnt.Remote.CNT_rcLostRecover > 10) {	// >200ms认为正常恢复连接(可等待遥控归中才恢复)
-					Cnt.Remote.CNT_rcLostRecover = 0;
-					BM_set(BitMask.System.BM_reset, BM_RESET_GIMBAL);	// 启动云台复位
-					System_State = SYSTEM_STATE_NORMAL;
-				}
+	Cnt.Remote.RcLost++;
+	/* 40ms遥控失联容限(不能太小，遥控数据 帧/14ms，需要预留处理时间) */
+	if(Cnt.Remote.RcLost > 20) {	
+		Cnt.Remote.RcLost = 20;	 // 防止溢出
+		Flag.Remote.RcLost = true;
+	} 
+	/* 具有恢复的弹性(遥控重新连接) */
+	else {
+		Flag.Remote.RcLost = false;
+		
+		/* 系统目前处于遥控失联状态 */
+		if(sys->State == SYSTEM_STATE_RCLOST) 
+		{	
+			/* 外部遥控通道已复位 */
+			if(REMOTE_IsRcChannelReset(&RC_Ctl_Info)) 
+			{
+				BM_Set(BitMask.System.BM_Reset, BM_RESET_GIMBAL);	// 启动云台复位
+				Flag.Gimbal.AngleRecordStart = true;
+				
+				/* 系统参数复位(sw2归中时的参数) */
+				sys->State = SYSTEM_STATE_NORMAL;	// 系统恢复正常
+				sys->Action = SYS_ACT_NORMAL;		// 常规模式
+				sys->PidMode = MECH;				// 机械模式
+				sys->RemoteMode = RC;				// 遥控器模式
 			}
 		}
 	}	
@@ -437,112 +468,280 @@ void REMOTE_rcLostProcess(void)
 /**
  *	@brief	遥控失联报告
  */
-void REMOTE_rcLostReport(void)
+void REMOTE_RcLostReport(System_t *sys)
 {
-	System_State = SYSTEM_STATE_RCLOST;
-	REMOTE_resetRCData(&RC_Ctl_Info);	
+	sys->State = SYSTEM_STATE_RCLOST;
+	REMOTE_ResetRcData(&RC_Ctl_Info);	
 }
 
 /**
  *	@brief	遥控数据错误处理
  */
-void REMOTE_rcErrReport(void)
+void REMOTE_RcErrReport(System_t *sys)
 {
-	System_State = SYSTEM_STATE_RCERR;
-	REMOTE_resetRCData(&RC_Ctl_Info);	
+	sys->State = SYSTEM_STATE_RCERR;
+	REMOTE_ResetRcData(&RC_Ctl_Info);	
 }
 
 /**
- *	@brief	遥控常规处理(模式切换)
+ *	@brief	根据遥控器切换控制方式
  */
-void REMOTE_rcCorrectProcess(void)
+void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 {
-	static int8_t  prev_sw2 = -1;
-	static uint8_t sw2;
-	static uint8_t change_pid_mode = false;
-		
-	sw2 = RC_Ctl_Info.rc.s2;
+	uint8_t sw2;
+	
+	sw2 = RC_SW2_VALUE;
 	
 	if(sw2 == RC_SW_UP) 
 	{
 		/* 遥控机械模式 -> 键盘模式 */
 		if(prev_sw2 == RC_SW_MID) 
 		{	
-			Flag.Remote.FLAG_mode = KEY;
-			Flag.Gimbal.FLAG_pidMode = GYRO;
-			GIMBAL_rcMech_To_keyGyro();
+			sys->RemoteMode = KEY;
+			sys->PidMode = GYRO;
+			// 刚切换过去的时候设置为常规行为
+			sys->Action = SYS_ACT_NORMAL;	
 		}
 	} 
 	else if(sw2 == RC_SW_MID) 
 	{
-		Gimbal.State.FLAG_topGyroOpen = false;
+		// 遥控控制默认系统为常规行为
+		sys->Action = SYS_ACT_NORMAL;
+		
+		//Gimbal.State.FLAG_topGyroOpen = false;
 		/* 键盘模式 -> 遥控机械模式 */
 		if(prev_sw2 == RC_SW_UP) 
 		{
-			// 底盘还未回来(等待回来)
+			/* 底盘还未回来(等待回来) */
 			if(abs(Gimbal_PID[MECH][YAW_205].Angle.erro) > 10) {
-				change_pid_mode = 1;
+				change_pid_mode = true;
 			} 
-			// 底盘已回来(可以切换)
+			/* 底盘已回来(可以切换) */
 			else {
-				change_pid_mode	= 0;
-				Flag.Remote.FLAG_mode = RC;
-				Flag.Gimbal.FLAG_pidMode = MECH;
-				GIMBAL_keyGyro_To_rcMech();
+				change_pid_mode	= false;
+				sys->RemoteMode = RC;
+				sys->PidMode = MECH;
 			}
 		} 
 		/* 遥控陀螺仪模式 -> 遥控机械模式 */
 		else if(prev_sw2 == RC_SW_DOWN) 
 		{	
-			// 底盘还未回来(等待回来)
+			/* 底盘还未回来(等待回来) */
 			if(abs(Gimbal_PID[MECH][YAW_205].Angle.erro) > 10) {
-				change_pid_mode = 1;
+				change_pid_mode = true;
 			} 
-			// 底盘已回来(可以切换)
+			/* 底盘已回来(可以切换) */
 			else {	
-				change_pid_mode	= 0;
-				Flag.Remote.FLAG_mode = RC;
-				Flag.Gimbal.FLAG_pidMode = MECH;
-				GIMBAL_rcGyro_To_rcMech();
+				change_pid_mode	= false;
+				sys->RemoteMode = RC;
+				sys->PidMode = MECH;
 			}
 		}
-		// 等待底盘回来
-		if(change_pid_mode == 1 && abs(Gimbal_PID[MECH][YAW_205].Angle.erro) <= 10) {
-			change_pid_mode = 0;
-			Flag.Remote.FLAG_mode = RC;
-			Flag.Gimbal.FLAG_pidMode = MECH;
-			GIMBAL_keyGyro_To_rcMech();
+		/* 等待底盘回来 */
+		if(change_pid_mode == true && abs(Gimbal_PID[MECH][YAW_205].Angle.erro) <= 10) {
+			change_pid_mode = false;
+			sys->RemoteMode = RC;
+			sys->PidMode = MECH;
 		}
 	} 
 	else if(sw2 == RC_SW_DOWN) 
 	{
+		/* 遥控控制默认系统为常规行为 */
+		sys->Action = SYS_ACT_NORMAL;
+
 		/* 遥控机械模式 -> 遥控陀螺仪模式 */
 		if(prev_sw2 == RC_SW_MID) 
 		{	
-			Flag.Remote.FLAG_mode = RC;
-			Flag.Gimbal.FLAG_pidMode = GYRO;
-			GIMBAL_rcMech_To_rcGyro();
+			sys->RemoteMode = RC;
+			sys->PidMode = GYRO;
 		}
 	}
 	
-	prev_sw2 = sw2;
+	prev_sw2 = sw2;	
+}
+
+/**
+ *	@brief	根据遥控器切换系统行为
+ */
+static uint8_t test_auto_pid = 0;
+
+void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
+{	
+	static portTickType KeyCtrlTime_Cur = 0;	
+	static portTickType KeyLockTime_Ctrl_F = 0;
+	static portTickType KeyLockTime_Ctrl_V = 0;
+	
+	KeyCtrlTime_Cur = xTaskGetTickCount();
+	
+	if(test_auto_pid == 0) {
+		/* 鼠标右键 */
+		if(IF_MOUSE_PRESSED_RIGH) {
+			/* 常规 -> 自瞄 */
+			if(MouseLockFlag_R == false 
+				&& sys->Action == SYS_ACT_NORMAL) {
+				sys->Action = SYS_ACT_AUTO;
+				sys->PidMode = GYRO;
+			}
+			MouseLockFlag_R = true;	// 右键锁定
+		}
+		/* 松开右键 */
+		else {
+			/* 自瞄 -> 常规 */
+			if(sys->Action == SYS_ACT_AUTO) {
+				sys->Action = SYS_ACT_NORMAL;
+				sys->PidMode = GYRO;
+			}
+			MouseLockFlag_R = false;// 右键解锁
+		}
+	} else {
+		/* Sw1 归中 */
+		if(IF_RC_SW1_MID) {
+			/* 常规 -> 自瞄 */
+			if(RcLockFlag_Sw1 == false
+				&& sys->Action == SYS_ACT_NORMAL) {
+				sys->Action = SYS_ACT_AUTO;
+				sys->PidMode = GYRO;
+			}
+			RcLockFlag_Sw1 = true;// Sw1锁定
+		} 
+		/* Sw1 其他档 */
+		else {
+			/* 自瞄 -> 常规 */
+			if(sys->Action == SYS_ACT_AUTO) {
+				sys->Action = SYS_ACT_NORMAL;
+				sys->PidMode = GYRO;
+			}
+			RcLockFlag_Sw1 = false;// Sw1解锁
+		}
+	}
+	
+	/* 按下Ctrl键 */
+	if(IF_KEY_PRESSED_CTRL) {
+		
+		/* 强制设置 常规行为+机械模式 */
+		if(KeyLockFlag_Ctrl == false) {
+			sys->Action = SYS_ACT_NORMAL;
+			if(abs(Gimbal_PID[MECH][YAW_205].Angle.erro) > 10) {
+				change_pid_mode = true;
+			} else {
+				change_pid_mode = false;
+				sys->PidMode = MECH;
+			}
+		}
+		
+		/* 等待底盘回来 */
+		if(sys->Action == SYS_ACT_NORMAL
+			&& change_pid_mode == true
+			&& abs(Gimbal_PID[MECH][YAW_205].Angle.erro) < 10) 
+		{
+			change_pid_mode = false;
+			sys->PidMode = MECH;
+		}
+		
+		/* Ctrl+V */
+		if(KeyCtrlTime_Cur > KeyLockTime_Ctrl_V) {	
+			KeyLockTime_Ctrl_V = KeyCtrlTime_Cur + TIME_STAMP_400MS;
+			if(IF_KEY_PRESSED_V) {
+				/* 常规 -> 打符 */
+				if(sys->Action == SYS_ACT_NORMAL) {
+					sys->Action = SYS_ACT_BUFF;
+					sys->BranchAction = BCH_ACT_SMALL_BUFF;
+					sys->PidMode = GYRO;
+				}
+			}
+		}
+		
+		/* Ctrl+F */
+		if(KeyCtrlTime_Cur > KeyLockTime_Ctrl_F) {
+			KeyLockTime_Ctrl_F = KeyCtrlTime_Cur + TIME_STAMP_400MS;
+			if(IF_KEY_PRESSED_F) {
+				/* 常规 -> 打符 */
+				if(sys->Action == SYS_ACT_NORMAL) {
+					sys->Action = SYS_ACT_BUFF;
+					sys->BranchAction = BCH_ACT_BIG_BUFF;
+					sys->PidMode = GYRO;
+				}
+			}
+		}
+		
+		/* Ctrl+R */
+		if(IF_KEY_PRESSED_R) {
+			/* 常规 -> 对位 */
+			if(sys->Action == SYS_ACT_NORMAL) {
+				sys->Action = SYS_ACT_PARK;
+				sys->PidMode = MECH;
+			}
+		}
+		
+		KeyLockFlag_Ctrl = true;
+	} 
+	/* 松开Ctrl键 */
+	else {
+		/* 常规机械 -> 常规陀螺仪 */
+		if(KeyLockFlag_Ctrl == true && sys->Action == SYS_ACT_NORMAL) {
+			sys->PidMode = GYRO;
+			change_pid_mode = false;
+		}
+		KeyLockFlag_Ctrl = false;
+	}	
+	
+	/* 退出打符模式判断(打符 -> 常规) */
+	if(sys->Action == SYS_ACT_BUFF) {
+		if((IF_KEY_PRESSED_W || IF_KEY_PRESSED_S || IF_KEY_PRESSED_A || IF_KEY_PRESSED_D
+			|| IF_KEY_PRESSED_Q || IF_KEY_PRESSED_E || IF_KEY_PRESSED_V)&&(!IF_KEY_PRESSED_CTRL)) 	
+		{
+			sys->Action = SYS_ACT_NORMAL;
+			sys->PidMode = GYRO;			
+		}
+	}
+	
+	/* 退出对位模式判断(对位 -> 常规) */
+	if(sys->Action == SYS_ACT_PARK) {
+		if((IF_KEY_PRESSED_W || IF_KEY_PRESSED_S || IF_KEY_PRESSED_A || IF_KEY_PRESSED_D
+			|| IF_KEY_PRESSED_Q || IF_KEY_PRESSED_E || IF_KEY_PRESSED_V)&&(!IF_KEY_PRESSED_CTRL)) 	
+		{
+			sys->Action = SYS_ACT_NORMAL;
+			sys->PidMode = GYRO;			
+		}
+	}	
+}
+
+/**
+ *	@brief	遥控常规处理(模式切换)
+ */
+void REMOTE_RcCorrectProcess(System_t *sys, RC_Ctl_t *remote)
+{
+	// 控制方式切换
+	REMOTE_SysCtrlModeSwitch(sys, remote);
+	// 系统行为切换(键盘模式下允许切换)
+	if(sys->RemoteMode == KEY)
+		REMOTE_SysActSwitch(sys, remote);
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 /**
  *	@brief	遥控控制
  */
-void REMOTE_control(void)
+void REMOTE_Ctrl(void)
 {
-	REMOTE_rcLostProcess();	// 失联判断及恢复处理
+	/*----信息读入----*/
+	REMOTE_RcUpdateInfo(&System, &RC_Ctl_Info);
 	
-	if(Flag.Remote.FLAG_rcLost == 1) {	// 遥控失联
-		REMOTE_rcLostReport();
-	} else if(Flag.Remote.FLAG_rcErr == 1) {	// 遥控错误
-		REMOTE_rcErrReport();
-	} else {	// 遥控正常
-//		if(BitMask.System.BM_reset == 0) {
-			REMOTE_rcCorrectProcess();
-//		}
+	// 失联判断及恢复处理
+	REMOTE_RcLostProcess(&System);	
+	
+	/* 遥控失联 */
+	if(Flag.Remote.RcLost == 1) {	
+		REMOTE_RcLostReport(&System);
+	} 
+	/* 遥控错误 */
+	else if(Flag.Remote.RcErr == 1) {	
+		REMOTE_RcErrReport(&System);
+	} 
+	/* 遥控正常 */
+	else {	
+		/* 云台复位完成后允许切换 */
+		if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_GIMBAL))
+			REMOTE_RcCorrectProcess(&System, &RC_Ctl_Info);
 	}
 }
