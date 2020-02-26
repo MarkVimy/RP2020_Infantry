@@ -9,7 +9,7 @@
  */
 
 /**
- *	# 视觉通信使用USART4作为通讯接口
+ *	# 超声波通信使用USART3作为通讯接口
  */
 
 /* UART5_RX  ----> DMA1 Ch4 Stream0 */
@@ -45,14 +45,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* ## Global variables ## ----------------------------------------------------*/
-uint8_t  Ultra_Buffer[ ULTRA_BUFFER_LEN ] = {0};	//视觉发过来的数据暂存在这里
+uint8_t  Ultra_Buffer[ ULTRA_BUFFER_LEN ] = {0};	//超声波发过来的数据暂存在这里
 
 /* Private function prototypes -----------------------------------------------*/
 static void USART3_DMA_Init( void );
 
 /* Private functions ---------------------------------------------------------*/
 /**
- *	@brief 串口4 DMA初始化
+ *	@brief 串口3 DMA初始化
  */
 static void USART3_DMA_Init( void )
 {		
@@ -84,7 +84,7 @@ static void USART3_DMA_Init( void )
 
 /* API functions -------------------------------------------------------------*/
 /**
- *	@brief	视觉通信串口初始化(USART3)
+ *	@brief	超声波通信串口初始化(USART3)
  */
 void USART3_Init( void )
 {
@@ -124,7 +124,7 @@ void USART3_Init( void )
 	USART_DMACmd( USART3, USART_DMAReq_Rx, ENABLE );
 	USART_DMACmd( USART3, USART_DMAReq_Tx, ENABLE );
 	
-	USART3_DMA_Init( );	// 初始化uart4的DMA
+	USART3_DMA_Init( );	// 初始化uart3的DMA
 	
 	xNvicInit.NVIC_IRQChannel                    = USART3_IRQn;
 	xNvicInit.NVIC_IRQChannelPreemptionPriority  = USART3_IT_PRIO_PRE;
@@ -134,7 +134,7 @@ void USART3_Init( void )
 }
 
 /**
- *	@brief	串口4中断函数
+ *	@brief	串口3中断函数
  */
 void USART3_IRQHandler( void )
 {

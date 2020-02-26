@@ -53,3 +53,4 @@
 .\objects\judge.o: ..\APP\friction.h
 .\objects\judge.o: ..\APP\magzine.h
 .\objects\judge.o: ..\APP\ultra.h
+.\objects\judge.o: ..\APP\anoc.h

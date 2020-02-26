@@ -46,6 +46,7 @@
 .\objects\remote.o: ..\APP\friction.h
 .\objects\remote.o: ..\APP\magzine.h
 .\objects\remote.o: ..\APP\ultra.h
+.\objects\remote.o: ..\APP\anoc.h
 .\objects\remote.o: ..\TASK\Task_Gimbal.h
 .\objects\remote.o: ..\TASK\Task_Revolver.h
 .\objects\remote.o: ..\TASK\Task_Timing_Report.h

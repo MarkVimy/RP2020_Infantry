@@ -51,6 +51,7 @@
 .\objects\task_gimbal.o: ..\APP\friction.h
 .\objects\task_gimbal.o: ..\APP\magzine.h
 .\objects\task_gimbal.o: ..\APP\ultra.h
+.\objects\task_gimbal.o: ..\APP\anoc.h
 .\objects\task_gimbal.o: ..\BSP\laser.h
 .\objects\task_gimbal.o: ..\BSP\can.h
 .\objects\task_gimbal.o: ..\APP\kalman.h

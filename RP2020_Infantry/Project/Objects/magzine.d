@@ -51,4 +51,5 @@
 .\objects\magzine.o: ..\APP\friction.h
 .\objects\magzine.o: ..\APP\magzine.h
 .\objects\magzine.o: ..\APP\ultra.h
+.\objects\magzine.o: ..\APP\anoc.h
 .\objects\magzine.o: ..\BSP\pwm.h

@@ -51,4 +51,5 @@
 .\objects\task_revolver.o: ..\APP\friction.h
 .\objects\task_revolver.o: ..\APP\magzine.h
 .\objects\task_revolver.o: ..\APP\ultra.h
+.\objects\task_revolver.o: ..\APP\anoc.h
 .\objects\task_revolver.o: ..\BSP\can.h

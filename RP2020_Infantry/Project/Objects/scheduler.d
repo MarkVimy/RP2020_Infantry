@@ -48,6 +48,7 @@
 .\objects\scheduler.o: ..\APP\friction.h
 .\objects\scheduler.o: ..\APP\magzine.h
 .\objects\scheduler.o: ..\APP\ultra.h
+.\objects\scheduler.o: ..\APP\anoc.h
 .\objects\scheduler.o: ..\TASK\Task_Gimbal.h
 .\objects\scheduler.o: ..\TASK\Task_Revolver.h
 .\objects\scheduler.o: ..\TASK\Task_Timing_Report.h
@@ -60,6 +61,7 @@
 .\objects\scheduler.o: ..\BSP\laser.h
 .\objects\scheduler.o: ..\BSP\can.h
 .\objects\scheduler.o: ..\BSP\pwm.h
+.\objects\scheduler.o: ..\BSP\usart1.h
 .\objects\scheduler.o: ..\BSP\usart3.h
 .\objects\scheduler.o: ..\BSP\uart4.h
 .\objects\scheduler.o: ..\BSP\uart5.h

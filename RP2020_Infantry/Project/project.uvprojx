@@ -478,6 +478,11 @@
               <FileType>1</FileType>
               <FilePath>..\APP\crc.c</FilePath>
             </File>
+            <File>
+              <FileName>anoc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\anoc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -532,6 +537,11 @@
               <FileName>spi1.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\spi1.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\usart1.c</FilePath>
             </File>
           </Files>
         </Group>

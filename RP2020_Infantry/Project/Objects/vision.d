@@ -51,6 +51,7 @@
 .\objects\vision.o: ..\APP\friction.h
 .\objects\vision.o: ..\APP\magzine.h
 .\objects\vision.o: ..\APP\ultra.h
+.\objects\vision.o: ..\APP\anoc.h
 .\objects\vision.o: ..\BSP\uart4.h
 .\objects\vision.o: ..\APP\crc.h
 .\objects\vision.o: ..\BSP\can.h

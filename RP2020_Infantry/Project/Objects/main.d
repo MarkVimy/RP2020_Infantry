@@ -47,6 +47,7 @@
 .\objects\main.o: ..\APP\friction.h
 .\objects\main.o: ..\APP\magzine.h
 .\objects\main.o: ..\APP\ultra.h
+.\objects\main.o: ..\APP\anoc.h
 .\objects\main.o: ..\TASK\Task_Gimbal.h
 .\objects\main.o: ..\TASK\Task_Revolver.h
 .\objects\main.o: ..\TASK\Task_Timing_Report.h
@@ -59,6 +60,7 @@
 .\objects\main.o: ..\BSP\laser.h
 .\objects\main.o: ..\BSP\can.h
 .\objects\main.o: ..\BSP\pwm.h
+.\objects\main.o: ..\BSP\usart1.h
 .\objects\main.o: ..\BSP\usart3.h
 .\objects\main.o: ..\BSP\uart4.h
 .\objects\main.o: ..\BSP\uart5.h

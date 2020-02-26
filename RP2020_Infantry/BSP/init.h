@@ -30,6 +30,7 @@
 #include "pwm.h"
 //#include "MPU_Temperature.h"
 /* Includes DRIVER Header Files ------------------------------------- */
+#include "usart1.h"
 #include "usart3.h"
 #include "uart4.h"
 #include "uart5.h"

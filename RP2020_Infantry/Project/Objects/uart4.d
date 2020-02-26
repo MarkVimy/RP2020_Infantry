@@ -52,3 +52,4 @@
 .\objects\uart4.o: ..\APP\friction.h
 .\objects\uart4.o: ..\APP\magzine.h
 .\objects\uart4.o: ..\APP\ultra.h
+.\objects\uart4.o: ..\APP\anoc.h

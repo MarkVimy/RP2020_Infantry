@@ -48,6 +48,7 @@
 .\objects\can.o: ..\APP\friction.h
 .\objects\can.o: ..\APP\magzine.h
 .\objects\can.o: ..\APP\ultra.h
+.\objects\can.o: ..\APP\anoc.h
 .\objects\can.o: ..\TASK\Task_Gimbal.h
 .\objects\can.o: ..\TASK\Task_Revolver.h
 .\objects\can.o: ..\TASK\Task_Timing_Report.h

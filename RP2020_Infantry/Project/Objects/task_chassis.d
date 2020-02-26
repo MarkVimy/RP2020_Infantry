@@ -51,6 +51,7 @@
 .\objects\task_chassis.o: ..\APP\friction.h
 .\objects\task_chassis.o: ..\APP\magzine.h
 .\objects\task_chassis.o: ..\APP\ultra.h
+.\objects\task_chassis.o: ..\APP\anoc.h
 .\objects\task_chassis.o: ..\Libraries\cmsis\Include\arm_math.h
 .\objects\task_chassis.o: ..\Libraries\cmsis\Include\core_cm4.h
 .\objects\task_chassis.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
