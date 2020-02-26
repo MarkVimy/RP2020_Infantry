@@ -487,7 +487,7 @@ void MAGZINE_GetInfo(void)
 	// 获取系统信息
 	MAGZINE_GetSysInfo(&System, &Magzine);
 	// 获取遥控信息
-	MAGZINE_GetRemoteInfo(&System, &RC_Ctl_Info, &Magzine);
+	MAGZINE_GetRemoteInfo(&System, &Remote, &Magzine);
 }
 
 /**
@@ -534,7 +534,7 @@ void MAGZINE_KeyCtrlTask(void)
 void MAGZINE_SelfProtect(void)
 {
 	MAGZINE_Stop(&Magzine);
-	MAGZINE_GetRemoteInfo(&System, &RC_Ctl_Info, &Magzine);
+	MAGZINE_GetRemoteInfo(&System, &Remote, &Magzine);
 }
 
 /**

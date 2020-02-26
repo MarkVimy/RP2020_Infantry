@@ -1081,7 +1081,7 @@ void CHASSIS_GetSysInfo(System_t *sys, Chassis_Info_t *chas)
 void CHASSIS_GetJudgeInfo(Judge_Info_t *judge, Chassis_Info_t *chas)
 {
 	if(JUDGE_IfDataValid() == true) {
-	
+		//chas->Power.buffer = judge->PowerHeatData.chassis_power_buffer;
 	}
 	else {
 	
@@ -1115,8 +1115,10 @@ void CHASSIS_GetImuInfo(Chassis_Z_PID_t *zpid)
 /**
  *	@brief	底盘读取遥控数据
  */
-static uint8_t rcWheelLockOnFlag = false;
-static uint8_t rcWheelLockOffFlag = false;
+static uint8_t RcLockFlag_Wheel = false;
+static uint8_t RcUnlockFlag_Wheel = false;
+static uint8_t KeyLockFlag_F = false;
+static uint8_t KeyLockFlag_C = false;
 
 void CHASSIS_GetRemoteInfo(System_t *sys, RC_Ctl_t *remote, Chassis_Info_t *chas)
 {
@@ -1124,18 +1126,22 @@ void CHASSIS_GetRemoteInfo(System_t *sys, RC_Ctl_t *remote, Chassis_Info_t *chas
 	if(sys->State == SYSTEM_STATE_NORMAL)
 	{
 		if(sys->RemoteMode == RC) {
+			KeyLockFlag_F = false;
+			KeyLockFlag_C = false;
 		}
 		else if(sys->RemoteMode == KEY) {
-			rcWheelLockOnFlag = false;
-			rcWheelLockOffFlag = false;
+			RcLockFlag_Wheel = false;
+			RcUnlockFlag_Wheel = false;
 		}
 	}
 	/* 系统异常 */
 	else
 	{
 		// 复位成初始值
-		rcWheelLockOnFlag = false;
-		rcWheelLockOffFlag = false;
+		KeyLockFlag_F = false;
+		KeyLockFlag_C = false;
+		RcLockFlag_Wheel = false;
+		RcUnlockFlag_Wheel = false;
 	}	
 }
 
@@ -1329,7 +1335,7 @@ void REMOTE_SetTopGyro(void)
 {
 	/* 拨轮向上开启 */
 	if(RC_THUMB_WHEEL_VALUE < -650) {
-		if(rcWheelLockOnFlag == false) {
+		if(RcLockFlag_Wheel == false) {
 			/* 陀螺仪模式 */
 			if(CHASSIS_IfGyroMode() == true) {
 				Chassis_Z_PID.Angle.target = Chassis_Z_PID.Angle.feedback;
@@ -1338,21 +1344,21 @@ void REMOTE_SetTopGyro(void)
 				top_gyro_dir = -1;
 			}
 		}
-		rcWheelLockOnFlag = true;
+		RcLockFlag_Wheel = true;
 	} else {
-		rcWheelLockOnFlag = false;
+		RcLockFlag_Wheel = false;
 	}
 	
 	/* 拨轮向下关闭 */
 	if(RC_THUMB_WHEEL_VALUE > 650) {
-		if(rcWheelLockOffFlag == false) {
+		if(RcUnlockFlag_Wheel == false) {
 			if(CHASSIS_IfGyroMode() == true) {
 				Chassis.TopGyro = false;
 			}
 		}
-		rcWheelLockOffFlag = true;
+		RcUnlockFlag_Wheel = true;
 	} else {
-		rcWheelLockOffFlag = false;
+		RcUnlockFlag_Wheel = false;
 	}
 }
 
@@ -1625,8 +1631,6 @@ void KEY_SetChassisMode(void)
  */
 void KEY_SetTopGyro(void)
 {
-	static uint8_t KeyLockFlag_F = false;
-	
 	if(IF_KEY_PRESSED_F) {
 		if(KeyLockFlag_F == false) {
 			if(CHASSIS_IfGyroMode() == true) {
@@ -1652,8 +1656,6 @@ void KEY_SetTopGyro(void)
  */
 void KEY_SetTwist(void)
 {
-	static uint8_t KeyLockFlag_C = false;
-	
 	if(IF_KEY_PRESSED_C) {
 		if(KeyLockFlag_C == false) {
 			if(CHASSIS_IfGyroMode() == true) {
@@ -2083,7 +2085,7 @@ void CHASSIS_GetInfo(void)
 	// 获取IMU信息
 	CHASSIS_GetImuInfo(&Chassis_Z_PID);	
 	// 获取遥控信息
-	CHASSIS_GetRemoteInfo(&System, &RC_Ctl_Info, &Chassis);
+	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
 }
 
 /**
@@ -2144,7 +2146,7 @@ void CHASSIS_SelfProtect(void)
 	CHASSIS_Stop(Chassis_PID);
 	CHASSIS_PID_ParamsInit(Chassis_PID, CHASSIS_MOTOR_COUNT);
 	CHASSIS_Z_PID_ParamsInit(&Chassis_Z_PID.Angle);	
-	CHASSIS_GetRemoteInfo(&System, &RC_Ctl_Info, &Chassis);
+	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
 }
 
 /**

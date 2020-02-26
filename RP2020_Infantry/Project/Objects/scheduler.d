@@ -42,7 +42,6 @@
 .\objects\scheduler.o: ..\APP\my_app.h
 .\objects\scheduler.o: ..\AppInfo\judge.h
 .\objects\scheduler.o: ..\AppInfo\vision.h
-.\objects\scheduler.o: ..\SYSTEM\sys.h
 .\objects\scheduler.o: ..\APP\my_app.h
 .\objects\scheduler.o: ..\APP\remote.h
 .\objects\scheduler.o: ..\TASK\my_task.h

@@ -528,6 +528,11 @@
               <FileType>1</FileType>
               <FilePath>..\BSP\usart3.c</FilePath>
             </File>
+            <File>
+              <FileName>spi1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\spi1.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -717,6 +722,11 @@
               <FileName>inv_mpu_dmp_motion_driver.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
+            </File>
+            <File>
+              <FileName>mpu6500.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\mpu6050\mpu6500.c</FilePath>
             </File>
           </Files>
         </Group>

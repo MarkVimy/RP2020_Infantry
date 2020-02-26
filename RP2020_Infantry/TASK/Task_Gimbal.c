@@ -2663,7 +2663,7 @@ void GIMBAL_PidCtrlTask(void)
 	} 
 	else 
 	{
-		Gimbal_PID[Gimbal.State.pid_mode][YAW_205].Speed.target = (RC_Ctl_Info.rc.ch0 - 1024)/660.f * test_yaw_speed_max_target;
+		Gimbal_PID[Gimbal.State.pid_mode][YAW_205].Speed.target = (Remote.rc.ch0 - 1024)/660.f * test_yaw_speed_max_target;
 	}
 	GIMBAL_Speed_PidCalc(Gimbal_PID[Gimbal.State.pid_mode], YAW_205);
 	

@@ -37,9 +37,10 @@
 .\objects\judge.o: ..\FreeRTOS\include\task.h
 .\objects\judge.o: ..\FreeRTOS\include\list.h
 .\objects\judge.o: ..\SYSTEM\my_include.h
+.\objects\judge.o: ..\APP\crc.h
+.\objects\judge.o: ..\TASK\Task_Revolver.h
 .\objects\judge.o: ..\APP\my_app.h
 .\objects\judge.o: ..\AppInfo\vision.h
-.\objects\judge.o: ..\SYSTEM\sys.h
 .\objects\judge.o: ..\APP\my_app.h
 .\objects\judge.o: ..\APP\remote.h
 .\objects\judge.o: ..\TASK\my_task.h
@@ -52,4 +53,3 @@
 .\objects\judge.o: ..\APP\friction.h
 .\objects\judge.o: ..\APP\magzine.h
 .\objects\judge.o: ..\APP\ultra.h
-.\objects\judge.o: ..\APP\crc.h

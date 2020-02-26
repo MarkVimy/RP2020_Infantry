@@ -287,7 +287,7 @@ void FRICTION_GetInfo(void)
 	// 获取裁判系统信息
 	FRICTION_GetJudgeInfo(&Judge, &Friction);
 	// 获取遥控信息
-	FRICTION_GetRemoteInfo(&System, &RC_Ctl_Info, &Friction);
+	FRICTION_GetRemoteInfo(&System, &Remote, &Friction);
 	// 根据pwm-射速表获取射速信息
 	Friction.Speed = Friction_Pwm_Speed[Friction.SpeedLevel];
 }
@@ -298,7 +298,7 @@ void FRICTION_GetInfo(void)
  */
 void FRICTION_RcCtrlTask(void)
 {
-	REMOTE_SetFrictionState(&RC_Ctl_Info);
+	REMOTE_SetFrictionState(&Remote);
 }
 
 /**
@@ -307,7 +307,7 @@ void FRICTION_RcCtrlTask(void)
  */
 void FRICTION_KeyCtrlTask(void)
 {
-	KEY_SetFrictionState(&RC_Ctl_Info);
+	KEY_SetFrictionState(&Remote);
 }
 
 /**
@@ -316,7 +316,7 @@ void FRICTION_KeyCtrlTask(void)
 void FRICTION_SelfProtect(void)
 {
 	FRICTION_Stop(&Friction);
-	FRICTION_GetRemoteInfo(&System, &RC_Ctl_Info, &Friction);
+	FRICTION_GetRemoteInfo(&System, &Remote, &Friction);
 	LASER_OFF();
 }
 

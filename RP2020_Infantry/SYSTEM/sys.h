@@ -28,7 +28,6 @@
 #include "FreeRTOSConfig.h"
 #include "task.h"
 #include "my_include.h"
-#include "my_app.h"
 #endif
 	 
 //位带操作,实现51类似的GPIO控制功能

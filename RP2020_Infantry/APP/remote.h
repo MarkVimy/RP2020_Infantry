@@ -57,53 +57,53 @@
 
 /* ----------------------- Function Definition-------------------------------- */
 /* 遥控摇杆通道偏移值 */
-#define		RC_SW1_VALUE				(RC_Ctl_Info.rc.s1)
-#define		RC_SW2_VALUE				(RC_Ctl_Info.rc.s2)
-#define		RC_LEFT_CH_LR_VALUE			(RC_Ctl_Info.rc.ch2 - RC_CH_VALUE_OFFSET)
-#define		RC_LEFT_CH_UD_VALUE			(RC_Ctl_Info.rc.ch3 - RC_CH_VALUE_OFFSET)
-#define		RC_RIGH_CH_LR_VALUE			(RC_Ctl_Info.rc.ch0 - RC_CH_VALUE_OFFSET)
-#define		RC_RIGH_CH_UD_VALUE			(RC_Ctl_Info.rc.ch1 - RC_CH_VALUE_OFFSET)
-#define		RC_THUMB_WHEEL_VALUE		(RC_Ctl_Info.rc.thumbwheel - RC_CH_VALUE_OFFSET)
+#define		RC_SW1_VALUE				(Remote.rc.s1)
+#define		RC_SW2_VALUE				(Remote.rc.s2)
+#define		RC_LEFT_CH_LR_VALUE			(Remote.rc.ch2 - RC_CH_VALUE_OFFSET)
+#define		RC_LEFT_CH_UD_VALUE			(Remote.rc.ch3 - RC_CH_VALUE_OFFSET)
+#define		RC_RIGH_CH_LR_VALUE			(Remote.rc.ch0 - RC_CH_VALUE_OFFSET)
+#define		RC_RIGH_CH_UD_VALUE			(Remote.rc.ch1 - RC_CH_VALUE_OFFSET)
+#define		RC_THUMB_WHEEL_VALUE		(Remote.rc.thumbwheel - RC_CH_VALUE_OFFSET)
 
 /* 检测遥控器开关状态 */
-#define    IF_RC_SW1_UP      (RC_Ctl_Info.rc.s1 == RC_SW_UP)
-#define    IF_RC_SW1_MID     (RC_Ctl_Info.rc.s1 == RC_SW_MID)
-#define    IF_RC_SW1_DOWN    (RC_Ctl_Info.rc.s1 == RC_SW_DOWN)
-#define    IF_RC_SW2_UP      (RC_Ctl_Info.rc.s2 == RC_SW_UP)
-#define    IF_RC_SW2_MID     (RC_Ctl_Info.rc.s2 == RC_SW_MID)
-#define    IF_RC_SW2_DOWN    (RC_Ctl_Info.rc.s2 == RC_SW_DOWN)
+#define    IF_RC_SW1_UP      (Remote.rc.s1 == RC_SW_UP)
+#define    IF_RC_SW1_MID     (Remote.rc.s1 == RC_SW_MID)
+#define    IF_RC_SW1_DOWN    (Remote.rc.s1 == RC_SW_DOWN)
+#define    IF_RC_SW2_UP      (Remote.rc.s2 == RC_SW_UP)
+#define    IF_RC_SW2_MID     (Remote.rc.s2 == RC_SW_MID)
+#define    IF_RC_SW2_DOWN    (Remote.rc.s2 == RC_SW_DOWN)
 
 /* 获取鼠标三轴的移动速度 */
-#define    MOUSE_X_MOVE_SPEED    (RC_Ctl_Info.mouse.x)
-#define    MOUSE_Y_MOVE_SPEED    (RC_Ctl_Info.mouse.y)
-#define    MOUSE_Z_MOVE_SPEED    (RC_Ctl_Info.mouse.z)
+#define    MOUSE_X_MOVE_SPEED    (Remote.mouse.x)
+#define    MOUSE_Y_MOVE_SPEED    (Remote.mouse.y)
+#define    MOUSE_Z_MOVE_SPEED    (Remote.mouse.z)
 
 
 /* 检测鼠标按键状态 
    按下为1，没按下为0*/
-#define    IF_MOUSE_PRESSED_LEFT    (RC_Ctl_Info.mouse.press_l == 1)
-#define    IF_MOUSE_PRESSED_RIGH    (RC_Ctl_Info.mouse.press_r == 1)
+#define    IF_MOUSE_PRESSED_LEFT    (Remote.mouse.press_l == 1)
+#define    IF_MOUSE_PRESSED_RIGH    (Remote.mouse.press_r == 1)
 
 
 /* 检测键盘按键状态 
    若对应按键被按下，则逻辑表达式的值为1，否则为0 */
-#define    IF_KEY_PRESSED         (  RC_Ctl_Info.key.v  )
-#define    IF_KEY_PRESSED_W       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_W)    != 0 )
-#define    IF_KEY_PRESSED_S       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_S)    != 0 )
-#define    IF_KEY_PRESSED_A       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_A)    != 0 )
-#define    IF_KEY_PRESSED_D       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_D)    != 0 )
-#define    IF_KEY_PRESSED_Q       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_Q)    != 0 )
-#define    IF_KEY_PRESSED_E       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_E)    != 0 )
-#define    IF_KEY_PRESSED_G       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_G)    != 0 )
-#define    IF_KEY_PRESSED_X       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_X)    != 0 )
-#define    IF_KEY_PRESSED_Z       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_Z)    != 0 )
-#define    IF_KEY_PRESSED_C       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_C)    != 0 )
-#define    IF_KEY_PRESSED_B       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_B)    != 0 )
-#define    IF_KEY_PRESSED_V       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_V)    != 0 )
-#define    IF_KEY_PRESSED_F       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_F)    != 0 )
-#define    IF_KEY_PRESSED_R       ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_R)    != 0 )
-#define    IF_KEY_PRESSED_CTRL    ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_CTRL) != 0 )
-#define    IF_KEY_PRESSED_SHIFT   ( (RC_Ctl_Info.key.v & KEY_PRESSED_OFFSET_SHIFT) != 0 )
+#define    IF_KEY_PRESSED         (  Remote.key.v  )
+#define    IF_KEY_PRESSED_W       ( (Remote.key.v & KEY_PRESSED_OFFSET_W)    != 0 )
+#define    IF_KEY_PRESSED_S       ( (Remote.key.v & KEY_PRESSED_OFFSET_S)    != 0 )
+#define    IF_KEY_PRESSED_A       ( (Remote.key.v & KEY_PRESSED_OFFSET_A)    != 0 )
+#define    IF_KEY_PRESSED_D       ( (Remote.key.v & KEY_PRESSED_OFFSET_D)    != 0 )
+#define    IF_KEY_PRESSED_Q       ( (Remote.key.v & KEY_PRESSED_OFFSET_Q)    != 0 )
+#define    IF_KEY_PRESSED_E       ( (Remote.key.v & KEY_PRESSED_OFFSET_E)    != 0 )
+#define    IF_KEY_PRESSED_G       ( (Remote.key.v & KEY_PRESSED_OFFSET_G)    != 0 )
+#define    IF_KEY_PRESSED_X       ( (Remote.key.v & KEY_PRESSED_OFFSET_X)    != 0 )
+#define    IF_KEY_PRESSED_Z       ( (Remote.key.v & KEY_PRESSED_OFFSET_Z)    != 0 )
+#define    IF_KEY_PRESSED_C       ( (Remote.key.v & KEY_PRESSED_OFFSET_C)    != 0 )
+#define    IF_KEY_PRESSED_B       ( (Remote.key.v & KEY_PRESSED_OFFSET_B)    != 0 )
+#define    IF_KEY_PRESSED_V       ( (Remote.key.v & KEY_PRESSED_OFFSET_V)    != 0 )
+#define    IF_KEY_PRESSED_F       ( (Remote.key.v & KEY_PRESSED_OFFSET_F)    != 0 )
+#define    IF_KEY_PRESSED_R       ( (Remote.key.v & KEY_PRESSED_OFFSET_R)    != 0 )
+#define    IF_KEY_PRESSED_CTRL    ( (Remote.key.v & KEY_PRESSED_OFFSET_CTRL) != 0 )
+#define    IF_KEY_PRESSED_SHIFT   ( (Remote.key.v & KEY_PRESSED_OFFSET_SHIFT) != 0 )
 
 typedef struct
 {
@@ -134,7 +134,7 @@ typedef struct
 	
 } RC_Ctl_t;
 
-extern RC_Ctl_t RC_Ctl_Info;
+extern RC_Ctl_t Remote;
 
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void REMOTE_Init(void);

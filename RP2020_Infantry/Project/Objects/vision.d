@@ -42,7 +42,6 @@
 .\objects\vision.o: ..\APP\remote.h
 .\objects\vision.o: ..\TASK\my_task.h
 .\objects\vision.o: ..\TASK\Task_Chassis.h
-.\objects\vision.o: ..\SYSTEM\sys.h
 .\objects\vision.o: ..\APP\my_app.h
 .\objects\vision.o: ..\TASK\Task_Gimbal.h
 .\objects\vision.o: ..\TASK\Task_Revolver.h

@@ -41,7 +41,6 @@
 .\objects\main.o: ..\APP\my_app.h
 .\objects\main.o: ..\AppInfo\judge.h
 .\objects\main.o: ..\AppInfo\vision.h
-.\objects\main.o: ..\SYSTEM\sys.h
 .\objects\main.o: ..\APP\my_app.h
 .\objects\main.o: ..\APP\remote.h
 .\objects\main.o: ..\TASK\my_task.h

@@ -39,7 +39,6 @@
 .\objects\task_revolver.o: ..\APP\my_app.h
 .\objects\task_revolver.o: ..\AppInfo\judge.h
 .\objects\task_revolver.o: ..\AppInfo\vision.h
-.\objects\task_revolver.o: ..\SYSTEM\sys.h
 .\objects\task_revolver.o: ..\APP\my_app.h
 .\objects\task_revolver.o: ..\APP\remote.h
 .\objects\task_revolver.o: ..\TASK\my_task.h

@@ -39,7 +39,6 @@
 .\objects\magzine.o: ..\APP\my_app.h
 .\objects\magzine.o: ..\AppInfo\judge.h
 .\objects\magzine.o: ..\AppInfo\vision.h
-.\objects\magzine.o: ..\SYSTEM\sys.h
 .\objects\magzine.o: ..\APP\my_app.h
 .\objects\magzine.o: ..\APP\remote.h
 .\objects\magzine.o: ..\TASK\my_task.h

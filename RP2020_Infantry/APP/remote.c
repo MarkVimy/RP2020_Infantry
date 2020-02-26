@@ -98,7 +98,7 @@ static char  sbus_rx_buffer[2][USART2_RX_MAX_LEN];	// 双SBUS接收缓冲区(接收数据)
 static uint16_t sbus_rx_len = 0;
 
 /* ## Global variables ## ----------------------------------------------------*/
-RC_Ctl_t RC_Ctl_Info;
+RC_Ctl_t Remote;
 
 /* Private function prototypes -----------------------------------------------*/
 static void USART2_GPIO_Init(void);
@@ -236,7 +236,7 @@ void USART2_IRQHandler(void)
 			/* 数据长度判断 */
 			if(sbus_rx_len == RC_DBUS_FRAME_LEN) {
 				/* RC 数据处理 */
-				REMOTE_ProcessData(&RC_Ctl_Info, sbus_rx_buffer[0]);
+				REMOTE_ProcessData(&Remote, sbus_rx_buffer[0]);
 			}
 		}	else {	// Memory 1
 			DMA_Cmd(DMA1_Stream5, DISABLE);
@@ -247,7 +247,7 @@ void USART2_IRQHandler(void)
 			/* 数据长度判断 */
 			if(sbus_rx_len == RC_DBUS_FRAME_LEN) {
 				/* RC 数据处理 */
-				REMOTE_ProcessData(&RC_Ctl_Info, sbus_rx_buffer[1]);
+				REMOTE_ProcessData(&Remote, sbus_rx_buffer[1]);
 			}
 		}
 	}
@@ -450,7 +450,7 @@ void REMOTE_RcLostProcess(System_t *sys)
 		if(sys->State == SYSTEM_STATE_RCLOST) 
 		{	
 			/* 外部遥控通道已复位 */
-			if(REMOTE_IsRcChannelReset(&RC_Ctl_Info)) 
+			if(REMOTE_IsRcChannelReset(&Remote)) 
 			{
 				BM_Set(BitMask.System.BM_Reset, BM_RESET_GIMBAL);	// 启动云台复位
 				Flag.Gimbal.AngleRecordStart = true;
@@ -471,7 +471,7 @@ void REMOTE_RcLostProcess(System_t *sys)
 void REMOTE_RcLostReport(System_t *sys)
 {
 	sys->State = SYSTEM_STATE_RCLOST;
-	REMOTE_ResetRcData(&RC_Ctl_Info);	
+	REMOTE_ResetRcData(&Remote);	
 }
 
 /**
@@ -480,7 +480,7 @@ void REMOTE_RcLostReport(System_t *sys)
 void REMOTE_RcErrReport(System_t *sys)
 {
 	sys->State = SYSTEM_STATE_RCERR;
-	REMOTE_ResetRcData(&RC_Ctl_Info);	
+	REMOTE_ResetRcData(&Remote);	
 }
 
 /**
@@ -563,7 +563,7 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 /**
  *	@brief	根据遥控器切换系统行为
  */
-static uint8_t test_auto_pid = 0;
+uint8_t test_auto_pid = 0;	// 调试自瞄
 
 void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 {	
@@ -725,7 +725,7 @@ void REMOTE_RcCorrectProcess(System_t *sys, RC_Ctl_t *remote)
 void REMOTE_Ctrl(void)
 {
 	/*----信息读入----*/
-	REMOTE_RcUpdateInfo(&System, &RC_Ctl_Info);
+	REMOTE_RcUpdateInfo(&System, &Remote);
 	
 	// 失联判断及恢复处理
 	REMOTE_RcLostProcess(&System);	
@@ -742,6 +742,6 @@ void REMOTE_Ctrl(void)
 	else {	
 		/* 云台复位完成后允许切换 */
 		if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_GIMBAL))
-			REMOTE_RcCorrectProcess(&System, &RC_Ctl_Info);
+			REMOTE_RcCorrectProcess(&System, &Remote);
 	}
 }

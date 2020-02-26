@@ -41,7 +41,6 @@
 .\objects\remote.o: ..\APP\my_app.h
 .\objects\remote.o: ..\AppInfo\judge.h
 .\objects\remote.o: ..\AppInfo\vision.h
-.\objects\remote.o: ..\SYSTEM\sys.h
 .\objects\remote.o: ..\APP\my_app.h
 .\objects\remote.o: ..\APP\remote.h
 .\objects\remote.o: ..\APP\friction.h

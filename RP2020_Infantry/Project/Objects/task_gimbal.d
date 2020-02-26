@@ -39,7 +39,6 @@
 .\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\AppInfo\judge.h
 .\objects\task_gimbal.o: ..\AppInfo\vision.h
-.\objects\task_gimbal.o: ..\SYSTEM\sys.h
 .\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\APP\remote.h
 .\objects\task_gimbal.o: ..\TASK\my_task.h

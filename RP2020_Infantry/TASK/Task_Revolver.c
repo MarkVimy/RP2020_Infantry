@@ -1015,7 +1015,7 @@ void REVOLVER_GetInfo(void)
 	// 获取系统信息
 	REVOLVER_GetSysInfo(&System, &Revolver);
 	// 获取遥控信息
-	REVOLVER_GetRemoteInfo(&System, &RC_Ctl_Info, &Revolver);
+	REVOLVER_GetRemoteInfo(&System, &Remote, &Revolver);
 	// 获取裁判系统信息
 	REVOLVER_GetJudgeInfo(&Judge, &Revolver);	
 }
@@ -1075,7 +1075,7 @@ void REVOLVER_PidCtrlTask(void)
  */
 void REVOLVER_RcCtrlTask(void)
 {
-	REMOTE_SetRevolverShoot(&RC_Ctl_Info);
+	REMOTE_SetRevolverShoot(&Remote);
 }
 
 /**

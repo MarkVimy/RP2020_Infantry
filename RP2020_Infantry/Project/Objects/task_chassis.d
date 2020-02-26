@@ -39,7 +39,6 @@
 .\objects\task_chassis.o: ..\APP\my_app.h
 .\objects\task_chassis.o: ..\AppInfo\judge.h
 .\objects\task_chassis.o: ..\AppInfo\vision.h
-.\objects\task_chassis.o: ..\SYSTEM\sys.h
 .\objects\task_chassis.o: ..\APP\my_app.h
 .\objects\task_chassis.o: ..\APP\remote.h
 .\objects\task_chassis.o: ..\TASK\my_task.h
