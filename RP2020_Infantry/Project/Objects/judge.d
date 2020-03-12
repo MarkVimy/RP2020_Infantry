@@ -41,10 +41,10 @@
 .\objects\judge.o: ..\TASK\Task_Revolver.h
 .\objects\judge.o: ..\APP\my_app.h
 .\objects\judge.o: ..\AppInfo\vision.h
-.\objects\judge.o: ..\APP\my_app.h
 .\objects\judge.o: ..\APP\remote.h
 .\objects\judge.o: ..\TASK\my_task.h
 .\objects\judge.o: ..\TASK\Task_Chassis.h
+.\objects\judge.o: ..\APP\my_app.h
 .\objects\judge.o: ..\TASK\Task_Gimbal.h
 .\objects\judge.o: ..\TASK\Task_Revolver.h
 .\objects\judge.o: ..\TASK\Task_Timing_Report.h

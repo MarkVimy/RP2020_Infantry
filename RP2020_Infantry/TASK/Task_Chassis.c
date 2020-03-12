@@ -1849,7 +1849,7 @@ void CHASSIS_SzuPupCtrl(void)
  *	@brief	自动对位控制
  *	@note	x方向距离受大小补给站影响
  */
-#define R_B_CASE	4
+#define R_B_CASE	5
 
 #define RELOAD_BULLET_DIS_Y				200	// 单位mm
 #define RELOAD_BULLET_DIS_JUDGE_CNT		3	// 判断计数
@@ -1859,8 +1859,11 @@ void CHASSIS_SzuPupCtrl(void)
 #define RELOAD_BULLET_DIS_X_SMALL		300	// 判定为小补给站时，x方向移动距离
 #define RELOAD_BULLET_DIS_X_BIG			500	// 判定为大补给站时，x方向移动距离
 
+float tar_angle_sum_y = -((RELOAD_BULLET_DIS_Y / PERIMETER) * 8192) / CHASSIS_DECELE_RATIO;	// 倒退取负
 float ramp_angle_y = 1024;
+
 portTickType ulDetectTime[TIME_STATE_COUNT];	// 测试超声波反馈帧率
+
 void CHASSIS_ReloadBulletCtrl(void)
 {
 	// 操作手先将车开至左上方顶住一个角
@@ -1920,7 +1923,6 @@ void CHASSIS_ReloadBulletCtrl(void)
 				底盘全向分配算法
 		*/
 		static uint16_t tx;
-		float tar_angle_sum_y = -((RELOAD_BULLET_DIS_Y / PERIMETER) * 8192) / CHASSIS_DECELE_RATIO;	// 倒退取负
 		float fed_angle_sum_y;
 		
 		if(Flag.Chassis.ReloadBulletStart == true) {
@@ -2061,13 +2063,143 @@ void CHASSIS_ReloadBulletCtrl(void)
 		
 			Chas_Target_Speed[ X ] = 0;
 			
-			//Chas_Target_Speed[ Y ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
+			Chas_Target_Speed[ Y ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
+
+//			if(Ultra.update == true) {
+//			
+//				Ultra.update = false;
+//				
+//				ULTRA_Detect();	// 再开启一次超声波探测
+//				
+//				ulDetectTime[NOW] = xTaskGetTickCount();
+//				
+//				ulDetectTime[DELTA] = ulDetectTime[NOW] - ulDetectTime[PREV];
+
+//				ulDetectTime[PREV] = ulDetectTime[NOW];
+//			
+//			}
 			
 		}
 		
 		/* 全向分配算法 */
 		CHASSIS_OmniSpeedCalc();
-	#else
+		
+	#elif (R_B_CASE == 5)
+		// 双反馈PID控制模型
+		
+		Supply_Id_t supply_id;
+		
+		if(Flag.Chassis.ReloadBulletStart == true) {
+			// 清除触发标志位
+			Flag.Chassis.ReloadBulletStart = false;
+			// 重新判定大小补给站
+			Flag.Chassis.ReloadBulletJudge = false;
+			// 重装载判断计数
+			Cnt.Chassis.ReloadBulletJudge = RELOAD_BULLET_DIS_JUDGE_CNT;
+			// 电机累加机械角度清零
+			CHASSIS_Angle_ClearSum(Chassis_PID);
+			// y方向目标累加角度重置
+			Chas_Locate_PID[ Y ].target = tar_angle_sum_y;
+			// x方向期望速度清零
+			Chas_Target_Speed[ X ] = 0;
+			// y方向期望速度清零
+			Chas_Target_Speed[ Y ] = 0;
+			// 开启一次超声波探测
+			Ultra.update = true;
+		}
+		
+		/* 正在判断大小补给站 */
+		if(Cnt.Chassis.ReloadBulletJudge) {
+			
+			supply_id = JUDGE_eGetSupplyId();
+			
+			if(supply_id == SUPPLY_ID_1) {
+				
+				Chas_Locate_PID[ X ].target = RELOAD_BULLET_DIS_X_SMALL;	// 判定为小补给站
+				
+				Flag.Chassis.ReloadBulletJudge = true;
+
+				Cnt.Chassis.ReloadBulletJudge = 0;
+				
+			} else if(supply_id == SUPPLY_ID_2) {
+				
+				Chas_Locate_PID[ X ].target = RELOAD_BULLET_DIS_X_BIG;		// 判定为大补给站
+				
+				Flag.Chassis.ReloadBulletJudge = true;
+						
+				Cnt.Chassis.ReloadBulletJudge = 0;
+
+			}
+			
+		}
+		
+		/* 判定成功 */
+		if(Flag.Chassis.ReloadBulletJudge == true) {
+		
+			#if (ULTRA_USE_USART)
+				if(Ultra.update == true) {
+				
+					Ultra.update = false;
+					
+					ULTRA_Detect();	// 再开启一次超声波探测
+					
+					ulDetectTime[NOW] = xTaskGetTickCount();
+					
+					ulDetectTime[DELTA] = ulDetectTime[NOW] - ulDetectTime[PREV];
+
+					ulDetectTime[PREV] = ulDetectTime[NOW];
+
+					Chas_Locate_PID[ X ].feedback = Ultra.dis;
+					
+					Chas_Target_Speed[ X ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ X ]);
+				
+				}
+			#else
+				if(Ultra.update == true) {
+					
+					Ultra.update = false;
+					
+					ULTRA_Detect();	// 再开启一次超声波探测
+
+					ulDetectTime[PREV] = xTaskGetTickCount();
+					
+				} 
+				else {
+				
+					// 读取SCL线来判断是否探测结束
+					if( ULTRA_SCL ) {
+						
+						Ultra.update = true;
+
+						ulDetectTime[NOW] = xTaskGetTickCount();
+						
+						ulDetectTime[DELTA] = ulDetectTime[NOW] - ulDetectTime[PREV];
+
+						ULTRA_IICReadResult();
+						
+						Chas_Locate_PID[ X ].feedback = Ultra.dis;
+						
+						Chas_Target_Speed[ X ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ X ]);
+					}					
+					
+				}
+				
+			#endif
+			
+			Chas_Target_Speed[ Y ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
+			
+		} 
+		/* 判定失败 */
+		else {
+		
+			Chas_Target_Speed[ X ] = 0;
+			
+			Chas_Target_Speed[ Y ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
+			
+		}
+		
+		/* 全向分配算法 */
+		CHASSIS_OmniSpeedCalc();		
 	
 	#endif
 }
@@ -2143,10 +2275,11 @@ void CHASSIS_KeyCtrlTask(void)
  */
 void CHASSIS_SelfProtect(void)
 {
-	CHASSIS_Stop(Chassis_PID);
-	CHASSIS_PID_ParamsInit(Chassis_PID, CHASSIS_MOTOR_COUNT);
-	CHASSIS_Z_PID_ParamsInit(&Chassis_Z_PID.Angle);	
-	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
+//	CHASSIS_Stop(Chassis_PID);
+//	CHASSIS_PID_ParamsInit(Chassis_PID, CHASSIS_MOTOR_COUNT);
+//	CHASSIS_Z_PID_ParamsInit(&Chassis_Z_PID.Angle);	
+//	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
+	CHASSIS_ReloadBulletCtrl();
 }
 
 /**

@@ -121,7 +121,6 @@
  
  int main(void)
 {
-
 	All_Init();
 	while(1) {
 	}

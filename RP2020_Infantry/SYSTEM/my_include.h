@@ -2,34 +2,37 @@
 #define __INCLUDE_H
 
 /* Interrupt Priority Management Table */
+/* FreeRTOS中设置为4位抢占优先级，故子优先级无用(默认设置为0) */
+/* Zigbee串口1中断 */
 #define USART1_IT_PRIO_PRE	3
-#define USART1_IT_PRIO_SUB	3
+#define USART1_IT_PRIO_SUB	0
 
-#define USART2_IT_PRIO_PRE	1
-#define USART2_IT_PRIO_SUB	1
+/* 遥控器串口2中断 */
+#define USART2_IT_PRIO_PRE	0
+#define USART2_IT_PRIO_SUB	0
 
-#define USART3_IT_PRIO_PRE	3
-#define USART3_IT_PRIO_SUB	3
+/* 超声波串口3中断 */
+#define USART3_IT_PRIO_PRE	2
+#define USART3_IT_PRIO_SUB	0
 
 /* 视觉通信串口4中断 */
-#define UART4_IT_PRIO_PRE	0
+#define UART4_IT_PRIO_PRE	1
 #define UART4_IT_PRIO_SUB	0
 
 /* 裁判系统串口5中断 */
 #define UART5_IT_PRIO_PRE	0
-#define UART5_IT_PRIO_SUB	1
+#define UART5_IT_PRIO_SUB	0
 
-//#define DMA1_Stream3_PRIO_PRE	3
-//#define DMA1_Stream3_PRIO_SUB	3
+/* CAN1接收中断 */
+#define CAN1_RX0_PRIO_PRE	1
+#define CAN1_RX0_PRIO_SUB	0
 
-#define CAN1_RX0_PRIO_PRE		0
-#define CAN1_RX0_PRIO_SUB		1
+/* CAN2接收中断 */
+#define CAN2_RX0_PRIO_PRE	1
+#define CAN2_RX0_PRIO_SUB	0
 
-#define CAN2_RX0_PRIO_PRE		0
-#define CAN2_RX0_PRIO_SUB		1
-
-#define CAN2_TX_PRIO_PRE		0
-#define CAN2_TX_PRIO_SUB		3
+#define CAN2_TX_PRIO_PRE	3
+#define CAN2_TX_PRIO_SUB	0
 
 /* Flag Asset Structure */
 typedef struct {
@@ -77,7 +80,7 @@ typedef struct {
 /* Bit Mask Asset Structure */
 typedef struct {
 	struct {
-		uint16_t	BM_Reset;	// 系统复位任务位掩膜
+		uint16_t	BM_Reset;		// 系统复位任务位掩膜
 	}System;
 	struct {
 		uint8_t		BM_rxReport;	// 底盘电机接收报文位掩膜
@@ -105,7 +108,7 @@ typedef enum {
 /* Bit Mask Reset Enum */
 typedef enum {
 	BM_RESET_GIMBAL = 0x01,	// 复位云台
-	BM_RESET_FRIC   = 0x02, 	// 复位摩擦轮
+	BM_RESET_FRIC   = 0x02, // 复位摩擦轮
 }BM_System_Reset_t;
 
 /* Pid Structure */

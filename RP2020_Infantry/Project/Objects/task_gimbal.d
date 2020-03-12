@@ -39,10 +39,10 @@
 .\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\AppInfo\judge.h
 .\objects\task_gimbal.o: ..\AppInfo\vision.h
-.\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\APP\remote.h
 .\objects\task_gimbal.o: ..\TASK\my_task.h
 .\objects\task_gimbal.o: ..\TASK\Task_Chassis.h
+.\objects\task_gimbal.o: ..\APP\my_app.h
 .\objects\task_gimbal.o: ..\TASK\Task_Gimbal.h
 .\objects\task_gimbal.o: ..\TASK\Task_Revolver.h
 .\objects\task_gimbal.o: ..\TASK\Task_Timing_Report.h

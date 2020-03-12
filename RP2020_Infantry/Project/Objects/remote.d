@@ -41,10 +41,10 @@
 .\objects\remote.o: ..\APP\my_app.h
 .\objects\remote.o: ..\AppInfo\judge.h
 .\objects\remote.o: ..\AppInfo\vision.h
-.\objects\remote.o: ..\APP\my_app.h
 .\objects\remote.o: ..\APP\remote.h
 .\objects\remote.o: ..\APP\friction.h
 .\objects\remote.o: ..\APP\magzine.h
+.\objects\remote.o: ..\APP\my_app.h
 .\objects\remote.o: ..\APP\ultra.h
 .\objects\remote.o: ..\APP\anoc.h
 .\objects\remote.o: ..\TASK\Task_Gimbal.h

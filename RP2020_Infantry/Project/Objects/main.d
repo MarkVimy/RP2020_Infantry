@@ -41,11 +41,11 @@
 .\objects\main.o: ..\APP\my_app.h
 .\objects\main.o: ..\AppInfo\judge.h
 .\objects\main.o: ..\AppInfo\vision.h
-.\objects\main.o: ..\APP\my_app.h
 .\objects\main.o: ..\APP\remote.h
 .\objects\main.o: ..\TASK\my_task.h
 .\objects\main.o: ..\APP\friction.h
 .\objects\main.o: ..\APP\magzine.h
+.\objects\main.o: ..\APP\my_app.h
 .\objects\main.o: ..\APP\ultra.h
 .\objects\main.o: ..\APP\anoc.h
 .\objects\main.o: ..\TASK\Task_Gimbal.h

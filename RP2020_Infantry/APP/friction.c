@@ -162,12 +162,30 @@ void FRICTION_GetSysInfo(System_t *sys, Friction_Info_t *fric)
  */
 void FRICTION_GetJudgeInfo(Judge_Info_t *judge, Friction_Info_t *fric)
 {
+	uint8_t speed_limit = JUDGE_ucGetBulletLimitSpeed17();
+	
 	/* #根据最高射速限制调整摩擦轮的速度 */
-//	switch(judge->GameRobotStatus.robot_level)
-//	{
-//		case: Friction.SpeedLevel = FRIC_SPEED_HIGH;
-//		default:break;
-//	}	
+	switch(speed_limit)
+	{
+		case 12: {
+				Friction.SpeedLevel = FRIC_SPEED_LOW;
+			}break;
+		
+		case 15: {
+				Friction.SpeedLevel = FRIC_SPEED_MID;
+			}break;
+		
+		case 18: {
+				Friction.SpeedLevel = FRIC_SPEED_HIGH;
+			}break;
+		
+		case 30: {
+				Friction.SpeedLevel = FRIC_SPEED_VERYHIGH;
+			}break;
+		
+		default:
+			break;
+	}	
 }
 
 /**

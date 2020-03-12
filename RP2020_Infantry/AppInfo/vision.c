@@ -49,7 +49,7 @@ typedef enum {
 	CMD_ID		= 1,
 	CRC8		= 2,
 	DATA		= 3,
-	TX_CRC16		= 20,
+	TX_CRC16	= 20,
 } Vision_Frame_Header_Offset_t;
 
 /* 数据长度 */

@@ -119,12 +119,13 @@ void USART3_Init( void )
 	USART_Init( USART3, &xUsartInit );
 	USART_Cmd( USART3, ENABLE );
 	
-	USART_ITConfig( USART3, USART_IT_IDLE, ENABLE  ); // 注意要配置成串口空闲中断 
+	//USART_ITConfig( USART3, USART_IT_IDLE, ENABLE  ); // 注意要配置成串口空闲中断 
+	USART_ITConfig( USART3, USART_IT_RXNE, ENABLE );
 
-	USART_DMACmd( USART3, USART_DMAReq_Rx, ENABLE );
-	USART_DMACmd( USART3, USART_DMAReq_Tx, ENABLE );
-	
-	USART3_DMA_Init( );	// 初始化uart3的DMA
+//	USART_DMACmd( USART3, USART_DMAReq_Rx, ENABLE );
+//	USART_DMACmd( USART3, USART_DMAReq_Tx, ENABLE );
+//	
+//	USART3_DMA_Init( );	// 初始化uart3的DMA
 	
 	xNvicInit.NVIC_IRQChannel                    = USART3_IRQn;
 	xNvicInit.NVIC_IRQChannelPreemptionPriority  = USART3_IT_PRIO_PRE;
@@ -158,6 +159,23 @@ void USART3_IRQHandler( void )
 		
 		memset(Ultra_Buffer, 0, ULTRA_BUFFER_LEN);	// 读完之后内容清零
 		DMA_Cmd(DMA1_Stream_RX, ENABLE);
+	}
+	
+	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET) {
+
+		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+
+		res = USART_ReceiveData(USART3);
+		
+		Ultra_Buffer[Ultra.cnt] = res;
+		Ultra.cnt++;
+		if(Ultra.cnt >= 2) {
+			Ultra.cnt = 0;
+			/* 超声波测距数据记录 */
+			Ultra.time = ULTRA_ReadData(Ultra_Buffer);		// 读取超声波探测时间(us)
+			Ultra.dis = 0.34f * Ultra.time / 2.f;
+			Ultra.update = true;
+		}
 	}
 }
 

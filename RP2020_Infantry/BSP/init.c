@@ -10,10 +10,9 @@ static void my_hardware_init(void)
 	RCC_ClocksTypeDef clocks;
 	RCC_GetClocksFreq(&clocks);	
 	
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
-//	delay_init(clocks.SYSCLK_Frequency/1000000);	// 1ms Systick
-	Delay_init(168);
+	Delay_init(168);// 1ms Systick
 	LED_Init();		// LED初始化
 	LASER_Init();	// 激光初始化
 	REMOTE_Init();	// 遥控通信USART2初始化
@@ -30,8 +29,6 @@ static void my_hardware_init(void)
 	
 	IMU_Init();		// 祖传IMU初始化
 	
-	/* 创建软件定时器数据收发任务,can1,can2,不要放太多函数 */
-	Timer_Send_Create();
 }
 
 static void my_system_init(void)

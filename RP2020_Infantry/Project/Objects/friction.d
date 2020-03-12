@@ -43,9 +43,9 @@
 .\objects\friction.o: ..\APP\my_app.h
 .\objects\friction.o: ..\AppInfo\judge.h
 .\objects\friction.o: ..\AppInfo\vision.h
-.\objects\friction.o: ..\APP\my_app.h
 .\objects\friction.o: ..\APP\remote.h
 .\objects\friction.o: ..\APP\magzine.h
+.\objects\friction.o: ..\APP\my_app.h
 .\objects\friction.o: ..\APP\ultra.h
 .\objects\friction.o: ..\APP\anoc.h
 .\objects\friction.o: ..\TASK\Task_Gimbal.h

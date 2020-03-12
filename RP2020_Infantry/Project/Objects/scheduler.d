@@ -42,11 +42,11 @@
 .\objects\scheduler.o: ..\APP\my_app.h
 .\objects\scheduler.o: ..\AppInfo\judge.h
 .\objects\scheduler.o: ..\AppInfo\vision.h
-.\objects\scheduler.o: ..\APP\my_app.h
 .\objects\scheduler.o: ..\APP\remote.h
 .\objects\scheduler.o: ..\TASK\my_task.h
 .\objects\scheduler.o: ..\APP\friction.h
 .\objects\scheduler.o: ..\APP\magzine.h
+.\objects\scheduler.o: ..\APP\my_app.h
 .\objects\scheduler.o: ..\APP\ultra.h
 .\objects\scheduler.o: ..\APP\anoc.h
 .\objects\scheduler.o: ..\TASK\Task_Gimbal.h

@@ -733,11 +733,6 @@
               <FileType>1</FileType>
               <FilePath>..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.c</FilePath>
             </File>
-            <File>
-              <FileName>mpu6500.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\mpu6050\mpu6500.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

@@ -15,8 +15,8 @@
 QueueHandle_t CAN1_Queue;	// CAN1消息队列句柄
 QueueHandle_t CAN2_Queue;	// CAN2消息队列句柄
 
-TimerHandle_t CAN1_Timer_Handle; 			//周期定时器句柄					
-TimerHandle_t CAN2_Timer_Handle; 			//周期定时器句柄
+TimerHandle_t CAN1_Timer_Handle;	//周期定时器句柄					
+TimerHandle_t CAN2_Timer_Handle;	//周期定时器句柄
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -84,17 +84,17 @@ void Timer_Send_Create(void)
 	
 	/* 创建CAN1接收队列
 		 CAN1接收到的报文存放在此队列中 */
-	CAN1_Queue = xQueueCreate( 128, sizeof(CanTxMsg) );	// 最多可以保持64个CanTxMsg
+	CAN1_Queue = xQueueCreate( 128, sizeof(CanTxMsg) );	// 最多可以保持128个CanTxMsg
 	
 	/* 创建CAN2接收队列
 		 CAN2接收到的报文存放在此队列中 */
-	CAN2_Queue = xQueueCreate( 128, sizeof(CanTxMsg) );	// 最多可以保持64个CanTxMsg
+	CAN2_Queue = xQueueCreate( 128, sizeof(CanTxMsg) );	// 最多可以保持128个CanTxMsg
 	
 	/* 创建CAN1发送定时器 */
 	CAN1_Timer_Handle = xTimerCreate((const char*)"CAN1_Timer",
 									(TickType_t)TIME_STAMP_2MS,	// 2ms
 									(UBaseType_t)pdTRUE,		// 周期执行
-									(void*)0,					// 编号0
+									(void*)1,					// 编号1
 									(TimerCallbackFunction_t)CAN1_Timer_Callback);	// 回调函数
 																
 	/* 创建成功
@@ -108,7 +108,7 @@ void Timer_Send_Create(void)
 	CAN2_Timer_Handle = xTimerCreate((const char*)"CAN2_Timer",
 									(TickType_t)TIME_STAMP_1MS,	// 1ms
 									(UBaseType_t)pdTRUE,		// 周期执行
-									(void*)0,					// 编号1
+									(void*)2,					// 编号2
 									(TimerCallbackFunction_t)CAN2_Timer_Callback);	// 回调函数
 																
 	/* 创建成功

@@ -597,7 +597,7 @@ void CAN2_Init(void)
 
 	/* CAN NVIC 中断配置 */
 	NVICx_init(CAN2_RX0_IRQn, CAN2_RX0_PRIO_PRE, CAN2_RX0_PRIO_SUB);
-	NVICx_init(CAN2_RX0_IRQn, CAN2_TX_PRIO_PRE, CAN2_TX_PRIO_SUB);
+	//NVICx_init(CAN2_TX_IRQn, CAN2_TX_PRIO_PRE, CAN2_TX_PRIO_SUB);
 	
 	/* CAN参数配置 */
 	CAN_ParamsInit(&CAN_InitStructure);
@@ -882,12 +882,12 @@ void CAN2_RX0_IRQHandler(void)
 	}		
 }
 
-/**
- *	@brief	CAN2 发送中断
- */
-void CAN2_TX_IRQHandler(void)
-{
-	if(CAN_GetITStatus(CAN2, CAN_IT_TME) != RESET) {
-		CAN_ClearITPendingBit(CAN2, CAN_IT_TME);
-	}
-}
+///**
+// *	@brief	CAN2 发送中断
+// */
+//void CAN2_TX_IRQHandler(void)
+//{
+//	if(CAN_GetITStatus(CAN2, CAN_IT_TME) != RESET) {
+//		CAN_ClearITPendingBit(CAN2, CAN_IT_TME);
+//	}
+//}

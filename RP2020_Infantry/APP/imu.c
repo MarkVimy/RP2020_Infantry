@@ -32,14 +32,14 @@ extern Mpu_Info_t Mpu_Info;
 static void IMU_CalcAvrOffset(void)
 {
 	uint16_t i;
-	for(i = 0; i < 50; i++) {
-		delay_us(100);
+	for(i = 0; i < 5; i++) {
+		delay_ms(1);
 		// 读取陀螺仪角度和角速度
 		//mpu_dmp_get_data( &Mpu_Info.roll, &Mpu_Info.pitch, &Mpu_Info.yaw);
-		MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);		
+		//MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);		
 	}
 	for(i = 0; i < 250; i++) {
-		delay_us(100);
+		//delay_us(100);
 		MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
 		Mpu_Info.ratePitchOffset += Mpu_Info.ratePitch;
 		Mpu_Info.rateYawOffset   += Mpu_Info.rateYaw;

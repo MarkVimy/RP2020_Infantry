@@ -673,7 +673,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 			}
 		}
 		
-		KeyLockFlag_Ctrl = true;
+		KeyLockFlag_Ctrl = true;	// Ctrl键锁定
 	} 
 	/* 松开Ctrl键 */
 	else {
@@ -682,7 +682,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 			sys->PidMode = GYRO;
 			change_pid_mode = false;
 		}
-		KeyLockFlag_Ctrl = false;
+		KeyLockFlag_Ctrl = false;	// Ctrl键解锁
 	}	
 	
 	/* 退出打符模式判断(打符 -> 常规) */

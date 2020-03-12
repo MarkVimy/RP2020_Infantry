@@ -75,7 +75,7 @@ System_t System = {
 TaskHandle_t SystemStateTask_Handler;				// 任务句柄
 void system_state_task(void *p_arg);
 //--- Chassis Task ---//
-#define CHASSIS_TASK_PRIO					3		// 任务优先级
+#define CHASSIS_TASK_PRIO					4		// 任务优先级
 #define CHASSIS_STK_SIZE					256		// 任务堆栈大小
 TaskHandle_t ChassisTask_Handler;					// 任务句柄
 void chassis_task(void *p_arg);
@@ -85,17 +85,17 @@ void chassis_task(void *p_arg);
 TaskHandle_t GimbalTask_Handler;					// 任务句柄
 void gimbal_task(void *p_arg);
 //--- Revolver Task ---//
-#define REVOLVER_TASK_PRIO					5		// 任务优先级
+#define REVOLVER_TASK_PRIO					4		// 任务优先级
 #define REVOLVER_STK_SIZE					256		// 任务堆栈大小
 TaskHandle_t RevolverTask_Handler;					// 任务句柄
 void revolver_task(void *p_arg);
 //--- Friction Task ---//
-#define DUTY_TASK_PRIO						6		// 任务优先级
+#define DUTY_TASK_PRIO						3		// 任务优先级
 #define DUTY_STK_SIZE						128		// 任务堆栈大小
 TaskHandle_t DutyTask_Handler;						// 任务句柄
 void duty_task(void *p_arg);
 //--- Vision Task ---//
-#define VISION_TASK_PRIO					7		// 任务优先级
+#define VISION_TASK_PRIO					3		// 任务优先级
 #define VISION_STK_SIZE						256		// 任务堆栈大小
 TaskHandle_t VisionTask_Handler;					// 任务句柄
 void vision_task(void *p_arg);
@@ -108,6 +108,10 @@ extern TaskHandle_t StartTask_Handler;				// 任务句柄(在init.c中定义)
 void start_task(void *pvParameters)
 {
 	taskENTER_CRITICAL();	// 进入临界区
+	
+	/* 创建软件定时器数据收发任务,can1,can2,不要放太多函数 */
+	Timer_Send_Create();		
+	
 	/* 创建系统状态机任务 */
 	xTaskCreate((TaskFunction_t		)system_state_task,						// 任务函数
 							(const char*		)"system_state_task",		// 任务名称
@@ -161,12 +165,9 @@ void start_task(void *pvParameters)
  */
 void system_state_task(void *p_arg)	// 系统状态机
 {
-	portTickType ulCurrentTime;
 	while(1) {
-		ulCurrentTime = xTaskGetTickCount();//当前系统时间
-
 		/* IMU读取任务 */
-		IMU_Task();
+		IMU_Task();	// 耗时56ms左右
 		
 		/* 遥控任务 */
 		REMOTE_Ctrl();
@@ -180,7 +181,7 @@ void system_state_task(void *p_arg)	// 系统状态机
 			LED_ALL_ON();
 		}
 
-		vTaskDelayUntil(&ulCurrentTime, TIME_STAMP_2MS);//绝对延时
+		vTaskDelay(TIME_STAMP_2MS);
 	}
 }
 
@@ -188,12 +189,12 @@ void system_state_task(void *p_arg)	// 系统状态机
  *	@note 
  *		Loop time:	2ms
  */
+
+
 void chassis_task(void *p_arg)
 {
-	portTickType ulCurrentTime;
 	CHASSIS_Init();
 	while(1) {
-		ulCurrentTime = xTaskGetTickCount();//当前系统时间
 		switch(System.State)
 		{												
 			case SYSTEM_STATE_NORMAL:
@@ -207,7 +208,8 @@ void chassis_task(void *p_arg)
 				CHASSIS_SelfProtect();
 				break;
 		}
-		vTaskDelayUntil(&ulCurrentTime, TIME_STAMP_2MS);//绝对延时
+		
+		vTaskDelay(TIME_STAMP_2MS);
 	}
 }
 
@@ -217,10 +219,8 @@ void chassis_task(void *p_arg)
  */
 void gimbal_task(void *p_arg)
 {
-	portTickType ulCurrentTime;
 	GIMBAL_Init();
 	while(1) {
-		ulCurrentTime = xTaskGetTickCount();//当前系统时间
 		switch(System.State)
 		{
 			case SYSTEM_STATE_NORMAL:
@@ -231,7 +231,7 @@ void gimbal_task(void *p_arg)
 				GIMBAL_SelfProtect();
 				break;
 		}
-		vTaskDelayUntil(&ulCurrentTime, TIME_STAMP_2MS);//绝对延时
+		vTaskDelay(TIME_STAMP_2MS);		
 	}
 }
 
@@ -241,9 +241,7 @@ void gimbal_task(void *p_arg)
  */
 void revolver_task(void *p_arg)
 {
-	portTickType ulCurrentTime;
 	while(1) {
-		ulCurrentTime = xTaskGetTickCount();//当前系统时间
 		switch(System.State)
 		{
 			case SYSTEM_STATE_NORMAL:
@@ -254,7 +252,7 @@ void revolver_task(void *p_arg)
 				REVOLVER_SelfProtect();
 				break;
 		}
-		vTaskDelayUntil(&ulCurrentTime, TIME_STAMP_1MS);//绝对延时
+		vTaskDelay(TIME_STAMP_1MS);
 	}
 }
 
