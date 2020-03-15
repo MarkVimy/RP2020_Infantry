@@ -86,7 +86,7 @@ void TIM3_Init(void)
 	
 	tim.TIM_Prescaler = 84-1;	// 1Mhz
 	tim.TIM_CounterMode = TIM_CounterMode_Up;
-	tim.TIM_Period = 2499;	// 25ms(每周期) +1代表+1us
+	tim.TIM_Period = 2500-1;	// 2.5ms(每周期) +1代表+1us
 	tim.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInit(TIM3, &tim);
 	
@@ -113,7 +113,7 @@ void TIM3_Init(void)
 	TIM_Cmd(TIM3, ENABLE);
 	
 	if(test_fric_cali == 0) {
-		PWM1 = 1000;	// 解锁摩擦轮(>640)
+		PWM1 = 1000;	// 解锁摩擦轮(>1000)
 		PWM2 = 1000;
 	} else {
 		PWM1 = 2500;

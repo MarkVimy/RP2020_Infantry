@@ -88,7 +88,7 @@
 
 /* 数值函数 */
 #define constrain(x, min, max)	((x>max)?max:(x<min?min:x))
-#define abs(x) 									((x)>0? (x):(-(x)))
+#define abs(x) 					((x)>0? (x):(-(x)))
 
 /* 时间戳 */
 /* for FreeRTOS*/

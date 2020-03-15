@@ -7,9 +7,6 @@ TaskHandle_t StartTask_Handler;			// ÈÎÎñ¾ä±ú
 
 static void my_hardware_init(void)
 {
-	RCC_ClocksTypeDef clocks;
-	RCC_GetClocksFreq(&clocks);	
-	
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
 	Delay_init(168);// 1ms Systick

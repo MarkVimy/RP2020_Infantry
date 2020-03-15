@@ -99,6 +99,11 @@ void duty_task(void *p_arg);
 #define VISION_STK_SIZE						256		// 任务堆栈大小
 TaskHandle_t VisionTask_Handler;					// 任务句柄
 void vision_task(void *p_arg);
+//--- Imu Task ---//
+#define IMU_TASK_PRIO						1		// 任务优先级
+#define IMU_STK_SIZE						256		// 任务堆栈大小
+TaskHandle_t ImuTask_Handler;						// 任务句柄
+void imu_task(void *p_arg);
 
 /* ## Semphore Manangement Table ## --------------------------------------------*/
 
@@ -154,6 +159,13 @@ void start_task(void *pvParameters)
 							(void*				)NULL,						// 传递给任务函数的参数
 							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
 							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
+	/* 创建IMU任务 */
+	xTaskCreate((TaskFunction_t		)imu_task,								// 任务函数
+							(const char*		)"imu_task",				// 任务名称
+							(uint16_t			)IMU_STK_SIZE,				// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)IMU_TASK_PRIO,				// 任务优先级
+							(TaskHandle_t*		)&ImuTask_Handler);
 							
 	vTaskDelete(StartTask_Handler);	
 	taskEXIT_CRITICAL();	// 退出临界区
@@ -166,9 +178,6 @@ void start_task(void *pvParameters)
 void system_state_task(void *p_arg)	// 系统状态机
 {
 	while(1) {
-		/* IMU读取任务 */
-		IMU_Task();	// 耗时56ms左右
-		
 		/* 遥控任务 */
 		REMOTE_Ctrl();
 		
@@ -256,7 +265,7 @@ void revolver_task(void *p_arg)
 	}
 }
 
-/**	!# 5 - Friction Task #!
+/**	!# 5 - Duty Task #!
  *	@note 
  *		Loop time:	10ms
  */
@@ -285,7 +294,7 @@ void duty_task(void *p_arg)
 
 /**	!# 6 - Vision Task #!
  *	@note 
- *		Loop time:	100ms
+ *		Loop time:	10ms
  */
 void vision_task(void *p_arg)
 {
@@ -293,5 +302,22 @@ void vision_task(void *p_arg)
 	while(1) {
 		VISION_Ctrl();
 		vTaskDelay(10);	// 10ms
+	}
+}
+
+/**	!# 7 - Imu Task #!
+ *	@note 
+ *		Loop time:	loop forever
+ */
+	portTickType ulCurrentTime;
+	portTickType ulRespondTime;
+void imu_task(void *p_arg)
+{
+	while(1) {
+		ulCurrentTime = xTaskGetTickCount();
+		/* IMU读取任务 */
+		IMU_Task();	// 耗时56ms左右		
+		ulRespondTime = xTaskGetTickCount() - ulCurrentTime;
+		vTaskDelay(1);	// 1ms，注释后进不了空闲任务
 	}
 }

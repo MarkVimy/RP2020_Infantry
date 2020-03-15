@@ -16,7 +16,7 @@
  *	规格参数
  *		DT7 - 特性 - 7通道
  *					电池 - 3.7V 2000 mAh 锂电池
- *	 DR16 - 特性 - 2.4GHz D-BUS协议
+ *	 	DR16 - 特性 - 2.4GHz D-BUS协议
  *
  *	@note
  *	1. Robomaster 战车控制协议
@@ -33,7 +33,7 @@
  *		@范围		min		364					364						364						364
  *					mid		1024				1024					1024					1024
  *					max 	1684				1684					1684					1684
- *		@功能				遥控器通道0		遥控器通道1		遥控器通道2		遥控器通道3
+ *		@功能				遥控器通道0			遥控器通道1				遥控器通道2				遥控器通道3
  *
  *		@域					S1					S2	
  *		@偏移				44					46						
@@ -57,11 +57,11 @@
  *					mid		0					0					0
  *					max 	32767				32767				32767
  *		@功能				鼠标X方向			鼠标Y方向			鼠标Z方向
- *							移动速度			移动速度			移动速度			
+ *							移动速度				移动速度				移动速度			
  *							- -> 左移			- -> 左移			- -> 左移
  *							+ -> 右移			+ -> 右移			+ -> 右移
  *
- *		@域					鼠标左键			鼠标右键			按键				保留字段
+ *		@域					鼠标左键				鼠标右键				按键				保留字段
  *		@偏移				96					104					112					128
  *		@长度(bit)			8					8					16					16
  *		@符号位				无					无					无
@@ -724,6 +724,8 @@ void REMOTE_RcCorrectProcess(System_t *sys, RC_Ctl_t *remote)
  */
 void REMOTE_Ctrl(void)
 {
+	taskENTER_CRITICAL();
+	
 	/*----信息读入----*/
 	REMOTE_RcUpdateInfo(&System, &Remote);
 	
@@ -744,4 +746,6 @@ void REMOTE_Ctrl(void)
 		if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_GIMBAL))
 			REMOTE_RcCorrectProcess(&System, &Remote);
 	}
+	
+	taskEXIT_CRITICAL();
 }

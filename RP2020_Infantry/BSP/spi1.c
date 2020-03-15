@@ -67,6 +67,11 @@ static void SPI1_GPIO_Init(void)
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
 	/* 初始化上拉 */
 	GPIO_SetBits(GPIOB, GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5);	
+	
+	/* 复用 */
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource3, GPIO_AF_SPI1);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource4, GPIO_AF_SPI1);
+	GPIO_PinAFConfig(GPIOB, GPIO_PinSource5, GPIO_AF_SPI1);
 }
 
 /* API functions -------------------------------------------------------------*/
