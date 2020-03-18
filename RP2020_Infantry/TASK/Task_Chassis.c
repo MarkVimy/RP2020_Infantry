@@ -21,6 +21,8 @@
 #include "arm_math.h"
 #include "kalman.h"
 #include "can.h"
+#include "rng.h"
+
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 #define X	0
@@ -99,6 +101,7 @@ float k_Gyro_Chas_Twist;
 
 //小陀螺旋转转速步长
 float Chas_Top_Gyro_Step;
+uint16_t Chas_Top_Gyro_Period = 0;	// 单项赛规则(T为3~7s的随机数)
 
 //扭腰旋转步长
 float Chas_Twist_Step;
@@ -1113,6 +1116,22 @@ void CHASSIS_GetImuInfo(Chassis_Z_PID_t *zpid)
 }
 
 /**
+ *	@brief	非匀速小陀螺
+ */
+void CHASSIS_GetTopGyroInfo(void)
+{
+	static portTickType ulCurrentTime;
+	
+	ulCurrentTime = xTaskGetTickCount();
+	ulCurrentTime %= Chas_Top_Gyro_Period;
+	
+	if(CHASSIS_IfTopGyroOpen() == true) {
+		// -7.5sin(2pi*t/T)+22.5
+		Chas_Top_Gyro_Step = -7.5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 22.5;	// 正弦小陀螺
+	}
+}
+
+/**
  *	@brief	底盘读取遥控数据
  */
 static uint8_t RcLockFlag_Wheel = false;
@@ -1342,6 +1361,8 @@ void REMOTE_SetTopGyro(void)
 				Chassis.TopGyro = true;
 				Chassis.Twist = false;
 				top_gyro_dir = -1;
+				//根据单项赛要求设置周期为3~7s
+				Chas_Top_Gyro_Period = RNG_ucGetRandomNum(3, 7)*1000;
 			}
 		}
 		RcLockFlag_Wheel = true;
@@ -1639,6 +1660,8 @@ void KEY_SetTopGyro(void)
 					Chassis.TopGyro = true;	// 开陀螺
 					Chassis.Twist = false;	// 关扭腰
 					top_gyro_dir = -1;	// 后面可设置随机数来使得小陀螺方向随机
+					//根据单项赛要求设置周期为3~7s
+					Chas_Top_Gyro_Period = RNG_ucGetRandomNum(3, 7)*1000;					
 				}
 				else {
 					Chassis.TopGyro = false;
@@ -2216,6 +2239,8 @@ void CHASSIS_GetInfo(void)
 	CHASSIS_GetJudgeInfo(&Judge, &Chassis);
 	// 获取IMU信息
 	CHASSIS_GetImuInfo(&Chassis_Z_PID);	
+	// 获取小陀螺信息
+	CHASSIS_GetTopGyroInfo();
 	// 获取遥控信息
 	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
 }

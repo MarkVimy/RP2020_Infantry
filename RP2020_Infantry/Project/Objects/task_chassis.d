@@ -57,3 +57,4 @@
 .\objects\task_chassis.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\math.h
 .\objects\task_chassis.o: ..\APP\kalman.h
 .\objects\task_chassis.o: ..\BSP\can.h
+.\objects\task_chassis.o: ..\BSP\rng.h

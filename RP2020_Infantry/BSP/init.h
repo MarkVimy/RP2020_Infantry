@@ -28,6 +28,7 @@
 #include "laser.h"
 #include "can.h"
 #include "pwm.h"
+#include "rng.h"
 //#include "MPU_Temperature.h"
 /* Includes DRIVER Header Files ------------------------------------- */
 #include "usart1.h"

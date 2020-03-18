@@ -61,6 +61,7 @@
 .\objects\scheduler.o: ..\BSP\laser.h
 .\objects\scheduler.o: ..\BSP\can.h
 .\objects\scheduler.o: ..\BSP\pwm.h
+.\objects\scheduler.o: ..\BSP\rng.h
 .\objects\scheduler.o: ..\BSP\usart1.h
 .\objects\scheduler.o: ..\BSP\usart3.h
 .\objects\scheduler.o: ..\BSP\uart4.h

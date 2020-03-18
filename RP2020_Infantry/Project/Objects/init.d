@@ -60,6 +60,7 @@
 .\objects\init.o: ..\BSP\laser.h
 .\objects\init.o: ..\BSP\can.h
 .\objects\init.o: ..\BSP\pwm.h
+.\objects\init.o: ..\BSP\rng.h
 .\objects\init.o: ..\BSP\usart1.h
 .\objects\init.o: ..\BSP\usart3.h
 .\objects\init.o: ..\BSP\uart4.h

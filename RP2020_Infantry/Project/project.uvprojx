@@ -418,6 +418,16 @@
               <FileType>1</FileType>
               <FilePath>..\AppInfo\vision.c</FilePath>
             </File>
+            <File>
+              <FileName>judge2_0.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\AppInfo\judge2_0.c</FilePath>
+            </File>
+            <File>
+              <FileName>judge2_0.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\AppInfo\judge2_0.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -543,6 +553,11 @@
               <FileType>1</FileType>
               <FilePath>..\BSP\usart1.c</FilePath>
             </File>
+            <File>
+              <FileName>rng.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\rng.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -617,6 +632,11 @@
               <FileName>stm32f4xx_syscfg.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Libraries\src\stm32f4xx_syscfg.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_rng.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\src\stm32f4xx_rng.c</FilePath>
             </File>
           </Files>
         </Group>

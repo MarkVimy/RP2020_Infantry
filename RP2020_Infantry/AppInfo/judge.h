@@ -13,6 +13,8 @@
 
 #define JUDGE_VERSION		20
 
+// 机器人间交互数据段长度
+#define INTERACT_DATA_LEN	10
 
 /* Global TypeDef ------------------------------------------------------------*/
 typedef enum {
@@ -562,21 +564,20 @@ typedef __packed struct
 /* ID: 0x0209  Byte:  4 	机器人RFID状态 */
 typedef __packed struct
 {
- uint32_t rfid_status;
+	uint32_t rfid_status;
 } ext_rfid_status_t;
-
 
 /**
  *	-----------------------------------
- *	# 机器人间交互数据暂时不看！
+ *	# 机器人间交互数据
  *	-----------------------------------
  */
 
 /* 
 	交互数据，包括一个统一的数据段头结构，
-	包含了内容 ID，发送者以及接受者的 ID 和内容数据段，
+	包含了内容 ID，发送者以及接收者的 ID 和内容数据段，
 	整个交互数据的包总共长最大为 128 个字节，
-	减去 frame_header,cmd_id,frame_tail 以及数据段头结构的 6 个字节，
+	减去 frame_header,cmd_id,frame_tail 共9个字节以及数据段头结构的 6 个字节，
 	故而发送的内容数据段最大为 113。
 	整个交互数据 0x0301 的包上行频率为 10Hz。
 
@@ -586,23 +587,22 @@ typedef __packed struct
 	3/4/5，步兵(红)；
 	6，空中(红)；
 	7，哨兵(红)；
-	8，飞镖(红)；
-	9，雷达站(红)；
+
 	101，英雄(蓝)；
 	102，工程(蓝)；
 	103/104/105，步兵(蓝)；
 	106，空中(蓝)；
 	107，哨兵(蓝)；
-	108，飞镖(蓝)；
-	109，雷达站(蓝)；
+
 	客户端 ID： 
 	0x0101 为英雄操作手客户端( 红) ；
 	0x0102 ，工程操作手客户端 ((红 )；
 	0x0103/0x0104/0x0105，步兵操作手客户端(红)；
 	0x0106，空中操作手客户端((红)； 
+
 	0x0165，英雄操作手客户端(蓝)；
 	0x0166，工程操作手客户端(蓝)；
-	0x0167/0x0168/0x0169，操作手客户端步兵(蓝)；
+	0x0167/0x0168/0x0169，步兵操作手客户端(蓝)；
 	0x016A，空中操作手客户端(蓝)。 
 */
 /* 交互数据接收信息：0x0301  */
@@ -615,31 +615,6 @@ typedef __packed struct
 
 
 /* 
-	客户端 客户端自定义数据：cmd_id:0x0301。内容 ID:0xD180
-	发送频率：上限 10Hz
-
-
-	1.	客户端 客户端自定义数据：cmd_id:0x0301。内容 ID:0xD180。发送频率：上限 10Hz 
-	字节偏移量 	大小 	说明 				备注 
-	0 			2 		数据的内容 ID 		0xD180 
-	2 			2 		送者的 ID 			需要校验发送者机器人的 ID 正确性 
-	4 			2 		客户端的 ID 		只能为发送者机器人对应的客户端 
-	6 			4 		自定义浮点数据 1 	 
-	10 			4 		自定义浮点数据 2 	 
-	14 			4 		自定义浮点数据 3 	 
-	18 			1 		自定义 8 位数据 4 	 
-
-*/
-typedef __packed struct 
-{ 
-	float data1; 
-	float data2; 
-	float data3; 
-	uint8_t masks; 
-} client_custom_data_t;
-
-
-/* 
 	学生机器人间通信 cmd_id 0x0301，内容 ID:0x0200~0x02FF
 	交互数据 机器人间通信：0x0301。
 	发送频率：上限 10Hz  
@@ -648,18 +623,89 @@ typedef __packed struct
 	0 			2 		数据的内容 ID 	0x0200~0x02FF 
 										可以在以上 ID 段选取，具体 ID 含义由参赛队自定义 
 	
-	2 			2 		发送者的 ID 	需要校验发送者的 ID 正确性， 
+	2 			2 		发送者的 ID 		需要校验发送者的 ID 正确性， 
 	
-	4 			2 		接收者的 ID 	需要校验接收者的 ID 正确性，
+	4 			2 		接收者的 ID 		需要校验接收者的 ID 正确性，
 										例如不能发送到敌对机器人的ID 
 	
 	6 			n 		数据段 			n 需要小于 113 
 
 */
+/*
+			最大上行每秒字节量	最大下行每秒字节量
+	步兵		3720Bytes/s			3720Bytes/s
+*/
 typedef __packed struct 
 { 
-	uint8_t data[10]; //数据段,n需要小于113
+	uint8_t data[INTERACT_DATA_LEN]; //数据段,n需要小于113
 } robot_interactive_data_t;
+
+typedef __packed struct 
+{ 
+	uint8_t operate_type;  
+	uint8_t layer;  
+} ext_client_custom_graphic_delete_t;
+
+typedef __packed struct 
+{  
+	uint8_t graphic_name[3];
+	uint32_t operate_tpye:3;
+	uint32_t graphic_tpye:3;
+	uint32_t layer:4;
+	uint32_t color:4;
+	uint32_t start_angle:9; 
+	uint32_t end_angle:9; 
+	uint32_t width:10;  
+	uint32_t start_x:11;  
+	uint32_t start_y:11;  
+	uint32_t radius:10;  
+	uint32_t end_x:11;  
+	uint32_t end_y:11;  
+} graphic_data_struct_t; 
+
+typedef __packed struct 
+{   
+	graphic_data_struct_t  grapic_data_struct; 
+} ext_client_custom_graphic_single_t;
+ 
+typedef __packed struct 
+{ 
+	graphic_data_struct_t  grapic_data_struct[2]; 
+} ext_client_custom_graphic_double_t; 
+
+typedef __packed struct 
+{ 
+	graphic_data_struct_t  grapic_data_struct[5];
+} ext_client_custom_graphic_five_t; 
+
+typedef __packed struct 
+{ 
+	graphic_data_struct_t  grapic_data_struct[7]; 
+} ext_client_custom_graphic_seven_t; 
+
+typedef __packed struct 
+{
+	graphic_data_struct_t  grapic_data_struct;
+	uint8_t data[30]; 
+} ext_client_custom_character_t; 
+
+typedef __packed struct
+{
+	std_frame_header_t						FrameHeader;	// 帧头
+	uint16_t 								CmdId;			// 命令码
+	ext_student_interactive_header_data_t	DataFrameHeader;// 数据段头结构
+	ext_client_custom_graphic_seven_t		ClientData;		// 数据
+	uint16_t								FrameTail;		// 帧尾
+} Judge_Client_Data_t;
+
+typedef __packed struct
+{
+	std_frame_header_t						FrameHeader;	// 帧头
+	uint16_t 								CmdId;			// 命令码
+	ext_student_interactive_header_data_t	DataFrameHeader;// 数据段头结构
+	robot_interactive_data_t				InteractData;	// 数据
+	uint16_t								FrameTail;		// 帧尾	
+} Judge_Interact_Data_t;
 
 typedef struct 
 {
@@ -667,6 +713,7 @@ typedef struct
 	uint16_t cmd_id;		// 命令码(调试时使用)
 	uint16_t err_cnt;		// 错帧数(调试时使用)
 	bool	 data_valid;	// 数据有效性
+	uint16_t self_client_id;// 发送者机器人对应的客户端ID
 	bool	 hurt_data_update;	// 伤害数据更新
 	bool	dart_data_update;	// 飞镖数据更新
 	bool	supply_data_update;	// 补给站数据更新
@@ -692,6 +739,7 @@ typedef struct
 	ext_shoot_data_t				ShootData;					// 0x0207
 	ext_bullet_remaining_t			BulletRemaining;			// 0x0208	
 	ext_rfid_status_t				RfidStatus;					// 0x0209
+	
 }Judge_Info_t;
 
 /*----------------------------------------------------------------------------*/

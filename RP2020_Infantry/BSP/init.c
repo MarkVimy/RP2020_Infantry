@@ -14,9 +14,7 @@ static void my_hardware_init(void)
 	LASER_Init();	// 激光初始化
 	REMOTE_Init();	// 遥控通信USART2初始化
 	USART3_Init();	// 超声波通信USART3初始化
-	
-	//ULTRA_Config();
-		
+	RNG_Init();		// 随机数发生器初始化
 	UART4_Init();	// 视觉通信UART4初始化
 	UART5_Init();	// 裁判系统UART5初始化
 	CAN1_Init();	// CAN1初始化

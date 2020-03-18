@@ -501,6 +501,7 @@ typedef enum {
 /* Private variables ---------------------------------------------------------*/
 	
 /* ## Global variables ## ----------------------------------------------------*/
+/* 裁判系统本地信息 */
 Judge_Info_t Judge = 
 {
 	.frame_length = 0,
@@ -509,6 +510,18 @@ Judge_Info_t Judge =
 	.data_valid = false,
 	.hurt_data_update = false,
 };	// 方便调试的时候用
+
+/* 裁判系统客户端信息 */
+Judge_Client_Data_t Judge_Client =
+{
+	.FrameHeader.sof = 0xA5
+};
+
+/* 裁判系统机器人交互信息 */
+Judge_Interact_Data_t Judge_Interact = 
+{
+	.FrameHeader.sof = 0xA5
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -845,7 +858,145 @@ void JUDGE_ShootNumCount(void)
 }
 
 /* #交互层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/* 
+	机器人 ID：					客户端 ID：
+	1，英雄(红)；				0x0101 为英雄操作手客户端( 红) ；
+	2，工程(红)；				0x0102 ，工程操作手客户端 ((红 )；
+	3/4/5，步兵(红)；			0x0103/0x0104/0x0105，步兵操作手客户端(红)；
+	6，空中(红)；				0x0106，空中操作手客户端((红)； 
+	7，哨兵(红)；
 
+	101，英雄(蓝)；				0x0165，英雄操作手客户端(蓝)；
+	102，工程(蓝)；				0x0166，工程操作手客户端(蓝)；
+	103/104/105，步兵(蓝)；		0x0167/0x0168/0x0169，步兵操作手客户端(蓝)；
+	106，空中(蓝)；				0x016A，空中操作手客户端(蓝)。 
+	107，哨兵(蓝)；
+*/
+void JUDGE_DetermineClientId(void)
+{
+	Color_t color;
+	
+	color = JUDGE_eGeyMyColor();
+	if(color == RED) {
+		Judge.self_client_id = 0x0100 + Judge.GameRobotStatus.robot_id;
+	} 
+	else if(color == BLUE) {
+		Judge.self_client_id = 0x0164 + Judge.GameRobotStatus.robot_id;
+	}
+}
+
+/**
+ *	@brief	上传自定义数据至客户端界面
+ */
+#define CLIENT_FRAME_LEN	(15+105)
+static uint8_t txClientBuf[CLIENT_FRAME_LEN];
+void JUDGE_SendToClient(void)
+{
+	uint8_t frame_length;
+	
+	JUDGE_DetermineClientId();
+	
+	// 帧头数据填充
+	Judge_Client.FrameHeader.sof = 0xA5;
+	Judge_Client.FrameHeader.data_length = sizeof(Judge_Client.DataFrameHeader) + sizeof(Judge_Client.ClientData);
+	Judge_Client.FrameHeader.seq = 0;
+
+	memcpy(txClientBuf, &Judge_Client.FrameHeader, sizeof(Judge_Client.FrameHeader));
+	// 写入帧头CRC8校验码
+	Append_CRC8_Check_Sum(txClientBuf, sizeof(Judge_Client.FrameHeader));
+	
+	// 命令码
+	Judge_Client.CmdId = ID_COMMUNICATION;
+	
+	// 发送7个图形
+	Judge_Client.DataFrameHeader.data_cmd_id = 0x0104;
+	
+	// 发送者ID
+	Judge_Client.DataFrameHeader.send_ID = Judge.GameRobotStatus.robot_id;
+	// 发送者客户端ID
+	Judge_Client.DataFrameHeader.receiver_ID = Judge.self_client_id;
+	
+	/*----数据段内容----*/
+	//...
+	
+	// 数据填充
+	memcpy(	
+			txClientBuf + CMD_ID, 
+			(uint8_t*)&Judge_Client.CmdId, 
+			(sizeof(Judge_Client.CmdId)+ sizeof(Judge_Client.DataFrameHeader)+ sizeof(Judge_Client.ClientData))
+		  );			
+	
+	frame_length = sizeof(Judge_Client);
+	//写入数据段CRC16校验码		
+	Append_CRC16_Check_Sum(txClientBuf, frame_length);	
+
+	for(uint8_t i = 0; i < frame_length; i++) {
+		UART5_SendChar(txClientBuf[i]);
+	}
+	
+	/* 发送数据包清零 */
+	memset(txClientBuf, 0, CLIENT_FRAME_LEN);	
+}
+
+/**
+ *	@brief	上传自定义数据至队友
+ */
+#define INTERACT_FRAME_LEN	(15+INTERACT_DATA_LEN)
+static uint8_t txInteractBuf[INTERACT_FRAME_LEN];
+void JUDGE_SendToTeammate(uint8_t teammate_id)
+{
+	uint8_t frame_length;
+
+	// 帧头数据填充
+	Judge_Interact.FrameHeader.sof = 0xA5;
+	Judge_Interact.FrameHeader.data_length = sizeof(Judge_Interact.DataFrameHeader) + sizeof(Judge_Interact.InteractData);
+	Judge_Interact.FrameHeader.seq = 0;	
+	
+	memcpy(txInteractBuf, &Judge_Interact.FrameHeader, sizeof(Judge_Interact.FrameHeader));
+	// 写入帧头CRC8校验码
+	Append_CRC8_Check_Sum(txInteractBuf, sizeof(Judge_Interact.FrameHeader));
+	
+	// 命令码
+	Judge_Interact.CmdId = ID_COMMUNICATION;
+	
+	// 自定义命令码
+	Judge_Interact.DataFrameHeader.data_cmd_id = 0x0200;	// 在0x0200-0x02ff之间选择
+	
+	// 发送者ID
+	Judge_Interact.DataFrameHeader.send_ID = Judge.GameRobotStatus.robot_id;
+	// 接收者ID
+	Judge_Interact.DataFrameHeader.receiver_ID = teammate_id;
+	
+	/*----数据段内容----*/
+	//...
+	
+	// 数据填充
+	memcpy(	
+			txClientBuf + CMD_ID, 
+			(uint8_t*)&Judge_Interact.CmdId, 
+			(sizeof(Judge_Interact.CmdId)+ sizeof(Judge_Interact.DataFrameHeader)+ sizeof(Judge_Interact.InteractData))
+		  );			
+	
+	frame_length = sizeof(Judge_Interact);
+	// 写入数据段CRC16校验码		
+	Append_CRC16_Check_Sum(txInteractBuf, frame_length);	
+
+	for(uint8_t i = 0; i < frame_length; i++) {
+		UART5_SendChar(txInteractBuf[i]);
+	}
+
+	/* 发送数据包清零 */
+	memset(txInteractBuf, 0, INTERACT_FRAME_LEN);	
+}
+
+/**
+ *	@brief	接收机器人间的通信数据
+ */
+void JUDGE_ReadFromCom()
+{
+	
+}
+	
 #endif	// Judge Version --20
 /*----------------------------------------------------------------------------*/
 /*-----------------------------↑↑20裁判系统↑↑------------------------------*/
