@@ -16,6 +16,7 @@
 #include "imu.h"
 
 #include "mpu6050.h"
+#include "mpu6500.h"
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
 #include "delay.h"
@@ -40,7 +41,8 @@ static void IMU_CalcAvrOffset(void)
 	}
 	for(i = 0; i < 250; i++) {
 		//delay_us(100);
-		MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
+		//MPU_Get_Gyroscope(&Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
+		MPU6500_GetGyroScope(&Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
 		Mpu_Info.ratePitchOffset += Mpu_Info.ratePitch;
 		Mpu_Info.rateYawOffset   += Mpu_Info.rateYaw;
 	}
@@ -64,7 +66,8 @@ void IMU_Init(void)
 	ulCurrentTime = millis();
 	
 	//祖传MPU初始化
-	MPU_Init();
+	//MPU_Init();
+	MPU6500_Init();
 	while (mpu_dmp_init( )) 
 	{
 		ulCurrentTime = millis();
@@ -100,7 +103,9 @@ void IMU_Init(void)
  */
 void IMU_Task(void)
 {
-	/* 读取MPU6050传感器数据 */
+//	/* 读取MPU6050传感器数据 */
+//	mpu_dmp_get_data( &Mpu_Info.roll, &Mpu_Info.pitch, &Mpu_Info.yaw);
+//	MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);		
 	mpu_dmp_get_data( &Mpu_Info.roll, &Mpu_Info.pitch, &Mpu_Info.yaw);
-	MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);		
+	MPU6500_GetGyroScope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
 }

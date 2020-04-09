@@ -388,10 +388,10 @@ bool REMOTE_IsRcDataValid(RC_Ctl_t *remote)
  */
 bool REMOTE_IsRcChannelReset(RC_Ctl_t *remote)
 {
-	if(  (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch0) == 0) && 
-		 (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch1) == 0) && 
-		 (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch2) == 0) && 
-		 (myDeathZoom(RC_CH_VALUE_OFFSET, 10, remote->rc.ch3) == 0)   )	
+	if(  (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch0) == 0) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch1) == 0) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch2) == 0) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch3) == 0)   )	
 	{
 		return true;
 	}
@@ -403,7 +403,7 @@ bool REMOTE_IsRcChannelReset(RC_Ctl_t *remote)
  *	@note	防止出错
  */
 static int8_t  prev_sw2 = RC_SW_MID;
-static uint8_t change_pid_mode = false;
+static uint8_t gyro2mech_pid_mode = false;
 
 static uint8_t MouseLockFlag_R = false;
 static uint8_t RcLockFlag_Sw1 = false;
@@ -414,7 +414,7 @@ void REMOTE_RcUpdateInfo(System_t *sys, RC_Ctl_t *remote)
 	if(Flag.Remote.RcLost || Flag.Remote.RcErr)
 	{
 		prev_sw2 = RC_SW_MID;	
-		change_pid_mode = false;
+		gyro2mech_pid_mode = false;
 		
 		MouseLockFlag_R = false;
 		RcLockFlag_Sw1 = false;
@@ -494,6 +494,7 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 	
 	if(sw2 == RC_SW_UP) 
 	{
+		gyro2mech_pid_mode = false;
 		/* 遥控机械模式 -> 键盘模式 */
 		if(prev_sw2 == RC_SW_MID) 
 		{	
@@ -508,17 +509,16 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 		// 遥控控制默认系统为常规行为
 		sys->Action = SYS_ACT_NORMAL;
 		
-		//Gimbal.State.FLAG_topGyroOpen = false;
 		/* 键盘模式 -> 遥控机械模式 */
 		if(prev_sw2 == RC_SW_UP) 
 		{
 			/* 底盘还未回来(等待回来) */
-			if(abs(Gimbal_PID[MECH][YAW_205].Angle.erro) > 10) {
-				change_pid_mode = true;
+			if(CHASSIS_GetMiddleAngleOffset() > 10) {
+				gyro2mech_pid_mode = true;
 			} 
 			/* 底盘已回来(可以切换) */
 			else {
-				change_pid_mode	= false;
+				gyro2mech_pid_mode	= false;
 				sys->RemoteMode = RC;
 				sys->PidMode = MECH;
 			}
@@ -527,25 +527,26 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 		else if(prev_sw2 == RC_SW_DOWN) 
 		{	
 			/* 底盘还未回来(等待回来) */
-			if(abs(Gimbal_PID[MECH][YAW_205].Angle.erro) > 10) {
-				change_pid_mode = true;
+			if(CHASSIS_GetMiddleAngleOffset() > 10) {
+				gyro2mech_pid_mode = true;
 			} 
 			/* 底盘已回来(可以切换) */
 			else {	
-				change_pid_mode	= false;
+				gyro2mech_pid_mode	= false;
 				sys->RemoteMode = RC;
 				sys->PidMode = MECH;
 			}
 		}
 		/* 等待底盘回来 */
-		if(change_pid_mode == true && abs(Gimbal_PID[MECH][YAW_205].Angle.erro) <= 10) {
-			change_pid_mode = false;
+		if(gyro2mech_pid_mode == true && CHASSIS_GetMiddleAngleOffset() <= 10) {
+			gyro2mech_pid_mode = false;
 			sys->RemoteMode = RC;
 			sys->PidMode = MECH;
 		}
 	} 
 	else if(sw2 == RC_SW_DOWN) 
 	{
+		gyro2mech_pid_mode = false;
 		/* 遥控控制默认系统为常规行为 */
 		sys->Action = SYS_ACT_NORMAL;
 
@@ -586,7 +587,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 		}
 		/* 松开右键 */
 		else {
-			/* 自瞄 -> 常规 */
+			/* 退出自瞄模式判断(自瞄 -> 常规)*/
 			if(sys->Action == SYS_ACT_AUTO) {
 				sys->Action = SYS_ACT_NORMAL;
 				sys->PidMode = GYRO;
@@ -606,7 +607,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 		} 
 		/* Sw1 其他档 */
 		else {
-			/* 自瞄 -> 常规 */
+			/* 退出自瞄模式判断(自瞄 -> 常规)*/
 			if(sys->Action == SYS_ACT_AUTO) {
 				sys->Action = SYS_ACT_NORMAL;
 				sys->PidMode = GYRO;
@@ -621,20 +622,20 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 		/* 强制设置 常规行为+机械模式 */
 		if(KeyLockFlag_Ctrl == false) {
 			sys->Action = SYS_ACT_NORMAL;
-			if(abs(Gimbal_PID[MECH][YAW_205].Angle.erro) > 10) {
-				change_pid_mode = true;
+			if(CHASSIS_GetMiddleAngleOffset() > 10) {
+				gyro2mech_pid_mode = true;
 			} else {
-				change_pid_mode = false;
+				gyro2mech_pid_mode = false;
 				sys->PidMode = MECH;
 			}
 		}
 		
 		/* 等待底盘回来 */
 		if(sys->Action == SYS_ACT_NORMAL
-			&& change_pid_mode == true
-			&& abs(Gimbal_PID[MECH][YAW_205].Angle.erro) < 10) 
+			&& gyro2mech_pid_mode == true
+			&& CHASSIS_GetMiddleAngleOffset() <= 10) 
 		{
-			change_pid_mode = false;
+			gyro2mech_pid_mode = false;
 			sys->PidMode = MECH;
 		}
 		
@@ -680,7 +681,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 		/* 常规机械 -> 常规陀螺仪 */
 		if(KeyLockFlag_Ctrl == true && sys->Action == SYS_ACT_NORMAL) {
 			sys->PidMode = GYRO;
-			change_pid_mode = false;
+			gyro2mech_pid_mode = false;
 		}
 		KeyLockFlag_Ctrl = false;	// Ctrl键解锁
 	}	
@@ -733,11 +734,11 @@ void REMOTE_Ctrl(void)
 	REMOTE_RcLostProcess(&System);	
 	
 	/* 遥控失联 */
-	if(Flag.Remote.RcLost == 1) {	
+	if(Flag.Remote.RcLost == true) {	
 		REMOTE_RcLostReport(&System);
 	} 
 	/* 遥控错误 */
-	else if(Flag.Remote.RcErr == 1) {	
+	else if(Flag.Remote.RcErr == true) {	
 		REMOTE_RcErrReport(&System);
 	} 
 	/* 遥控正常 */

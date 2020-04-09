@@ -184,8 +184,8 @@ typedef enum {
 
 /* Infantry Branch Action Enum */
 typedef enum {
-	BCH_ACT_SMALL_BUFF = 0,
-	BCH_ACT_BIG_BUFF = 1,
+	BCH_ACT_SMALL_BUFF = 0,	// 打小符
+	BCH_ACT_BIG_BUFF = 1,	// 打大符
 	BCH_ACT_COUNT = 2,
 }Branch_Action_Names_t;
 

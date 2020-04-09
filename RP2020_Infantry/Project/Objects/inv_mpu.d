@@ -40,7 +40,7 @@
 .\objects\inv_mpu.o: ..\FreeRTOS\include\list.h
 .\objects\inv_mpu.o: ..\SYSTEM\my_include.h
 .\objects\inv_mpu.o: ..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.h
-.\objects\inv_mpu.o: ..\mpu6050\mpu6050.h
+.\objects\inv_mpu.o: ..\mpu6050\mpu6500.h
 .\objects\inv_mpu.o: ..\SYSTEM\delay.h
 .\objects\inv_mpu.o: ..\SYSTEM\usart.h
 .\objects\inv_mpu.o: ..\mpu6050\myiic.h

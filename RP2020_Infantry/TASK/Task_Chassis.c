@@ -910,7 +910,7 @@ Chassis_Logic_Names_t CHASSIS_GetLogic(void)
 /**	
  *	@breif	反馈底盘机械中值目标
  */
-float CHASSIS_GetMiddleAngle(void)
+int16_t CHASSIS_GetMiddleAngle(void)
 {
 	if(Chassis.Logic == CHAS_LOGIC_NORMAL) {
 		return GIMBAL_TOP_YAW_MID_ANGLE;
@@ -918,6 +918,14 @@ float CHASSIS_GetMiddleAngle(void)
 	else {
 		return GIMBAL_REVERT_YAW_MID_ANGLE;
 	}
+}
+
+/**	
+ *	@breif	反馈底盘机械中值目标
+ */
+int16_t CHASSIS_GetMiddleAngleOffset(void)
+{
+	return abs(CHASSIS_GetMiddleAngle() - Gimbal_PID[MECH][YAW_205].Angle.feedback);
 }
 
 /**

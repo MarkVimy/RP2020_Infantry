@@ -24,8 +24,8 @@
 #include <math.h>
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
-#include "mpu6050.h"
-//#include "mpu6500.h"
+//#include "mpu6050.h"
+#include "mpu6500.h"
 #include "delay.h"
 #include "usart.h"
 #include "myiic.h"
@@ -53,8 +53,8 @@
 //#include "msp430_clock.h"
 //#include "msp430_interrupt.h"
 
-#define i2c_write   MPU_Write_Len	//MPU6500_WriteReg
-#define i2c_read    MPU_Read_Len	//MPU6500_ReadReg
+#define i2c_write   MPU6500_WriteReg	//MPU_Write_Len
+#define i2c_read    MPU6500_ReadReg	//MPU_Read_Len
 #define delay_ms    delay_ms
 #define get_ms      mget_ms
 //static inline int reg_int_cb(struct int_param_s *int_param)

@@ -3,7 +3,7 @@
 /* ## Global variables ## ------------------------------------------------------*/
 Flag_t	Flag = {
 	/* Remote */
-	.Remote.RcLost = false,
+	.Remote.RcLost = true,	// 初始状态为遥控失联状态
 	.Remote.RcErr = false,
 	/* Chassis */
 	.Chassis.FLAG_angleTurnOk = 0,
@@ -23,7 +23,7 @@ Cnt_t	Cnt = {
 	.System.Err = 0,
 	.System.Reset = 2,	// # 注意这里的初始值要和BM_systemReset值的数量相同
 	/* Remote */
-	.Remote.RcLost = 0,
+	.Remote.RcLost = 20,	// 初始化为遥控失联状态
 	.Remote.RcLostRecover = 0,
 	/* Chassis */
 	.Chassis.CNT_angleTurnOk = 0,

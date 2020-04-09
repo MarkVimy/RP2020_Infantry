@@ -14,4 +14,6 @@ uint8_t MPU6500_Init(void);
 uint8_t MPU6500_WriteReg(uint8_t addr, uint8_t reg, uint8_t len, uint8_t *txBuf);
 uint8_t MPU6500_ReadReg(uint8_t addr, uint8_t reg, uint8_t len, uint8_t *rxBuf);
 
+uint8_t MPU6500_GetGyroScope(int16_t *gx, int16_t *gy, int16_t *gz);
+
 #endif
