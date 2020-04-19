@@ -37,7 +37,6 @@
 .\objects\imu.o: ..\FreeRTOS\include\task.h
 .\objects\imu.o: ..\FreeRTOS\include\list.h
 .\objects\imu.o: ..\SYSTEM\my_include.h
-.\objects\imu.o: ..\mpu6050\mpu6500.h
 .\objects\imu.o: ..\mpu6050\eMPL\inv_mpu.h
 .\objects\imu.o: ..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.h
 .\objects\imu.o: ..\SYSTEM\delay.h

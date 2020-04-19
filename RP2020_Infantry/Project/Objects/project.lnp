@@ -55,7 +55,7 @@
 ".\objects\myiic.o"
 ".\objects\inv_mpu.o"
 ".\objects\inv_mpu_dmp_motion_driver.o"
-".\objects\mpu6500.o"
+".\objects\mpu6050.o"
 ".\objects\temp.o"
 ".\objects\task_chassis.o"
 ".\objects\task_gimbal.o"

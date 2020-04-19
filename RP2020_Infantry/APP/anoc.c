@@ -104,3 +104,41 @@ void ANOC_SendToPc(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, i
 		USART1_SendChar(data_to_pc[i]);
 	}
 }
+
+
+void RP_SendToPc(float yaw, float pitch, float roll, int16_t rateYaw, int16_t ratePitch, int16_t rateRoll)
+{
+	uint8_t i;
+	uint16_t check_sum = 0;
+	uint8_t data_to_pc[23];
+	
+	data_to_pc[0] = 0xAA;
+	data_to_pc[1] = 0xAA;
+	data_to_pc[2] = 0x01;
+	data_to_pc[3] = 18;
+	
+	/* 以默认的小端模式发送数据 */
+	memcpy(&data_to_pc[4], (uint8_t*)&yaw, 4);
+	memcpy(&data_to_pc[8], (uint8_t*)&pitch, 4);
+	memcpy(&data_to_pc[12], (uint8_t*)&roll, 4);
+	memcpy(&data_to_pc[16], (uint8_t*)&rateYaw, 2);
+	memcpy(&data_to_pc[18], (uint8_t*)&ratePitch, 2);
+	memcpy(&data_to_pc[20], (uint8_t*)&rateRoll, 2);
+	
+//	以下操作会将数据转化成大端模式发送出去
+//	data_to_pc[16] = (rateYaw & 0xff00) >> 8;
+//	data_to_pc[17] = (rateYaw & 0xff);
+//	data_to_pc[18] = (ratePitch & 0xff00) >> 8;
+//	data_to_pc[19] = (ratePitch & 0xff);
+//	data_to_pc[20] = (rateRoll & 0xff00) >> 8;
+//	data_to_pc[21] = (rateRoll & 0xff);
+	
+	for(i = 0; i < 22; i++) {
+		check_sum += data_to_pc[i];
+	}
+	data_to_pc[22] = check_sum & 0xff;
+	
+	for(i = 0; i < 23; i++) {
+		USART1_SendChar(data_to_pc[i]);
+	}
+}
