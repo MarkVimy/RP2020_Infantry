@@ -33,8 +33,8 @@
 /* 19步兵车参数 */
 #define RADIUS     76      //麦轮半径
 #define PERIMETER  478     //麦轮周长
-#define WHEELTRACK 360//398     //左右轮距
-#define WHEELBASE  300     //前后轴距
+#define WHEELTRACK 375     //左右轮距
+#define WHEELBASE  365     //前后轴距
 #define GIMBAL_X_OFFSET 0//75  //云台相对底盘中心的前后偏移量
 #define GIMBAL_Y_OFFSET 0 //云台相对底盘中心的左右偏移量
 #define CHASSIS_DECELE_RATIO (1.0f/19.0f)  //电机减数比
@@ -48,8 +48,11 @@
 #define SPIN_MAX_SZUPUP			9000
 
 /* 不同模式下底盘斜坡 */
-#define TIME_INC_NORMAL	2
-#define TIME_DEC_NORMAL	500
+//#define TIME_INC_NORMAL	2
+//#define TIME_DEC_NORMAL	50
+uint16_t TIME_INC_NORMAL = 2;
+uint16_t TIME_DEC_NORMAL = 50;
+
 
 #define TIME_INC_SZUPUP	3
 
@@ -70,6 +73,10 @@ float Chas_Top_Spin_scale = 0.8;	// 小陀螺旋转所能分配的速度比例
 float Chas_Top_Move_scale = 0.2;	// 小陀螺行进所能分配的速度比例
 
 /* 斜坡 */
+int16_t time_fron_y = 0;
+int16_t time_back_y = 0;
+int16_t time_left_x = 0;
+int16_t time_righ_x = 0;
 uint16_t Time_Inc_Normal;			// 正常斜坡增加量
 uint16_t Time_Inc_Saltation = 1;	// 前后方向突变斜坡增加量
 
@@ -112,6 +119,7 @@ float speed_target_203;
 float speed_feedback_203;
 float angle_target_203;
 float angle_feedback_203;
+float js_201_out;
 
 /**
  *	@brief	底盘PID
@@ -131,6 +139,7 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
+		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
 		.Angle.kp = 0,
 		.Angle.ki = 0,
@@ -159,6 +168,7 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
+		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
 		.Angle.kp = 0,
 		.Angle.ki = 0,
@@ -187,6 +197,7 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
+		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
 		.Angle.kp = 1.172,		// 1.15					1.16				1.172		(这套参数适合大角度转动)
 		.Angle.ki = 0.7,			// 1						0.82					0.7
@@ -215,6 +226,7 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
+		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
 		.Angle.kp = 0,
 		.Angle.ki = 0,
@@ -258,21 +270,28 @@ Chassis_Z_PID_t Chassis_Z_PID = {
 /**
  *	@brief	底盘定位PID
  */
-PID_Object_t Chas_Locate_PID[2] = 
+PID_Object_t Chas_Locate_PID[ALL] = 
 {
 	{	// X
-		.kp = 0,
+		.kp = 60,
 		.ki = 0,
 		.kd = 0,
 		.integrate_max = 0,
 		.out_max = 3000,
 	},
 	{	// Y
-		.kp = 0,
+		.kp = 40,
 		.ki = 0,
 		.kd = 0,
 		.integrate_max = 0,
-		.out_max = 3000
+		.out_max = 3000,
+	},
+	{	// Z
+		.kp = 50,
+		.ki = 0,
+		.kd = 0,
+		.integrate_max = 0,
+		.out_max = 3000,
 	}
 };
 
@@ -651,6 +670,7 @@ void CHASSIS_Speed_PidCalc(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
 	/* test */
 	speed_target_203 = pid[LEFT_BACK_203].Speed.target;
 	speed_feedback_203 = pid[LEFT_BACK_203].Speed.feedback;
+	js_201_out = pid[LEFT_FRON_201].Out;
 }
 
 ///**
@@ -784,7 +804,7 @@ float CHASSIS_Z_Angle_PidCalc(PID_Object_t *pid, float kp)
 	/* 底盘处于普通跟随模式 */
 	if(CHASSIS_IfTopGyroOpen() == false) {
 		// 死区控制算法
-		if(abs(pid->erro) < 15) {
+		if(abs(pid->erro) < CHASSIS_MIDDLE_ANGLE_DEATH) {
 			pid->erro = 0;
 		}
 	}
@@ -850,10 +870,9 @@ void CHASSIS_Angle_ClearSum(Chassis_PID_t *pid)
 	g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum = 0;
 
 	/* 底盘角度环PID反馈清零 */
-	pid[LEFT_FRON_201].Angle.feedback = 0;
-	pid[RIGH_FRON_202].Angle.feedback = 0;
-	pid[LEFT_BACK_203].Angle.feedback = 0;
-	pid[RIGH_BACK_204].Angle.feedback = 0;	
+	Chas_Locate_PID[ X ].feedback = 0;
+	Chas_Locate_PID[ Y ].feedback = 0;
+	Chas_Locate_PID[ Z ].feedback = 0;
 }
 
 /**
@@ -926,6 +945,14 @@ int16_t CHASSIS_GetMiddleAngle(void)
 int16_t CHASSIS_GetMiddleAngleOffset(void)
 {
 	return abs(CHASSIS_GetMiddleAngle() - Gimbal_PID[MECH][YAW_205].Angle.feedback);
+}
+
+/**
+ *	@brief	底盘是否已归中
+ */
+bool CHASSIS_IfBackToMiddleAngle(void)
+{
+	return (CHASSIS_GetMiddleAngleOffset() < (CHASSIS_MIDDLE_ANGLE_DEATH+10))? true: false;	
 }
 
 /**
@@ -1064,6 +1091,8 @@ void CHASSIS_GetSysInfo(System_t *sys, Chassis_Info_t *chas)
 			{
 				// 刚进入自动对位模式
 				if(chas->Mode != CHAS_MODE_RELOAD_BULLET) {
+					// 启动对位标志位
+					Flag.Chassis.ReloadBulletStart = true;
 				}
 				chas->Mode = CHAS_MODE_RELOAD_BULLET;
 			}break;
@@ -1135,8 +1164,74 @@ void CHASSIS_GetTopGyroInfo(void)
 	
 	if(CHASSIS_IfTopGyroOpen() == true) {
 		// -7.5sin(2pi*t/T)+22.5
-		Chas_Top_Gyro_Step = -7.5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 22.5;	// 正弦小陀螺
+//		Chas_Top_Gyro_Step = -7.5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 22.5;	// 正弦小陀螺
+		Chas_Top_Gyro_Step = -5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 10;	// 正弦小陀螺
 	}
+}
+
+/**
+ *	@brief	获取底盘姿态
+ */
+float js_pos_y = 0;
+float js_pos_x = 0;
+float js_rad_z = 0;
+float js_agl_z = 0;
+float js_v_x = 0;
+float js_v_y = 0;
+float js_w_z = 0;
+#define MOTOR_RPM_RATIO		(PERIMETER/(19.f*4*8192))
+#define ECD_RATIO			(PERIMETER/(19.f*4*60))
+#define GRAVITY_CENTER_X 	0
+#define GRAVITY_CENTER_Y 	-50
+#define R					((WHEELTRACK + WHEELBASE)/2)
+#define R1 					(R + GRAVITY_CENTER_X - GRAVITY_CENTER_Y)
+#define R2					(R - GRAVITY_CENTER_X - GRAVITY_CENTER_Y)
+#define R3					(R + GRAVITY_CENTER_X + GRAVITY_CENTER_Y)
+#define R4					(R - GRAVITY_CENTER_X + GRAVITY_CENTER_Y)
+void CHASSIS_GetSelfAttitude(void)
+{
+	static uint8_t startup = false;
+	if( !startup ) {
+		startup = true;
+		g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum = 0;
+		g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum = 0;
+		g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum = 0;
+		g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum = 0;
+	}
+	
+	js_v_y = ECD_RATIO*(+g_Chassis_Motor_Info[LEFT_FRON_201].speed
+						-g_Chassis_Motor_Info[RIGH_FRON_202].speed
+						+g_Chassis_Motor_Info[LEFT_BACK_203].speed
+						-g_Chassis_Motor_Info[RIGH_BACK_204].speed);
+	
+	js_v_x = -ECD_RATIO*(-g_Chassis_Motor_Info[LEFT_FRON_201].speed
+						 -g_Chassis_Motor_Info[RIGH_FRON_202].speed
+						 +g_Chassis_Motor_Info[LEFT_BACK_203].speed
+						 +g_Chassis_Motor_Info[RIGH_BACK_204].speed);
+	
+	js_w_z = ECD_RATIO*(+g_Chassis_Motor_Info[LEFT_FRON_201].speed/R1
+						+g_Chassis_Motor_Info[RIGH_FRON_202].speed/R2
+						+g_Chassis_Motor_Info[LEFT_BACK_203].speed/R3
+						+g_Chassis_Motor_Info[RIGH_BACK_204].speed/R4);
+	js_w_z = RADIAN_COEF * js_w_z;
+	
+	js_pos_y = MOTOR_RPM_RATIO*(+g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum
+								-g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum
+								+g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum
+								-g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum);
+	js_pos_x = -MOTOR_RPM_RATIO*(-g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum
+								 -g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum
+								 +g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum
+								 +g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum);
+	js_rad_z = MOTOR_RPM_RATIO*(+g_Chassis_Motor_Info[LEFT_FRON_201].angle_sum/R1
+								+g_Chassis_Motor_Info[RIGH_FRON_202].angle_sum/R2
+								+g_Chassis_Motor_Info[LEFT_BACK_203].angle_sum/R3
+								+g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum/R4);
+	js_agl_z = RADIAN_COEF * js_rad_z;	// 弧度转换成角度
+	// 记录反馈值
+	Chas_Locate_PID[ X ].feedback = js_pos_x;
+	Chas_Locate_PID[ Y ].feedback = js_pos_y;
+	Chas_Locate_PID[ Z ].feedback = js_agl_z;
 }
 
 /**
@@ -1155,6 +1250,10 @@ void CHASSIS_GetRemoteInfo(System_t *sys, RC_Ctl_t *remote, Chassis_Info_t *chas
 		if(sys->RemoteMode == RC) {
 			KeyLockFlag_F = false;
 			KeyLockFlag_C = false;
+			time_fron_y = 0;
+			time_back_y = 0;
+			time_left_x = 0;
+			time_righ_x = 0;			
 		}
 		else if(sys->RemoteMode == KEY) {
 			RcLockFlag_Wheel = false;
@@ -1169,6 +1268,11 @@ void CHASSIS_GetRemoteInfo(System_t *sys, RC_Ctl_t *remote, Chassis_Info_t *chas
 		KeyLockFlag_C = false;
 		RcLockFlag_Wheel = false;
 		RcUnlockFlag_Wheel = false;
+		// 按键累计清零
+		time_fron_y = 0;
+		time_back_y = 0;
+		time_left_x = 0;
+		time_righ_x = 0;
 	}	
 }
 
@@ -1396,49 +1500,52 @@ void REMOTE_SetTopGyro(void)
  *	@note	长按返回最大系数1
  *			长时未按返回最小系数0
  */
-#define KEY_RAMP_SCALE	500
+#define KEY_RAMP_SCALE	500.f
+uint8_t key_ramp_way = 0;
 float KEY_RampChasSpeed(int8_t key_state, int16_t *time, uint16_t inc_ramp_step, uint16_t dec_ramp_step)
 {
-	#if 0
 	float fac;
-
-	if(key_state == 1) {	// 按键按下
-		if(fac < 1) {
-			*time += inc_ramp_step;
-		}
-	} else {	// 按键松开
-		if(fac > 0) {
-			*time -= dec_ramp_step;
-			if(*time < 0) {
-				*time = 0;
+	if(key_ramp_way == 0) {
+		fac = 0.15 * sqrt( 0.15 * (*time) );	// time累加到296.3斜坡就完成
+		if(key_state == 1) {	// 按键按下
+			if(fac < 1) {
+				*time += inc_ramp_step;
+			}
+		} else {	// 按键松开
+			if(fac > 0) {
+				*time -= dec_ramp_step;
+				if(*time < 0) {
+					*time = 0;
+				}
 			}
 		}
-	}
 
-	fac = 0.15 * sqrt( 0.15 * (*time) );	// time累加到296.3斜坡就完成
-	fac = constrain(fac, 0, 1);
-	return fac;
-	
-	#else
-	float fac;
-	
-	if(key_state == 1) {
-		if(fac < 1) {
-			*time += inc_ramp_step;
-		}
-	} else {
-		if(fac > 0) {
-			*time -= dec_ramp_step;
-			if(*time < 0) {
-				*time = 0;
+		fac = constrain(fac, 0, 1);
+		return fac;
+	}
+	else if(key_ramp_way == 1) {
+		fac = (*time)*(*time) / (KEY_RAMP_SCALE*KEY_RAMP_SCALE);	
+		
+		if(key_state == 1) {
+			if(fac < 1) {
+				*time += inc_ramp_step;
+				if(*time > KEY_RAMP_SCALE) {
+					*time = KEY_RAMP_SCALE;
+				}
+			}
+		} else {
+			if(fac > 0) {
+				*time -= dec_ramp_step;
+				if(*time < 0) {
+					*time = 0;
+				}
 			}
 		}
-	}
 
-	fac = (*time)*(*time) / (KEY_RAMP_SCALE*KEY_RAMP_SCALE);
-	fac = constrain(fac, 0, 1);
-	return fac;
-	#endif
+		fac = constrain(fac, 0, 1);
+		return fac;
+	}
+	return 0;
 }
 
 /**
@@ -1509,7 +1616,6 @@ void KEY_SetChasSpinSpeed(int16_t sSpinMax)
  */
 void KEY_SetChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 {
-	static int16_t time_fron_y, time_back_y, time_left_x, time_righ_x;
 	float target_speed_x, target_speed_y;
 	float k_rc_z;
 	
@@ -1531,23 +1637,23 @@ void KEY_SetChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 	
 	if(Chassis.Mode == CHAS_MODE_NORMAL) {
 		
-		/* 前后方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
-		if(abs(Chas_Target_Speed[ Y ]) < (Chas_Standard_Move_Max/2.5f)) {
-			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
-			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
-		} else {
+//		/* 前后方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
+//		if(abs(Chas_Target_Speed[ Y ]) < (Chas_Standard_Move_Max/2.5f)) {
+//			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
+//			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
+//		} else {
 			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Normal, TIME_DEC_NORMAL);
 			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Normal, TIME_DEC_NORMAL);
-		}
+//		}
 		
 		/* 左右方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
-		if(abs(Chas_Target_Speed[ X ]) < (Chas_Standard_Move_Max/2.5f)) {
-			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
-			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
-		} else {
+//		if(abs(Chas_Target_Speed[ X ]) < (Chas_Standard_Move_Max/2.5f)) {
+//			Chas_Slope_Move_Left = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_A, &time_left_x, Time_Inc_Saltation, TIME_DEC_NORMAL);
+//			Chas_Slope_Move_Righ = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_D, &time_righ_x, Time_Inc_Saltation, TIME_DEC_NORMAL);
+//		} else {
 			Chas_Slope_Move_Left = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_A, &time_left_x, Time_Inc_Normal, TIME_DEC_NORMAL);
 			Chas_Slope_Move_Righ = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_D, &time_righ_x, Time_Inc_Normal, TIME_DEC_NORMAL);
-		}
+//		}
 		
 	} else {
 		/* 全向斜坡量计算 */
@@ -1880,7 +1986,7 @@ void CHASSIS_SzuPupCtrl(void)
  *	@brief	自动对位控制
  *	@note	x方向距离受大小补给站影响
  */
-#define R_B_CASE	5
+#define R_B_CASE	6
 
 #define RELOAD_BULLET_DIS_Y				200	// 单位mm
 #define RELOAD_BULLET_DIS_JUDGE_CNT		3	// 判断计数
@@ -2232,6 +2338,23 @@ void CHASSIS_ReloadBulletCtrl(void)
 		/* 全向分配算法 */
 		CHASSIS_OmniSpeedCalc();		
 	
+	#elif (R_B_CASE == 6)
+		if(Flag.Chassis.ReloadBulletStart == true) {
+			// 清除触发标志位
+			Flag.Chassis.ReloadBulletStart = false;
+			// 电机累加机械角度清零
+			CHASSIS_Angle_ClearSum(Chassis_PID);
+			// 设置目标位移
+			Chas_Locate_PID[ X ].target = -600;
+			Chas_Locate_PID[ Y ].target = 0;
+			Chas_Locate_PID[ Z ].target = 0;
+		}
+		// pid计算
+		Chas_Target_Speed[ X ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ X ]);
+		Chas_Target_Speed[ Y ] = 0;//CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
+		Chas_Target_Speed[ Z ] = 0;//CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Z ]);
+		// 全向分配算法
+		CHASSIS_OmniSpeedCalc();
 	#endif
 }
 
@@ -2249,6 +2372,8 @@ void CHASSIS_GetInfo(void)
 	CHASSIS_GetImuInfo(&Chassis_Z_PID);	
 	// 获取小陀螺信息
 	CHASSIS_GetTopGyroInfo();
+	// 获取底盘姿态
+	CHASSIS_GetSelfAttitude();
 	// 获取遥控信息
 	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
 }
@@ -2264,7 +2389,7 @@ void CHASSIS_PidCtrlTask(void)
 	CHASSIS_Speed_PidCalc(Chassis_PID, LEFT_BACK_203); 	// 左后 - 速度环
 	CHASSIS_Speed_PidCalc(Chassis_PID, RIGH_BACK_204); 	// 右后 - 速度环
 	/* 功率限制 */
-	//CHASSIS_PowerLimit(&Chassis_Power, Chassis_PID, &Judge);
+//	CHASSIS_PowerLimit(&Chassis, Chassis_PID, &Judge);
 	/* 最终输出 */
 	CHASSIS_PidOut(Chassis_PID);	
 }
@@ -2308,11 +2433,10 @@ void CHASSIS_KeyCtrlTask(void)
  */
 void CHASSIS_SelfProtect(void)
 {
-//	CHASSIS_Stop(Chassis_PID);
-//	CHASSIS_PID_ParamsInit(Chassis_PID, CHASSIS_MOTOR_COUNT);
-//	CHASSIS_Z_PID_ParamsInit(&Chassis_Z_PID.Angle);	
-//	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
-	CHASSIS_ReloadBulletCtrl();
+	CHASSIS_Stop(Chassis_PID);
+	CHASSIS_PID_ParamsInit(Chassis_PID, CHASSIS_MOTOR_COUNT);
+	CHASSIS_Z_PID_ParamsInit(&Chassis_Z_PID.Angle);	
+	CHASSIS_GetRemoteInfo(&System, &Remote, &Chassis);
 }
 
 /**

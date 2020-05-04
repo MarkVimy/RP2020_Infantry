@@ -13,10 +13,12 @@
 #define CHASSIS_ANGLE_IOUT_MAX		3000	// 底盘电机位置环pid积分输出限幅
 #define CHASSIS_ANGLE_INTEGRATE_MAX	6000	// 底盘电机位置环pid积分限幅
 #define CHASSIS_MAX_SPEED			8000	// 底盘电机转子最大转速
-#define CHASSIS_PID_OUT_MAX			9000	// 底盘电机pid输出最大值(功率限制)
+#define CHASSIS_PID_OUT_MAX			6000	//9000	// 底盘电机pid输出最大值(功率限制)
 
 #define WARNING_REMAIN_POWER		60
 #define CHASSIS_MAX_CURRENT_LIMIT	36000	// 单个电机最大输出9000
+
+#define CHASSIS_MIDDLE_ANGLE_DEATH	15		// 底盘Z角度环死区
 
 /* Global TypeDef ------------------------------------------------------------*/
 typedef enum {
@@ -87,6 +89,14 @@ typedef struct {
 extern Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT];
 extern Chassis_Z_PID_t Chassis_Z_PID;
 extern Chassis_Info_t Chassis;
+
+extern float js_pos_y;
+extern float js_pos_x;
+extern float js_agl_z;
+extern float js_v_x;
+extern float js_v_y;
+extern float js_w_z;
+
 /* API functions Prototypes --------------------------------------------------*/
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void CHASSIS_UpdateMotorSpeed(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx);
@@ -110,6 +120,7 @@ Chassis_Mode_Names_t CHASSIS_GetMode(void);
 Chassis_Logic_Names_t CHASSIS_GetLogic(void);
 int16_t CHASSIS_GetMiddleAngle(void);
 int16_t CHASSIS_GetMiddleAngleOffset(void);
+bool CHASSIS_IfBackToMiddleAngle(void);
 bool CHASSIS_IfNormalMode(void);
 bool CHASSIS_IfTopGyroOpen(void);
 bool CHASSIS_IfTwistOpen(void);

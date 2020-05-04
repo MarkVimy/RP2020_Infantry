@@ -6,11 +6,11 @@
             <JLink>
                 <Options Connection="1" IsRTTSession="0" IsRTTWithTimeStamp="1" SamplingPeriod="100" SerialNo="0" JTAG_IRPre="-1" JTAG_DRPre="-1" IP="" TargetDevice="STM32F407VE" TargetInterface="SWD" InterfaceSpeed="4000" />
             </JLink>
-            <ElfFile Name="D:\2020RobotPiolts\程序代码\备份区\RP2020_InfantryV2.0(200219)\Project\Objects\project.axf" />
+            <ElfFile Name="C:\Users\MarkV\Desktop\myGit\RP2020_Infantry\RP2020_Infantry\Project\Objects\project.axf" />
             <DataFile Name="" />
             <RawFile Name="" />
             <Scope>
-                <Options TimeResolutionUs="1000000" />
+                <Options TimeResolutionUs="500000" />
             </Scope>
         </Configuration>
         <Windows>
@@ -19,16 +19,16 @@
         </Windows>
         <SelectedSymbols>
             <Symbol>
-                <Options Name="pitch" Address="0x20001478" Type="float" TypeID="1" Size="4" GraphColorRed="255" GraphColorGreen="215" GraphColorBlue="0" YMinSampled="0" YMaxSampled="21" YAvgSampled="20" Offset="4" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="20" MaxValue="40" File="..\SYSTEM\scheduler.c" Scope="0" DrawStyle="0" />
+                <Options Name="pitch" Address="0x200015D0" Type="float" TypeID="1" Size="4" GraphColorRed="255" GraphColorGreen="215" GraphColorBlue="0" YMinSampled="3" YMaxSampled="11" YAvgSampled="0" Offset="4" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="10" MaxValue="20" File="..\SYSTEM\scheduler.c" Scope="0" DrawStyle="0" />
             </Symbol>
             <Symbol>
-                <Options Name="yaw" Address="0x20001480" Type="float" TypeID="1" Size="4" GraphColorRed="0" GraphColorGreen="255" GraphColorBlue="0" YMinSampled="0" YMaxSampled="34" YAvgSampled="4" Offset="8" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="20" MaxValue="40" File="..\SYSTEM\scheduler.c" Scope="0" DrawStyle="0" />
+                <Options Name="yaw" Address="0x20000F04" Type="float" TypeID="1" Size="4" GraphColorRed="0" GraphColorGreen="255" GraphColorBlue="0" YMinSampled="-37" YMaxSampled="99" YAvgSampled="0" Offset="8" ShowInGraph="1" ACCoupling="0" YOffset="0" IsAutoConfig="0" YResolution="10" MaxValue="10" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
             </Symbol>
             <Symbol>
-                <Options Name="ratePitch" Address="0x20001484" Type="short" TypeID="11" Size="2" GraphColorRed="102" GraphColorGreen="102" GraphColorBlue="178" YMinSampled="-111" YMaxSampled="149" YAvgSampled="3" Offset="12" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="100" MaxValue="200" File="..\SYSTEM\scheduler.c" Scope="0" DrawStyle="0" />
+                <Options Name="ratePitch" Address="0x20000F0C" Type="float" TypeID="1" Size="4" GraphColorRed="102" GraphColorGreen="102" GraphColorBlue="178" YMinSampled="-1179" YMaxSampled="1801" YAvgSampled="0" Offset="12" ShowInGraph="0" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="5" MaxValue="10" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
             </Symbol>
             <Symbol>
-                <Options Name="rateYaw" Address="0x20001488" Type="short" TypeID="11" Size="2" GraphColorRed="160" GraphColorGreen="32" GraphColorBlue="240" YMinSampled="-72" YMaxSampled="274" YAvgSampled="-10" Offset="14" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="200" MaxValue="400" File="..\SYSTEM\scheduler.c" Scope="0" DrawStyle="0" />
+                <Options Name="rateYaw" Address="0x20000F08" Type="float" TypeID="1" Size="4" GraphColorRed="160" GraphColorGreen="32" GraphColorBlue="240" YMinSampled="-4845" YMaxSampled="5374" YAvgSampled="0" Offset="14" ShowInGraph="0" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="10" MaxValue="20" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
             </Symbol>
         </SelectedSymbols>
     </Project>

@@ -369,6 +369,7 @@ void GIMBAL_PidParamsSwitch(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COU
 {
 	switch(gimbal->State.mode)
 	{
+		case GIMBAL_MODE_RELOAD_BULLET:
 		case GIMBAL_MODE_NORMAL:
 		
 			pid[MECH][YAW_205].Speed.kp = normal_mech_yaw_speed_kp;		
@@ -627,7 +628,7 @@ void GIMBAL_PidOut(Gimbal_PID_t *pid)
 	else {
 		pidOut[YAW_205] = 0;	// Ê§ÁªºóÐ¶Á¦
 	}
-	
+//	pidOut[YAW_205] = (int16_t)pid[YAW_205].Out;		// 0x205
 	if(BitMask.Gimbal.BM_rxReport & BM_RX_REPORT_206) {
 		pidOut[PITCH_206] = (int16_t)pid[PITCH_206].Out;	// 0x206
 	} 

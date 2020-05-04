@@ -372,8 +372,9 @@ bool REMOTE_IsRcDataValid(RC_Ctl_t *remote)
 		|| (remote->rc.ch0 > RC_CH_VALUE_MAX || remote->rc.ch0 < RC_CH_VALUE_MIN)
 		|| (remote->rc.ch1 > RC_CH_VALUE_MAX || remote->rc.ch1 < RC_CH_VALUE_MIN)
 		|| (remote->rc.ch2 > RC_CH_VALUE_MAX || remote->rc.ch2 < RC_CH_VALUE_MIN)
-		|| (remote->rc.ch3 > RC_CH_VALUE_MAX || remote->rc.ch3 < RC_CH_VALUE_MIN) 
-		|| (remote->rc.thumbwheel  > RC_CH_VALUE_MAX || remote->rc.thumbwheel  < RC_CH_VALUE_MIN)) 
+		|| (remote->rc.ch3 > RC_CH_VALUE_MAX || remote->rc.ch3 < RC_CH_VALUE_MIN))
+//		如果临时换遥控（没烧最新固件会导致这里出错）
+//		|| (remote->rc.thumbwheel  > RC_CH_VALUE_MAX || remote->rc.thumbwheel  < RC_CH_VALUE_MIN)) 
 	{
 		return false;
 	} 
@@ -388,10 +389,10 @@ bool REMOTE_IsRcDataValid(RC_Ctl_t *remote)
  */
 bool REMOTE_IsRcChannelReset(RC_Ctl_t *remote)
 {
-	if(  (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch0) == 0) && 
-		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch1) == 0) && 
-		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch2) == 0) && 
-		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch3) == 0)   )	
+	if(  (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch0) == RC_CH_VALUE_OFFSET) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch1) == RC_CH_VALUE_OFFSET) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch2) == RC_CH_VALUE_OFFSET) && 
+		 (myDeathZoom(RC_CH_VALUE_OFFSET, 20, remote->rc.ch3) == RC_CH_VALUE_OFFSET)   )	
 	{
 		return true;
 	}
@@ -494,10 +495,10 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 	
 	if(sw2 == RC_SW_UP) 
 	{
-		gyro2mech_pid_mode = false;
 		/* 遥控机械模式 -> 键盘模式 */
 		if(prev_sw2 == RC_SW_MID) 
 		{	
+			gyro2mech_pid_mode = false;
 			sys->RemoteMode = KEY;
 			sys->PidMode = GYRO;
 			// 刚切换过去的时候设置为常规行为
@@ -513,7 +514,7 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 		if(prev_sw2 == RC_SW_UP) 
 		{
 			/* 底盘还未回来(等待回来) */
-			if(CHASSIS_GetMiddleAngleOffset() > 10) {
+			if( !CHASSIS_IfBackToMiddleAngle() ) {
 				gyro2mech_pid_mode = true;
 			} 
 			/* 底盘已回来(可以切换) */
@@ -527,7 +528,7 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 		else if(prev_sw2 == RC_SW_DOWN) 
 		{	
 			/* 底盘还未回来(等待回来) */
-			if(CHASSIS_GetMiddleAngleOffset() > 10) {
+			if( !CHASSIS_IfBackToMiddleAngle() ) {
 				gyro2mech_pid_mode = true;
 			} 
 			/* 底盘已回来(可以切换) */
@@ -538,7 +539,7 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 			}
 		}
 		/* 等待底盘回来 */
-		if(gyro2mech_pid_mode == true && CHASSIS_GetMiddleAngleOffset() <= 10) {
+		if(gyro2mech_pid_mode && CHASSIS_IfBackToMiddleAngle()) {
 			gyro2mech_pid_mode = false;
 			sys->RemoteMode = RC;
 			sys->PidMode = MECH;
@@ -622,7 +623,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 		/* 强制设置 常规行为+机械模式 */
 		if(KeyLockFlag_Ctrl == false) {
 			sys->Action = SYS_ACT_NORMAL;
-			if(CHASSIS_GetMiddleAngleOffset() > 10) {
+			if( !CHASSIS_IfBackToMiddleAngle() ) {
 				gyro2mech_pid_mode = true;
 			} else {
 				gyro2mech_pid_mode = false;
@@ -632,8 +633,8 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 		
 		/* 等待底盘回来 */
 		if(sys->Action == SYS_ACT_NORMAL
-			&& gyro2mech_pid_mode == true
-			&& CHASSIS_GetMiddleAngleOffset() <= 10) 
+			&& gyro2mech_pid_mode
+			&& CHASSIS_IfBackToMiddleAngle()) 
 		{
 			gyro2mech_pid_mode = false;
 			sys->PidMode = MECH;

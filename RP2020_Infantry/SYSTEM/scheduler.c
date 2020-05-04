@@ -138,13 +138,13 @@ void start_task(void *pvParameters)
 							(void*				)NULL,						// 传递给任务函数的参数
 							(UBaseType_t		)GIMBAL_TASK_PRIO,			// 任务优先级
 							(TaskHandle_t*		)&GimbalTask_Handler);		// 任务句柄							
-	/* 创建拨盘电机任务 */
-	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
-							(const char*		)"revovler_task",			// 任务名称
-							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
-							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
+//	/* 创建拨盘电机任务 */
+//	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
+//							(const char*		)"revovler_task",			// 任务名称
+//							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
+//							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
 	/* 创建常规任务 */
 	xTaskCreate((TaskFunction_t		)duty_task,								// 任务函数
 							(const char*		)"duty_task",				// 任务名称
@@ -152,13 +152,13 @@ void start_task(void *pvParameters)
 							(void*				)NULL,						// 传递给任务函数的参数
 							(UBaseType_t		)DUTY_TASK_PRIO,			// 任务优先级
 							(TaskHandle_t*		)&DutyTask_Handler);		// 任务句柄
-	/* 创建视觉任务 */
-	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
-							(const char*		)"vision_task",				// 任务名称
-							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
-							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
+//	/* 创建视觉任务 */
+//	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
+//							(const char*		)"vision_task",				// 任务名称
+//							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
+//							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
 	/* 创建IMU任务 */
 	xTaskCreate((TaskFunction_t		)imu_task,								// 任务函数
 							(const char*		)"imu_task",				// 任务名称
@@ -276,7 +276,7 @@ void duty_task(void *p_arg)
 		{
 			case SYSTEM_STATE_NORMAL:
 			{
-				FRICTION_Ctrl();
+//				FRICTION_Ctrl();
 				MAGZINE_Ctrl();
 				break;
 			}
@@ -318,6 +318,9 @@ void imu_task(void *p_arg)
 		/* IMU读取任务 */
 		IMU_Task();	// 耗时56ms左右		
 		ulRespondTime = xTaskGetTickCount() - ulCurrentTime;
+//		ANOC_SendToPc(js_pos_x*100, js_pos_y*100, js_agl_z*100, 	
+//		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, Mpu_Info.roll, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
+		RP_SendToPc(js_pos_x, js_pos_y, js_agl_z, js_v_x, js_v_y, js_w_z);
 		vTaskDelay(1);	// 1ms，注释后进不了空闲任务
 	}
 }

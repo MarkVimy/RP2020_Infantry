@@ -173,6 +173,10 @@
       <TargetDriverDllRegistry>
         <SetRegEntry>
           <Number>0</Number>
+          <Key>DLGUARM</Key>
+        </SetRegEntry>
+        <SetRegEntry>
+          <Number>0</Number>
           <Key>UL2CM3</Key>
           <Name>-S0 -C0 -P0 )  -FN1 -FC1000 -FD20000000 -FF0STM32F4xx_1024 -FL0100000 -FS08000000 -FP0($$Device:STM32F407VE$Flash\STM32F4xx_1024.FLM)</Name>
         </SetRegEntry>
@@ -463,6 +467,26 @@
           <count>51</count>
           <WinNumber>1</WinNumber>
           <ItemText>Chas_Slope_Move_Righ</ItemText>
+        </Ww>
+        <Ww>
+          <count>52</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Remote,0x10</ItemText>
+        </Ww>
+        <Ww>
+          <count>53</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>System</ItemText>
+        </Ww>
+        <Ww>
+          <count>54</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Chas_Locate_PID</ItemText>
+        </Ww>
+        <Ww>
+          <count>55</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>gyro2mech_pid_mode</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
@@ -841,6 +865,21 @@
           <WinNumber>2</WinNumber>
           <ItemText>ulCurrentTime,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>75</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>TIME_INC_NORMAL,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>76</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>TIME_DEC_NORMAL,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>77</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>key_ramp_way</ItemText>
+        </Ww>
       </WatchWindow2>
       <Tracepoint>
         <THDelay>0</THDelay>
@@ -918,7 +957,7 @@
 
   <Group>
     <GroupName>APP</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1719,8 +1758,8 @@
       <Focus>0</Focus>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\mpu6050\mpu6500.c</PathWithFileName>
-      <FilenameWithoutPath>mpu6500.c</FilenameWithoutPath>
+      <PathWithFileName>..\mpu6050\mpu6050.c</PathWithFileName>
+      <FilenameWithoutPath>mpu6050.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

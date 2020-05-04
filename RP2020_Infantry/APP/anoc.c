@@ -63,6 +63,45 @@
 /* Private functions ---------------------------------------------------------*/
 
 /* API functions -------------------------------------------------------------*/
+void ANOC_SendToPc1(int16_t rol, int16_t pit, int16_t yaw)
+{
+	uint16_t static send_cnt = 0;
+	uint8_t i;
+	uint16_t check_sum = 0;
+	uint8_t data_to_pc[17];
+	
+	data_to_pc[0] = 0xAA;
+	data_to_pc[1] = 0xAA;
+	data_to_pc[2] = 0x01;
+	data_to_pc[3] = 12;
+	
+	data_to_pc[4] = (rol & 0xff00) >> 8;
+	data_to_pc[5] = (rol & 0xff);
+	data_to_pc[6] = (pit & 0xff00) >> 8;
+	data_to_pc[7] = (pit & 0xff);
+	data_to_pc[8] = (yaw & 0xff00) >> 8;
+	data_to_pc[9] = (yaw & 0xff);
+	
+	data_to_pc[10] = 0;
+	data_to_pc[11] = 0;
+	data_to_pc[12] = 0;
+	data_to_pc[13] = 0;
+	data_to_pc[14] = 0;
+	data_to_pc[15] = 0;
+		
+	for(i = 0; i < 16; i++) {
+		check_sum += data_to_pc[i];
+	}
+	data_to_pc[16] = check_sum & 0xff;
+	
+	if(send_cnt < 5000) {
+		for(i = 0; i < 17; i++) {
+			USART1_SendChar(data_to_pc[i]);
+		}
+		send_cnt++;
+	}
+}
+
 void ANOC_SendToPc(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, int16_t gz, int16_t mx, int16_t my, int16_t mz)
 {
 	uint8_t i;
@@ -108,6 +147,7 @@ void ANOC_SendToPc(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, i
 
 void RP_SendToPc(float yaw, float pitch, float roll, int16_t rateYaw, int16_t ratePitch, int16_t rateRoll)
 {
+	static uint16_t send_cnt = 1;
 	uint8_t i;
 	uint16_t check_sum = 0;
 	uint8_t data_to_pc[23];
@@ -125,6 +165,7 @@ void RP_SendToPc(float yaw, float pitch, float roll, int16_t rateYaw, int16_t ra
 	memcpy(&data_to_pc[18], (uint8_t*)&ratePitch, 2);
 	memcpy(&data_to_pc[20], (uint8_t*)&rateRoll, 2);
 	
+//	send_cnt++;
 //	以下操作会将数据转化成大端模式发送出去
 //	data_to_pc[16] = (rateYaw & 0xff00) >> 8;
 //	data_to_pc[17] = (rateYaw & 0xff);

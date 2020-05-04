@@ -40,3 +40,4 @@
 .\objects\imu.o: ..\mpu6050\eMPL\inv_mpu.h
 .\objects\imu.o: ..\mpu6050\eMPL\inv_mpu_dmp_motion_driver.h
 .\objects\imu.o: ..\SYSTEM\delay.h
+.\objects\imu.o: ..\APP\anoc.h

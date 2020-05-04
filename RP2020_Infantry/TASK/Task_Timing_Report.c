@@ -30,7 +30,6 @@ TimerHandle_t CAN2_Timer_Handle;	//周期定时器句柄
 void CAN1_Timer_Callback( TimerHandle_t xTimer )
 {
 	CanTxMsg	SendCanTxMsg;
-	
 	while(xQueueReceive(CAN1_Queue, &SendCanTxMsg, 0))	// 接收队列信息，禁止等待！！！
 	{
 //        do

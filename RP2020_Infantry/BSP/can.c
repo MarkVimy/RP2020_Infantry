@@ -482,14 +482,14 @@ static int16_t CAN_GetMotorSpeed(CanRxMsg *rxMsg)
 }
 
 /**
- *	@brief	从CAN报文中反馈电机的电流
+ *	@brief	从CAN报文中反馈电机的实际转矩电流
  */
-//static int16_t CAN_GetMotorCurrent(CanRxMsg *rxMsg)
-//{
-//	int16_t current;
-//	current = ((int16_t)rxMsg->Data[4] << 8 | rxMsg->Data[5]);
-//	return current;
-//}
+static int16_t CAN_GetMotorCurrent(CanRxMsg *rxMsg)
+{
+	int16_t current;
+	current = ((int16_t)rxMsg->Data[4] << 8 | rxMsg->Data[5]);
+	return current;
+}
 
 /**
  *	@brief	从CAN报文中反馈电机的温度
@@ -737,6 +737,8 @@ void CAN2_QueueSend(uint32_t stdID, int16_t *dat)
  *	@brief	CAN1 接收中断(底盘与云台)
  *	@note		尽量不要在下面中断打印串口(很占资源) 
  */
+uint16_t js_201_last_current = 0;
+float js_201_power = 0;
 void CAN1_RX0_IRQHandler(void)
 {
 	static uint8_t bm = 0;
@@ -748,6 +750,10 @@ void CAN1_RX0_IRQHandler(void)
 		CAN_Receive(CAN1, CAN_FIFO0, &rxMsg);
 		
 		if(rxMsg.StdId == 0x201) {	// 左前
+			/* 实际转矩电流记录 */
+			g_Chassis_Motor_Info[LEFT_FRON_201].current = CAN_GetMotorCurrent(&rxMsg);
+			// 取前后两点的电流值平均值计算平均功率（认为电压为稳定的24V)
+			js_201_power = 24 * (abs(g_Chassis_Motor_Info[LEFT_FRON_201].current)+abs(js_201_last_current))/(2*16384.f) * 20;
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[LEFT_FRON_201].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
@@ -762,6 +768,8 @@ void CAN1_RX0_IRQHandler(void)
 		}
 		
 		if(rxMsg.StdId == 0x202) {	// 右前
+			/* 实际转矩电流记录 */
+			g_Chassis_Motor_Info[RIGH_FRON_202].current = CAN_GetMotorCurrent(&rxMsg);
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[RIGH_FRON_202].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
@@ -776,6 +784,8 @@ void CAN1_RX0_IRQHandler(void)
 		}
 		
 		if(rxMsg.StdId == 0x203) {	// 左后
+			/* 实际转矩电流记录 */
+			g_Chassis_Motor_Info[LEFT_BACK_203].current = CAN_GetMotorCurrent(&rxMsg);			
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[LEFT_BACK_203].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
@@ -790,6 +800,8 @@ void CAN1_RX0_IRQHandler(void)
 		}
 		
 		if(rxMsg.StdId == 0x204) {	// 右后
+			/* 实际转矩电流记录 */
+			g_Chassis_Motor_Info[RIGH_BACK_204].current = CAN_GetMotorCurrent(&rxMsg);			
 			/* 机械角度记录 */
 			g_Chassis_Motor_Info[RIGH_BACK_204].angle = CAN_GetMotorAngle(&rxMsg);
 			/* 底盘电机累加角度反馈记录 */			
@@ -816,7 +828,7 @@ void CAN1_RX0_IRQHandler(void)
 			Gimbal_PID[MECH][YAW_205].Angle.feedback = CAN_GetMotorAngle(&rxMsg);	// 机械模式 YAW 
 			Chassis_Z_PID.Angle.feedback = CAN_GetMotorAngle(&rxMsg);
 			
-			bm|= BM_RX_REPORT_205;
+			bm |= BM_RX_REPORT_205;
 		}
 		
 		if(rxMsg.StdId == 0x206) {	// Pitch轴云台电机
@@ -834,9 +846,12 @@ void CAN1_RX0_IRQHandler(void)
 			bm |= BM_RX_REPORT_206;
 		}
 
-		/* 每产生100次中断判断1次是否CAN失联 */
+		/* 
+		   每产生200次中断判断1次是否CAN失联
+		   2020/04/26 设定为100次的时候会发现yaw轴电机会出现失联情况，从而导致电机卸力
+		*/
 		cnt++;
-		if(cnt > 100) {
+		if(cnt > 200) {
 			cnt = 0;
 			BitMask.Chassis.BM_rxReport = bm & (BM_RX_REPORT_201 | BM_RX_REPORT_202 | BM_RX_REPORT_203 | BM_RX_REPORT_204);
 			BitMask.Gimbal.BM_rxReport  = bm & (BM_RX_REPORT_205 | BM_RX_REPORT_206);

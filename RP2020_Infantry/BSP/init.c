@@ -11,26 +11,30 @@ static void my_hardware_init(void)
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 
 	Delay_init(168);// 1ms Systick
-//	LED_Init();		// LED初始化
-//	LASER_Init();	// 激光初始化
-//	REMOTE_Init();	// 遥控通信USART2初始化
-//	USART3_Init();	// 超声波通信USART3初始化
-//	RNG_Init();		// 随机数发生器初始化
-//	UART4_Init();	// 视觉通信UART4初始化
-//	UART5_Init();	// 裁判系统UART5初始化
-//	CAN1_Init();	// CAN1初始化
-//	CAN2_Init();	// CAN2初始化
-//	TIM1_Init();	// 弹仓定时器1初始化
-//	TIM3_Init();	// 摩擦轮定时器3初始化
+	LED_Init();		// LED初始化
+	LASER_Init();	// 激光初始化
+	REMOTE_Init();	// 遥控通信USART2初始化
+	USART3_Init();	// 超声波通信USART3初始化
+	RNG_Init();		// 随机数发生器初始化
+	UART4_Init();	// 视觉通信UART4初始化
+	UART5_Init();	// 裁判系统UART5初始化
+	CAN1_Init();	// CAN1初始化
+	CAN2_Init();	// CAN2初始化
+	TIM1_Init();	// 弹仓定时器1初始化
+	TIM3_Init();	// 摩擦轮定时器3初始化
 	
 	USART1_Init();
 	IMU_Init();		// 祖传IMU初始化
-	while(1) {
-		now_time = millis();
-		IMU_Task();
-		delta_time = millis() - now_time;
-		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, Mpu_Info.roll, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
-	}
+//	while(1) {
+//		now_time = millis();
+//		IMU_Task();
+//		delta_time = millis() - now_time;
+////		ANOC_SendToPc1((int16_t)(Mpu_Info.yaw*100), (int16_t)(Mpu_Info.pitch*100), (int16_t)(Mpu_Info.roll*100));
+////		ANOC_SendToPc((int16_t)Mpu_Info.yaw, (int16_t)Mpu_Info.pitch, (int16_t)Mpu_Info.roll, (int16_t)Mpu_Info.rateYaw, (int16_t)Mpu_Info.ratePitch, (int16_t)Mpu_Info.rateRoll, 0, 0, 0);
+//		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, delta_time, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
+////		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, delta_time, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
+////		delay_ms(1);
+//	}
 }
 
 static void my_system_init(void)

@@ -25,14 +25,12 @@
 #include "inv_mpu.h"
 #include "inv_mpu_dmp_motion_driver.h"
 #include "mpu6050.h"
-//#include "mpu6500.h"
 #include "delay.h"
 #include "usart.h"
 #include "myiic.h"
 
 
 #define MPU6050							//定义我们使用的传感器为MPU6050
-//#define MPU6500							//定义我们使用的传感器为MPU6500
 #define MOTION_DRIVER_TARGET_MSP430		//定义驱动部分,采用MSP430的驱动(移植到STM32F4)
 
 /* The following functions must be defined for this platform:
@@ -53,8 +51,8 @@
 //#include "msp430_clock.h"
 //#include "msp430_interrupt.h"
 
-#define i2c_write   MPU_Write_Len	//MPU6500_WriteReg	
-#define i2c_read    MPU_Read_Len	//MPU6500_ReadReg	
+#define i2c_write   MPU_Write_Len
+#define i2c_read    MPU_Read_Len
 #define delay_ms    delay_ms
 #define get_ms      mget_ms
 //static inline int reg_int_cb(struct int_param_s *int_param)
@@ -170,8 +168,8 @@ struct gyro_reg_s {
     unsigned char fifo_en;
     unsigned char gyro_cfg;
     unsigned char accel_cfg;
-    unsigned char accel_cfg2;	//
-    unsigned char lp_accel_odr;	//
+//    unsigned char accel_cfg2;
+//    unsigned char lp_accel_odr;
     unsigned char motion_thr;
     unsigned char motion_dur;
     unsigned char fifo_count_h;
@@ -182,7 +180,7 @@ struct gyro_reg_s {
     unsigned char int_enable;
     unsigned char dmp_int_status;
     unsigned char int_status;
-    unsigned char accel_intel;	//
+//    unsigned char accel_intel;
     unsigned char pwr_mgmt_1;
     unsigned char pwr_mgmt_2;
     unsigned char int_pin_cfg;
@@ -668,7 +666,6 @@ const struct test_s test = {
 static struct gyro_state_s st = {
     .reg = &reg,
     .hw = &hw,
-	.chip_cfg = {0},
     .test = &test
 };
 #endif
@@ -811,14 +808,14 @@ int mpu_init(void)
     }
 #elif defined MPU6500
 #define MPU6500_MEM_REV_ADDR    (0x17)
-//    if (mpu_read_mem(MPU6500_MEM_REV_ADDR, 1, &rev))
-//        return -1;
-//    if (rev == 0x1)
-//        st.chip_cfg.accel_half = 0;
-//    else {
-//        log_e("Unsupported software product rev %d.\n", rev);
-//        return -1;
-//    }
+    if (mpu_read_mem(MPU6500_MEM_REV_ADDR, 1, &rev))
+        return -1;
+    if (rev == 0x1)
+        st.chip_cfg.accel_half = 0;
+    else {
+        log_e("Unsupported software product rev %d.\n", rev);
+        return -1;
+    }
 
     /* MPU6500 shares 4kB of memory between the DMP and the FIFO. Since the
      * first 3kB are needed by the DMP, we'll use the last 1kB for the FIFO.
