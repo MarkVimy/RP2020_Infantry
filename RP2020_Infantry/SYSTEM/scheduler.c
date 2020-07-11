@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "semphr.h"
 
 /* ## Global variables ## ------------------------------------------------------*/
 Flag_t	Flag = {
@@ -106,6 +107,7 @@ TaskHandle_t ImuTask_Handler;						// 任务句柄
 void imu_task(void *p_arg);
 
 /* ## Semphore Manangement Table ## --------------------------------------------*/
+SemaphoreHandle_t Semaphore_Usart1_Tx;
 
 /* ## Task List ## -------------------------------------------------------------*/
 /*!# Start Task #!*/
@@ -113,6 +115,9 @@ extern TaskHandle_t StartTask_Handler;				// 任务句柄(在init.c中定义)
 void start_task(void *pvParameters)
 {
 	taskENTER_CRITICAL();	// 进入临界区
+	
+//	Semaphore_Usart1_Tx = xSemaphoreCreateBinary();
+//	xSemaphoreGive(Semaphore_Usart1_Tx);
 	
 	/* 创建软件定时器数据收发任务,can1,can2,不要放太多函数 */
 	Timer_Send_Create();		
@@ -125,12 +130,12 @@ void start_task(void *pvParameters)
 							(UBaseType_t		)SYSTEM_STATE_TASK_PRIO,	// 任务优先级
 							(TaskHandle_t*		)&SystemStateTask_Handler);	// 任务句柄
 	/* 创建底盘任务 */
-	xTaskCreate((TaskFunction_t		)chassis_task,							// 任务函数
-							(const char*		)"chassis_task",			// 任务名称
-							(uint16_t			)CHASSIS_STK_SIZE,			// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)CHASSIS_TASK_PRIO,			// 任务优先级
-							(TaskHandle_t*		)&ChassisTask_Handler);		// 任务句柄
+//	xTaskCreate((TaskFunction_t		)chassis_task,							// 任务函数
+//							(const char*		)"chassis_task",			// 任务名称
+//							(uint16_t			)CHASSIS_STK_SIZE,			// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)CHASSIS_TASK_PRIO,			// 任务优先级
+//							(TaskHandle_t*		)&ChassisTask_Handler);		// 任务句柄
 	/* 创建云台任务 */
 	xTaskCreate((TaskFunction_t		)gimbal_task,							// 任务函数
 							(const char*		)"gimbal_task",				// 任务名称
@@ -138,13 +143,13 @@ void start_task(void *pvParameters)
 							(void*				)NULL,						// 传递给任务函数的参数
 							(UBaseType_t		)GIMBAL_TASK_PRIO,			// 任务优先级
 							(TaskHandle_t*		)&GimbalTask_Handler);		// 任务句柄							
-//	/* 创建拨盘电机任务 */
-//	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
-//							(const char*		)"revovler_task",			// 任务名称
-//							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
-//							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
+	/* 创建拨盘电机任务 */
+	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
+							(const char*		)"revovler_task",			// 任务名称
+							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
+							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
 	/* 创建常规任务 */
 	xTaskCreate((TaskFunction_t		)duty_task,								// 任务函数
 							(const char*		)"duty_task",				// 任务名称
@@ -276,7 +281,7 @@ void duty_task(void *p_arg)
 		{
 			case SYSTEM_STATE_NORMAL:
 			{
-//				FRICTION_Ctrl();
+				FRICTION_Ctrl();
 				MAGZINE_Ctrl();
 				break;
 			}
@@ -316,11 +321,12 @@ void imu_task(void *p_arg)
 	while(1) {
 		ulCurrentTime = xTaskGetTickCount();
 		/* IMU读取任务 */
-		IMU_Task();	// 耗时56ms左右		
+		IMU_Task();		
 		ulRespondTime = xTaskGetTickCount() - ulCurrentTime;
 //		ANOC_SendToPc(js_pos_x*100, js_pos_y*100, js_agl_z*100, 	
 //		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, Mpu_Info.roll, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
-		RP_SendToPc(js_pos_x, js_pos_y, js_agl_z, js_v_x, js_v_y, js_w_z);
+//		RP_SendToPc(js_pos_x, js_pos_y, js_agl_z, js_v_x, js_v_y, js_w_z);
+//		RP_SendToPc2(Friction.SpeedFeedback, JUDGE_fGetBulletSpeed17(), Judge.PowerHeatData.shooter_heat0, Judge.PowerHeatData.chassis_power);
 		vTaskDelay(1);	// 1ms，注释后进不了空闲任务
 	}
 }

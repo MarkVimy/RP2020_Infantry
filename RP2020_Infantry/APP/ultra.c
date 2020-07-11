@@ -15,7 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "ultra.h"
 
-#include "usart3.h"
+#include "usart1.h"
 #include "delay.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -23,17 +23,17 @@
 
 
 /* Private macro -------------------------------------------------------------*/
-#define SCL_GPIO		GPIOC
-#define SCL_GPIO_PIN	GPIO_Pin_1
-#define SCL_GPIO_CLK	RCC_AHB1Periph_GPIOC
+#define SCL_GPIO		GPIOA
+#define SCL_GPIO_PIN	GPIO_Pin_10
+#define SCL_GPIO_CLK	RCC_AHB1Periph_GPIOA
 
-#define SDA_GPIO		GPIOC
-#define SDA_GPIO_PIN	GPIO_Pin_2
-#define SDA_GPIO_CLK	RCC_AHB1Periph_GPIOC
+#define SDA_GPIO		GPIOA
+#define SDA_GPIO_PIN	GPIO_Pin_9
+#define SDA_GPIO_CLK	RCC_AHB1Periph_GPIOA
 
-#define ULTRA_SCL		PCout(1)
-#define ULTRA_SDA		PCout(2)
-#define ULTRA_READ_SDA	PCin(2)
+#define ULTRA_SCL		PAout(10)
+#define ULTRA_SDA		PAout(9)
+#define ULTRA_READ_SDA	PAin(9)
 
 #define ULTRA_SPEED 	0.34f	// mm/us
 
@@ -51,11 +51,11 @@ Ultra_Info_t Ultra;
  */
 static void ULTRA_SendCmd( uint8_t addr, uint8_t cmd)
 {
-	USART3_SendChar(addr);	// I2C地址
+	USART1_SendChar(addr);	// I2C地址
 	delay_us(100);			// 延时 20~100us
-	USART3_SendChar(0x02);	// 寄存器0x02
+	USART1_SendChar(0x02);	// 寄存器0x02
 	delay_us(100);			// 延时 20~100us
-	USART3_SendChar(cmd);	// 发送配置命令	
+	USART1_SendChar(cmd);	// 发送配置命令	
 }
 
 static void IIC_Init(void)
@@ -254,17 +254,17 @@ uint16_t ULTRA_ReadData( uint8_t *rxBuf )
 void ULTRA_Detect( void )
 {
 	#if (ULTRA_USE_USART)
-	ULTRA_SendCmd( ULTRA_ADDR, 0xb2 );	
+	ULTRA_SendCmd(ULTRA_ADDR, 0xb0);	//0xb2
 	#else
-	ULTRA_IICWriteByte( ULTRA_ADDR, 0x02, 0x0a);
+	ULTRA_IICWriteByte(ULTRA_ADDR, 0x02, 0x0a);
 	
-	// delay_ms(1);	// 安全延时，由任务延时提供
+	//delay_ms(1);	// 安全延时，由任务延时提供
 	
-//	while( !ULTRA_SCL );
-//	Ultra.time = ULTRA_IICReadByte( ULTRA_ADDR, 0x02);
-//	Ultra.time <<= 8;
-//	Ultra.time += ULTRA_IICReadByte( ULTRA_ADDR, 0x03);
-//	Ultra.dis = 0.34f * Ultra.time / 2.f;
+	while( !ULTRA_SCL );
+	Ultra.time = ULTRA_IICReadByte( ULTRA_ADDR, 0x02);
+	Ultra.time <<= 8;
+	Ultra.time += ULTRA_IICReadByte( ULTRA_ADDR, 0x03);
+	Ultra.dis = 0.34f * Ultra.time / 2.f;
 	#endif
 }
 
@@ -273,9 +273,9 @@ void ULTRA_Detect( void )
  */
 void ULTRA_IICReadResult( void )
 {
-	Ultra.time = ULTRA_IICReadByte( ULTRA_ADDR, 0x02);
+	Ultra.time = ULTRA_IICReadByte(ULTRA_ADDR, 0x02);
 	Ultra.time <<= 8;
-	Ultra.time += ULTRA_IICReadByte( ULTRA_ADDR, 0x03);
+	Ultra.time += ULTRA_IICReadByte(ULTRA_ADDR, 0x03);
 	Ultra.dis = 0.34f * Ultra.time / 2.f;	
 }
 
@@ -284,7 +284,7 @@ void ULTRA_IICReadResult( void )
  */
 void ULTRA_Config( void )
 {
-	ULTRA_SendCmd( ULTRA_ADDR, 0x71);	// 电源二级降噪(USB供电)
+	ULTRA_SendCmd(ULTRA_ADDR, 0x71);	// 电源二级降噪(USB供电)
 	delay_ms(2500);
 }
 
@@ -293,6 +293,18 @@ void ULTRA_Config( void )
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+/**
+ *	@brief	超声波初始化
+ */
+void ULTRA_Init(void)
+{
+	#if (ULTRA_USE_USART)
+	USART1_Init();
+	#else
+	IIC_Init();
+	#endif
+}
+
 /**
  *	@brief	超声波自动对位
  */

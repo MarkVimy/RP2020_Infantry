@@ -179,7 +179,34 @@ void RP_SendToPc(float yaw, float pitch, float roll, int16_t rateYaw, int16_t ra
 	}
 	data_to_pc[22] = check_sum & 0xff;
 	
+//	USART1_DMA_SendBuf(data_to_pc, 23);
 	for(i = 0; i < 23; i++) {
+		USART1_SendChar(data_to_pc[i]);
+	}
+}
+
+void RP_SendToPc2(uint16_t pwm, float speed, uint16_t heat, float power)
+{
+	uint8_t i;
+	uint16_t check_sum = 0;
+	uint8_t data_to_pc[17];	
+	
+	data_to_pc[0] = 0xAA;
+	data_to_pc[1] = 0xAA;
+	data_to_pc[2] = 0x02;
+	data_to_pc[3] = 12;	
+	
+	memcpy(&data_to_pc[4], (uint8_t*)&pwm, 2);
+	memcpy(&data_to_pc[6], (uint8_t*)&speed, 4);
+	memcpy(&data_to_pc[10], (uint8_t*)&heat, 2);
+	memcpy(&data_to_pc[12], (uint8_t*)&power, 4);
+	
+	for(i = 0; i < 16; i++) {
+		check_sum += data_to_pc[i];
+	}
+	data_to_pc[16] = check_sum & 0xff;	
+	
+	for(i = 0; i < 17; i++) {
 		USART1_SendChar(data_to_pc[i]);
 	}
 }

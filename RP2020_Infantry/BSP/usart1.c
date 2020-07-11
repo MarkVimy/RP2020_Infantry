@@ -17,9 +17,13 @@
 /* USART1_RX ----> DMA1 Ch4 Stream1 */
 /* USART2_RX ----> DMA1 Ch4 Stream5 */
 /* USART1_RX ----> DMA2 Ch4 Stream2/5 */
+/* USART1_TX ----> DMA2 Ch4 Stream7 */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usart1.h"
+
+#include "ultra.h"
+#include "semphr.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -37,35 +41,68 @@
 #define    RCC_AHB1PERIPH_GPIO_RX    RCC_AHB1Periph_GPIOA
 
 /* DMA */
-#define    DMA2_Stream_RX            DMA2_Stream2
+#define    DMA2_STREAM_RX            DMA2_Stream2
+#define	   DMA2_STREAM_TX			 DMA2_Stream7
 
 /* Buffer Len */
-#define    USART1_BUFFER_LEN         20
-
+#define    USART1_BUFFER_RX_LEN     20
+#define	   USART1_BUFFER_TX_LEN		256
 /* Private variables ---------------------------------------------------------*/
 /* ## Global variables ## ----------------------------------------------------*/
-uint8_t  Usart1_Buffer[ USART1_BUFFER_LEN ] = {0};	//发过来的数据暂存在这里
+uint8_t Usart1_Buffer_Rx[ USART1_BUFFER_RX_LEN ] = {0};	//发过来的数据暂存在这里
+uint8_t Usart1_Buffer_Tx[ USART1_BUFFER_TX_LEN ] = {0};
+static uint8_t  Ultra_Buffer[ 2 ] = {0};	//超声波发过来的数据暂存在这里
+static uint8_t tx_busy_flag = 0;
+
+extern SemaphoreHandle_t Semaphore_Usart1_Tx;
 
 /* Private function prototypes -----------------------------------------------*/
 static void USART1_DMA_Init( void );
 
 /* Private functions ---------------------------------------------------------*/
-/**
- *	@brief 串口1 DMA初始化
- */
-static void USART1_DMA_Init( void )
-{		
+static void USART1_TX_DMA_Init( void )
+{
 	DMA_InitTypeDef xCom1DMAInit;
 	
-	DMA_DeInit( DMA2_Stream_RX );
+	DMA_DeInit( DMA2_STREAM_TX );
 	xCom1DMAInit.DMA_Channel = DMA_Channel_4;
 
-	xCom1DMAInit.DMA_DIR = DMA_DIR_PeripheralToMemory;//方向外设到存储器
+	xCom1DMAInit.DMA_DIR = DMA_DIR_MemoryToPeripheral;//方向外设到存储器
 
 	xCom1DMAInit.DMA_PeripheralBaseAddr  = (uint32_t)&(USART1->DR);
-	xCom1DMAInit.DMA_Memory0BaseAddr     = (uint32_t)Usart1_Buffer;
-	xCom1DMAInit.DMA_DIR = DMA_DIR_PeripheralToMemory;
-	xCom1DMAInit.DMA_BufferSize = USART1_BUFFER_LEN;
+	xCom1DMAInit.DMA_Memory0BaseAddr     = (uint32_t)Usart1_Buffer_Tx;
+//	xCom1DMAInit.DMA_DIR = DMA_DIR_PeripheralToMemory;
+	xCom1DMAInit.DMA_BufferSize = USART1_BUFFER_TX_LEN;
+	xCom1DMAInit.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	xCom1DMAInit.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	xCom1DMAInit.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	xCom1DMAInit.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	xCom1DMAInit.DMA_Mode = DMA_Mode_Normal;	// 单次传输（可触发中断）
+	xCom1DMAInit.DMA_Priority = DMA_Priority_High;
+	xCom1DMAInit.DMA_FIFOMode = DMA_FIFOMode_Disable;	// 禁止FIFO
+	xCom1DMAInit.DMA_FIFOThreshold = DMA_FIFOThreshold_Full;
+	xCom1DMAInit.DMA_MemoryBurst = DMA_MemoryBurst_Single;
+	xCom1DMAInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
+
+	DMA_Init( DMA2_STREAM_TX, &xCom1DMAInit );	
+	DMA_Cmd( DMA2_STREAM_TX, ENABLE);  // stream7	
+	
+	DMA_ITConfig(DMA2_STREAM_TX, DMA_IT_TC, ENABLE);
+}
+
+static void USART1_RX_DMA_Init( void )
+{
+	DMA_InitTypeDef xCom1DMAInit;
+	
+	DMA_DeInit( DMA2_STREAM_RX );
+	xCom1DMAInit.DMA_Channel = DMA_Channel_4;
+
+	xCom1DMAInit.DMA_DIR = DMA_DIR_PeripheralToMemory;//方向存储器到外设
+
+	xCom1DMAInit.DMA_PeripheralBaseAddr  = (uint32_t)&(USART1->DR);
+	xCom1DMAInit.DMA_Memory0BaseAddr     = (uint32_t)Usart1_Buffer_Rx;
+//	xCom1DMAInit.DMA_DIR = DMA_DIR_PeripheralToMemory;
+	xCom1DMAInit.DMA_BufferSize = USART1_BUFFER_RX_LEN;
 	xCom1DMAInit.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
 	xCom1DMAInit.DMA_MemoryInc = DMA_MemoryInc_Enable;
 	xCom1DMAInit.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
@@ -77,8 +114,17 @@ static void USART1_DMA_Init( void )
 	xCom1DMAInit.DMA_MemoryBurst = DMA_MemoryBurst_Single;
 	xCom1DMAInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
 
-	DMA_Init( DMA2_Stream_RX, &xCom1DMAInit );	
-	DMA_Cmd( DMA2_Stream_RX, ENABLE);  // stream2
+	DMA_Init( DMA2_STREAM_RX, &xCom1DMAInit );	
+	DMA_Cmd( DMA2_STREAM_RX, ENABLE);  // stream2	
+}
+
+/**
+ *	@brief 串口1 DMA初始化
+ */
+static void USART1_DMA_Init( void )
+{		
+	USART1_TX_DMA_Init();
+	USART1_RX_DMA_Init();
 }
 
 /* API functions -------------------------------------------------------------*/
@@ -93,6 +139,7 @@ void USART1_Init( void )
 
 	RCC_AHB1PeriphClockCmd( RCC_AHB1PERIPH_GPIO_TX | RCC_AHB1PERIPH_GPIO_RX, ENABLE );
 	RCC_APB2PeriphClockCmd( RCC_APB2Periph_USART1, ENABLE );
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA2, ENABLE);
 
 	GPIO_PinAFConfig( GPIO_TX, GPIO_PINSOURCE_TX, GPIO_AF_USART1 );
 	GPIO_PinAFConfig( GPIO_RX, GPIO_PINSOURCE_RX, GPIO_AF_USART1 ); 
@@ -121,6 +168,7 @@ void USART1_Init( void )
 	USART_Cmd( USART1, ENABLE );
 	
 	USART_ITConfig( USART1, USART_IT_IDLE, ENABLE  ); // 注意要配置成串口空闲中断 
+//	USART_ITConfig( USART1, USART_IT_RXNE, ENABLE );
 
 	/*----Configure DMA----*/
 	USART_DMACmd( USART1, USART_DMAReq_Rx, ENABLE );
@@ -134,6 +182,12 @@ void USART1_Init( void )
 	xNvicInit.NVIC_IRQChannelSubPriority         = USART1_IT_PRIO_SUB;
 	xNvicInit.NVIC_IRQChannelCmd                 = ENABLE;
 	NVIC_Init( &xNvicInit );
+		
+	xNvicInit.NVIC_IRQChannel                    = DMA2_Stream7_IRQn;
+	xNvicInit.NVIC_IRQChannelPreemptionPriority  = 3;
+	xNvicInit.NVIC_IRQChannelSubPriority         = 0;
+	xNvicInit.NVIC_IRQChannelCmd                 = ENABLE;
+	NVIC_Init( &xNvicInit );	
 }
 
 /**
@@ -150,15 +204,69 @@ void USART1_IRQHandler( void )
 		res = USART1->SR ;
 		res = USART1->DR ;
 		
-		DMA_Cmd(DMA2_Stream_RX, DISABLE);
+		DMA_Cmd(DMA2_STREAM_RX, DISABLE);
 		
-		res = USART1_BUFFER_LEN - DMA_GetCurrDataCounter(DMA2_Stream_RX);
+		res = USART1_BUFFER_RX_LEN - DMA_GetCurrDataCounter(DMA2_STREAM_RX);
+			
+		/* 超声波测距数据记录 */
+//		Ultra.time = ULTRA_ReadData(Usart1_Buffer_Rx);		// 读取超声波探测时间(us)
+//		Ultra.dis = 0.34f * Ultra.time / 2.f;
+//		Ultra.update = true;
 		
-		memset(Usart1_Buffer, 0, USART1_BUFFER_LEN);	// 读完之后内容清零
-		DMA_Cmd(DMA2_Stream_RX, ENABLE);
+		memset(Usart1_Buffer_Rx, 0, USART1_BUFFER_RX_LEN);	// 读完之后内容清零
+		DMA_Cmd(DMA2_STREAM_RX, ENABLE);
+	}
+//	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
+
+//		USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+
+//		res = USART_ReceiveData(USART1);
+//		
+//		Ultra_Buffer[Ultra.cnt] = res;
+//		Ultra.cnt++;
+//		if(Ultra.cnt >= 2) {
+//			Ultra.cnt = 0;
+//			/* 超声波测距数据记录 */
+//			Ultra.time = ULTRA_ReadData(Ultra_Buffer);		// 读取超声波探测时间(us)
+//			Ultra.dis = 0.34f * Ultra.time / 2.f;
+//			Ultra.update = true;
+//		}
+//	}
+}
+
+void DMA2_Stream7_IRQHandler(void)
+{
+	BaseType_t xHigherPriorityTaskWoken;
+	if(DMA_GetITStatus(DMA2_STREAM_TX, DMA_IT_TCIF7) != RESET)
+	{
+		DMA_ClearITPendingBit(DMA2_STREAM_TX, DMA_IT_TCIF7);
+		DMA_Cmd(DMA2_STREAM_TX, DISABLE);
+		tx_busy_flag = 0;
+//		if(Semaphore_Usart1_Tx != NULL) {
+//			xSemaphoreGiveFromISR(Semaphore_Usart1_Tx, &xHigherPriorityTaskWoken);
+//			portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+//		}
 	}
 }
 
+void USART1_DMA_SendBuf(uint8_t *buf, uint16_t size)
+{
+	
+//	DMA_Cmd(DMA2_STREAM_TX, DISABLE);	//关闭 DMA 传输   
+//	while (DMA_GetCmdStatus(DMA2_STREAM_TX) != DISABLE){} //确保 DMA 可以被设置 	
+	
+//	if(Semaphore_Usart1_Tx != NULL) {
+//		xSemaphoreTake(Semaphore_Usart1_Tx, portMAX_DELAY);
+//		memcpy(Usart1_Buffer_Tx, buf, size);
+//		DMA_SetCurrDataCounter(DMA2_STREAM_TX, size);
+//		DMA_Cmd(DMA2_STREAM_TX, ENABLE);
+//	}
+	while(tx_busy_flag == 1);
+	tx_busy_flag = 1;
+	memcpy(Usart1_Buffer_Tx, buf, size);
+	DMA_SetCurrDataCounter(DMA2_STREAM_TX, size);
+	DMA_Cmd(DMA2_STREAM_TX, ENABLE);
+}
 
 /**
   * @brief  串口一次发送一个字节数据

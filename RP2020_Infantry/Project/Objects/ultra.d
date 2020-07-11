@@ -36,5 +36,5 @@
 .\objects\ultra.o: ..\FreeRTOS\include\task.h
 .\objects\ultra.o: ..\FreeRTOS\include\list.h
 .\objects\ultra.o: ..\SYSTEM\my_include.h
-.\objects\ultra.o: ..\BSP\usart3.h
+.\objects\ultra.o: ..\BSP\usart1.h
 .\objects\ultra.o: ..\SYSTEM\delay.h

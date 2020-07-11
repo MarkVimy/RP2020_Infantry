@@ -66,3 +66,4 @@
 .\objects\scheduler.o: ..\BSP\usart3.h
 .\objects\scheduler.o: ..\BSP\uart4.h
 .\objects\scheduler.o: ..\BSP\uart5.h
+.\objects\scheduler.o: ..\FreeRTOS\include\semphr.h

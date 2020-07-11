@@ -38,7 +38,7 @@ typedef enum {
 	SUPPLY_ID_NONE = 0xff,
 } Supply_Id_t;
 
-enum
+typedef enum
 {
 	//0x200-0x02ff 	自定义命令 格式  INTERACT_ID_XXXX
 	INTERACT_ID_delete_graphic 		= 0x0100,	/*客户端删除图形*/
@@ -47,11 +47,11 @@ enum
 	INTERACT_ID_draw_five_graphic 	= 0x0103,	/*客户端绘制5个图形*/
 	INTERACT_ID_draw_seven_graphic 	= 0x0104,	/*客户端绘制7个图形*/
 	INTERACT_ID_draw_char_graphic 	= 0x0105	/*客户端绘制字符图形*/
-};
+} Interact_Id;
 
 /*自定义交互ID*/
 
-enum
+typedef enum
 {
 	LEN_INTERACT_delete_graphic = 8,	/*删除图层*/
 	LEN_INTERACT_draw_one_graphic = 21,
@@ -59,7 +59,7 @@ enum
 	LEN_INTERACT_draw_five_graphic = 81,
 	LEN_INTERACT_draw_seven_graphic = 111,
 	LEN_INTERACT_draw_char_graphic = 51
-};
+} Len_Interact;
 
 typedef enum
 {
@@ -480,7 +480,7 @@ typedef __packed struct
 	std_frame_header_t						FrameHeader;	// 帧头
 	uint16_t 								CmdId;			// 命令码
 	ext_student_interactive_header_data_t	DataFrameHeader;// 数据段头结构
-	ext_client_custom_graphic_seven_t		ClientData;		// 数据
+	ext_client_custom_graphic_single_t		ClientData;		// 数据(1个图形) <- 根据图形数修改
 	uint16_t								FrameTail;		// 帧尾
 } Judge_Client_Data_t;
 
@@ -558,8 +558,120 @@ float 		JUDGE_fGetShooterYaw(void);
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 void JUDGE_ShootNumCount(void);
+void JUDGE_SendToClient(void);
+void JUDGE_SendToTeammate(uint8_t teammate_id);
 
 /* #交互层# ---------------------------------------------------------------------------------------------------------------------------------------*/
+void Draw_Rectangle(graphic_data_struct_t* graphic,
+										const uint8_t *name,
+										uint8_t layer,
+										Graphic_Color color,
+										uint16_t width,
+										uint16_t start_x,
+										uint16_t start_y,
+										uint16_t diagonal_x,
+										uint16_t diagonal_y);
+void Draw_Line(graphic_data_struct_t* graphic,
+							const uint8_t *name,
+							uint8_t layer,
+							Graphic_Color color,
+							uint16_t width,
+							uint16_t start_x,
+							uint16_t start_y,
+							uint16_t end_x,
+							uint16_t end_y);
+void Draw_Circle(graphic_data_struct_t* graphic,
+							const uint8_t *name,
+							uint8_t layer,
+							Graphic_Color color,
+							uint16_t width,
+							uint16_t center_x,
+							uint16_t center_y,
+							uint16_t radius);
+void Draw_Oval(graphic_data_struct_t* graphic,
+							const uint8_t *name,
+							uint8_t layer,
+							Graphic_Color color,
+							uint16_t width,
+							uint16_t center_x,
+							uint16_t center_y,
+							uint16_t axis_x,
+							uint16_t axis_y);
+void Draw_ARC(graphic_data_struct_t* graphic,
+							const uint8_t *name,
+							uint8_t layer,
+							Graphic_Color color,
+							uint16_t start_angle,
+							uint16_t end_angle,
+							uint16_t width,
+							uint16_t center_x,
+							uint16_t center_y,
+							uint16_t axis_x,
+							uint16_t axis_y);
+void Draw_Float(graphic_data_struct_t* graphic,
+								const uint8_t *name,
+								uint8_t layer,
+								Graphic_Color color,
+								uint16_t font_size,
+								uint16_t accuracy,
+								uint16_t width,
+								uint16_t start_x,
+								uint16_t start_y,
+								float number);
+void Draw_Int(graphic_data_struct_t* graphic,
+							const uint8_t *name,
+							uint8_t layer,
+							Graphic_Color color,
+							uint16_t font_size,
+							uint16_t width,
+							uint16_t start_x,
+							uint16_t start_y,
+							int32_t number);
+void Draw_Char(ext_client_custom_character_t* graphic,
+							const uint8_t *name,
+							uint8_t layer,
+							Graphic_Color color,
+							uint16_t font_size,
+							uint16_t length,
+							uint16_t width,
+							uint16_t start_x,
+							uint16_t start_y,
+							const uint8_t *character);
+void Add_Graphic(graphic_data_struct_t* graphic,
+									const uint8_t* name,
+									uint8_t layer,
+									uint8_t type,
+									uint8_t color,
+									uint16_t start_angle,
+									uint16_t end_angle,
+									uint16_t width,
+									uint16_t start_x,
+									uint16_t start_y,
+									uint16_t radius,
+									uint16_t end_x,
+									uint16_t end_y);
+void Modify_Graphic(graphic_data_struct_t* graphic,
+								  const uint8_t* name,
+									uint8_t layer,
+									uint8_t type,
+									uint8_t color,
+									uint16_t start_angle,
+									uint16_t end_angle,
+									uint16_t width,
+									uint16_t start_x,
+									uint16_t start_y,
+									uint16_t radius,
+									uint16_t end_x,
+									uint16_t end_y);
+void Delete_Graphic(graphic_data_struct_t* graphic);
+void Delete_Graphic_Layer(Interact_Target target,uint8_t layer);
+void Delete_All_Graphic_Layer(Interact_Target target);
+bool Send_Interact_Data(robot_interactive_data_t *str,uint16_t length);
+void Modify_Float(graphic_data_struct_t* graphic,float number);
+void Modify_Int(graphic_data_struct_t* graphic,int32_t number);
+void Modify_Char(ext_client_custom_character_t* graphic,const uint8_t *character,uint16_t length);	
+
+								  
 #endif	// Judge Version --20
 /*----------------------------------------------------------------------------*/
 /*-----------------------------↑↑20裁判系统↑↑------------------------------*/

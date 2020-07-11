@@ -217,6 +217,7 @@ void FRICTION_GetRemoteInfo(System_t *sys, RC_Ctl_t *remote, Friction_Info_t *fr
  *	@brief	遥控设置摩擦轮开启/关闭
  *	@note	SW2_DOWN + SW1_UP
  */
+uint16_t test_speed = 350;
 void REMOTE_SetFrictionState(RC_Ctl_t *remote)
 {
 	uint8_t	sw1, sw2;
@@ -228,7 +229,7 @@ void REMOTE_SetFrictionState(RC_Ctl_t *remote)
 			if(Friction.State == FRIC_STATE_OFF) {
 				Friction.State = FRIC_STATE_ON;			// 打开摩擦轮
 				Friction.SpeedLevel = FRIC_SPEED_HIGH;	// 高射速
-				Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
+				Friction.SpeedTarget = test_speed;//Friction_Pwm_Output[Friction.SpeedLevel];
 				LASER_ON();
 			} else if(Friction.State == FRIC_STATE_ON){
 				Friction.State = FRIC_STATE_OFF;		// 关闭摩擦轮

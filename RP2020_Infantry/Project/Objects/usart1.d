@@ -36,3 +36,6 @@
 .\objects\usart1.o: ..\FreeRTOS\include\task.h
 .\objects\usart1.o: ..\FreeRTOS\include\list.h
 .\objects\usart1.o: ..\SYSTEM\my_include.h
+.\objects\usart1.o: ..\APP\ultra.h
+.\objects\usart1.o: ..\FreeRTOS\include\semphr.h
+.\objects\usart1.o: ..\FreeRTOS\include\queue.h

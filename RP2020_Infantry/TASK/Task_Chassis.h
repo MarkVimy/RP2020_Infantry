@@ -13,7 +13,7 @@
 #define CHASSIS_ANGLE_IOUT_MAX		3000	// 底盘电机位置环pid积分输出限幅
 #define CHASSIS_ANGLE_INTEGRATE_MAX	6000	// 底盘电机位置环pid积分限幅
 #define CHASSIS_MAX_SPEED			8000	// 底盘电机转子最大转速
-#define CHASSIS_PID_OUT_MAX			6000	//9000	// 底盘电机pid输出最大值(功率限制)
+#define CHASSIS_PID_OUT_MAX			9000	//9000	// 底盘电机pid输出最大值(功率限制)
 
 #define WARNING_REMAIN_POWER		60
 #define CHASSIS_MAX_CURRENT_LIMIT	36000	// 单个电机最大输出9000

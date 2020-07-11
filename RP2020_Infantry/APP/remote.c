@@ -671,7 +671,7 @@ void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 			/* 常规 -> 对位 */
 			if(sys->Action == SYS_ACT_NORMAL) {
 				sys->Action = SYS_ACT_PARK;
-				sys->PidMode = MECH;
+				sys->PidMode = GYRO;//MECH;
 			}
 		}
 		

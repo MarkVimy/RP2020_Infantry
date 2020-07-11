@@ -5,8 +5,8 @@
  * @date        1-October-2019
  * @brief       This file includes the Gimbal(云台) external functions 
  *
- * @Verison			V1.1 (1-October-2019)
- *							V1.2 (30-Jan-2020)		-	优化云台复位就近算法
+ * @Verison		V1.1 (1-October-2019)
+ *				V1.2 (30-Jan-2020)		-	优化云台复位就近算法
  */
 
 /**

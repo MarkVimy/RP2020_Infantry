@@ -21,20 +21,35 @@ static void my_hardware_init(void)
 	CAN1_Init();	// CAN1初始化
 	CAN2_Init();	// CAN2初始化
 	TIM1_Init();	// 弹仓定时器1初始化
-	TIM3_Init();	// 摩擦轮定时器3初始化
-	
+	TIM3_Init();	// 摩擦轮定时器3初始化	
 	USART1_Init();
+
+	//	ULTRA_Config();
+//	while(1) {
+//		ULTRA_Detect();
+//		delay_ms(2);
+//	}
+	
 	IMU_Init();		// 祖传IMU初始化
 //	while(1) {
-//		now_time = millis();
+////		now_time = millis();
 //		IMU_Task();
-//		delta_time = millis() - now_time;
+////		delta_time = millis() - now_time;
 ////		ANOC_SendToPc1((int16_t)(Mpu_Info.yaw*100), (int16_t)(Mpu_Info.pitch*100), (int16_t)(Mpu_Info.roll*100));
 ////		ANOC_SendToPc((int16_t)Mpu_Info.yaw, (int16_t)Mpu_Info.pitch, (int16_t)Mpu_Info.roll, (int16_t)Mpu_Info.rateYaw, (int16_t)Mpu_Info.ratePitch, (int16_t)Mpu_Info.rateRoll, 0, 0, 0);
 //		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, delta_time, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
-////		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, delta_time, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
-////		delay_ms(1);
+////		RP_SendToPc(1, 2, 3, 4, 5, 6);
+////		delay_ms(2);
 //	}
+
+	JUDGE_SendToClient();
+	while(1) {	
+//		JUDGE_SendToTeammate(0x0103);
+//		JUDGE_SendToClient();
+		delay_ms(1000);
+//		JUDGE_SendToTeammate(0x0103);
+//		delay_ms(500);
+	}
 }
 
 static void my_system_init(void)

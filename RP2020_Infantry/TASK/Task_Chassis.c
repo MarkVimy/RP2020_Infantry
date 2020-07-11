@@ -58,13 +58,16 @@ uint16_t TIME_DEC_NORMAL = 50;
 
 #define SPIN_ANGLE	(35)
 
+#define CHAS_LOCATE_RAMP	(25)
+#define CHAS_SLIDE_LAMDA	(CHAS_LOCATE_RAMP)
+
 /* Private variables ---------------------------------------------------------*/
 /* 卡尔曼滤波器 */
 extKalman_t Chassis_Kalman_Error;
 
 /* 限幅 */
 float Chas_Spin_Move_Max = CHASSIS_PID_OUT_MAX;			// 底盘旋转-限速
-float Chas_Standard_Move_Max = CHASSIS_PID_OUT_MAX;	// 底盘平移-限速
+float Chas_Standard_Move_Max = CHASSIS_PID_OUT_MAX;		// 底盘平移-限速
 
 float Chas_Top_Spin_Max = CHASSIS_PID_OUT_MAX;
 float Chas_Top_Move_Max = CHASSIS_PID_OUT_MAX;
@@ -277,21 +280,21 @@ PID_Object_t Chas_Locate_PID[ALL] =
 		.ki = 0,
 		.kd = 0,
 		.integrate_max = 0,
-		.out_max = 3000,
+		.out_max = 6000,
 	},
 	{	// Y
-		.kp = 40,
+		.kp = 60,
 		.ki = 0,
 		.kd = 0,
 		.integrate_max = 0,
-		.out_max = 3000,
+		.out_max = 6000,
 	},
 	{	// Z
-		.kp = 50,
-		.ki = 0,
+		.kp = 160,
+		.ki = 15,
 		.kd = 0,
-		.integrate_max = 0,
-		.out_max = 3000,
+		.integrate_max = 9000,
+		.out_max = 6000,
 	}
 };
 
@@ -1182,7 +1185,7 @@ float js_w_z = 0;
 #define MOTOR_RPM_RATIO		(PERIMETER/(19.f*4*8192))
 #define ECD_RATIO			(PERIMETER/(19.f*4*60))
 #define GRAVITY_CENTER_X 	0
-#define GRAVITY_CENTER_Y 	-50
+#define GRAVITY_CENTER_Y 	0
 #define R					((WHEELTRACK + WHEELBASE)/2)
 #define R1 					(R + GRAVITY_CENTER_X - GRAVITY_CENTER_Y)
 #define R2					(R - GRAVITY_CENTER_X - GRAVITY_CENTER_Y)
@@ -1229,8 +1232,8 @@ void CHASSIS_GetSelfAttitude(void)
 								+g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum/R4);
 	js_agl_z = RADIAN_COEF * js_rad_z;	// 弧度转换成角度
 	// 记录反馈值
-	Chas_Locate_PID[ X ].feedback = js_pos_x;
-	Chas_Locate_PID[ Y ].feedback = js_pos_y;
+	Chas_Locate_PID[ X ].feedback = js_pos_x * 0.70f;
+	Chas_Locate_PID[ Y ].feedback = js_pos_y * 0.88f;
 	Chas_Locate_PID[ Z ].feedback = js_agl_z;
 }
 
@@ -1500,6 +1503,26 @@ void REMOTE_SetTopGyro(void)
  *	@note	长按返回最大系数1
  *			长时未按返回最小系数0
  */
+float KEY_SlopeChasSpeed(int8_t key_state, int16_t *time, uint16_t inc_ramp_step, uint16_t dec_ramp_step)
+{
+	float fac;
+	fac = (*time) / 2000.f;
+	if(key_state == 1) {	// 按键按下
+		if(fac < 1) {
+			*time += inc_ramp_step;
+		}
+	} else {	// 按键松开
+		if(fac > 0) {
+			*time -= dec_ramp_step;
+			if(*time < 0) {
+				*time = 0;
+			}
+		}
+	}
+	fac = constrain(fac, 0, 1);
+	return fac;
+}
+
 #define KEY_RAMP_SCALE	500.f
 uint8_t key_ramp_way = 0;
 float KEY_RampChasSpeed(int8_t key_state, int16_t *time, uint16_t inc_ramp_step, uint16_t dec_ramp_step)
@@ -1637,10 +1660,10 @@ void KEY_SetChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 	
 	if(Chassis.Mode == CHAS_MODE_NORMAL) {
 		
-//		/* 前后方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
-//		if(abs(Chas_Target_Speed[ Y ]) < (Chas_Standard_Move_Max/2.5f)) {
-//			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
-//			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
+		/* 前后方向突变，刚开始一小段缓慢斜坡，防止轮子打滑浪费功率 */
+//		if(abs(Chas_Target_Speed[ Y ]) < (Chas_Standard_Move_Max/3.f)) {
+//			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_SlopeChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
+//			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_SlopeChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Saltation, TIME_DEC_NORMAL);
 //		} else {
 			Chas_Slope_Move_Fron = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_W, &time_fron_y, Time_Inc_Normal, TIME_DEC_NORMAL);
 			Chas_Slope_Move_Back = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_S, &time_back_y, Time_Inc_Normal, TIME_DEC_NORMAL);
@@ -2339,20 +2362,30 @@ void CHASSIS_ReloadBulletCtrl(void)
 		CHASSIS_OmniSpeedCalc();		
 	
 	#elif (R_B_CASE == 6)
+		/*
+			该算法的误差情况如下（下面的数据是单独一个方向的测试）：
+			x方向误差：20cm左右
+			y方向误差：12cm左右
+			z方向误差：6°左右
+			如果是组合运动的话，误差会更加大
+		*/
 		if(Flag.Chassis.ReloadBulletStart == true) {
 			// 清除触发标志位
 			Flag.Chassis.ReloadBulletStart = false;
 			// 电机累加机械角度清零
 			CHASSIS_Angle_ClearSum(Chassis_PID);
 			// 设置目标位移
-			Chas_Locate_PID[ X ].target = -600;
+			Chas_Locate_PID[ X ].target = 0;
 			Chas_Locate_PID[ Y ].target = 0;
-			Chas_Locate_PID[ Z ].target = 0;
+//			Chas_Locate_PID[ Z ].target = 0;
 		}
+		Chas_Locate_PID[ X ].target = RampFloat(600, Chas_Locate_PID[ X ].feedback, CHAS_LOCATE_RAMP);	// 10-8cm	20-8.5	->kp60	600 15-11.5	20-12.5	25-15.5/17
+		Chas_Locate_PID[ Y ].target = RampFloat(-600, Chas_Locate_PID[ Y ].feedback, CHAS_LOCATE_RAMP);	// 10-4cm	20-5.5	->kp60	600 15-5.5	20-6.5	25-8.5/11.5
 		// pid计算
 		Chas_Target_Speed[ X ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ X ]);
-		Chas_Target_Speed[ Y ] = 0;//CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
-		Chas_Target_Speed[ Z ] = 0;//CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Z ]);
+		Chas_Target_Speed[ Y ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Y ]);
+		Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_PidCalc(&Chassis_Z_PID.Angle, (YAW_DIR) * kKey_Gyro_Chas_Spin);
+//		Chas_Target_Speed[ Z ] = CHASSIS_Locate_PidCalc(&Chas_Locate_PID[ Z ]);
 		// 全向分配算法
 		CHASSIS_OmniSpeedCalc();
 	#endif
@@ -2389,7 +2422,7 @@ void CHASSIS_PidCtrlTask(void)
 	CHASSIS_Speed_PidCalc(Chassis_PID, LEFT_BACK_203); 	// 左后 - 速度环
 	CHASSIS_Speed_PidCalc(Chassis_PID, RIGH_BACK_204); 	// 右后 - 速度环
 	/* 功率限制 */
-//	CHASSIS_PowerLimit(&Chassis, Chassis_PID, &Judge);
+	CHASSIS_PowerLimit(&Chassis, Chassis_PID, &Judge);
 	/* 最终输出 */
 	CHASSIS_PidOut(Chassis_PID);	
 }
