@@ -76,8 +76,8 @@ kalman_filter_init_t pitch_kalman_filter_para = {
 };//初始化pitch的部分kalman参数
 
 /* 打符参数 */
-float GIMBAL_BUFF_PITCH_COMPENSATION =	5;	// 0	5
-float GIMBAL_BUFF_YAW_COMPENSATION = -15;	// -175		-35
+float GIMBAL_BUFF_PITCH_COMPENSATION = 5;	// 0	5				325
+float GIMBAL_BUFF_YAW_COMPENSATION = -35;	// -175		-35				150
 float GIMBAL_BUFF_YAW_RAMP = 170;		// 185	160	185	180
 float GIMBAL_BUFF_PITCH_RAMP = 120;	// 130	105	120	140
 
@@ -622,14 +622,14 @@ void GIMBAL_PidOut(Gimbal_PID_t *pid)
 	int16_t pidOut[4] = {0, 0, 0, 0};
 	
 	/* CAN发送电压值 */
-	if(BitMask.Gimbal.BM_rxReport & BM_RX_REPORT_205) {
+	if(BitMask.Gimbal.CanReport & BM_CAN_REPORT_205) {
 		pidOut[YAW_205] = (int16_t)pid[YAW_205].Out;		// 0x205
 	}
 	else {
 		pidOut[YAW_205] = 0;	// 失联后卸力
 	}
-//	pidOut[YAW_205] = (int16_t)pid[YAW_205].Out;		// 0x205
-	if(BitMask.Gimbal.BM_rxReport & BM_RX_REPORT_206) {
+
+	if(BitMask.Gimbal.CanReport & BM_CAN_REPORT_206) {
 		pidOut[PITCH_206] = (int16_t)pid[PITCH_206].Out;	// 0x206
 	} 
 	else {
@@ -644,8 +644,19 @@ void GIMBAL_PidOut(Gimbal_PID_t *pid)
  */
 float k_Auto_Yaw_R = 20;
 float k_Auto_Pitch_R = 10;
-float k_Zx_Yaw_Q = 1;
-float k_Zx_Yaw_R = 1000;
+float k_visionYaw_Q = 1;
+float k_visionYaw_R = 10;
+float k_cloudYaw_Q = 1;
+float k_cloudYaw_R = 10;
+float k_targetYaw_Q = 1;
+float k_targetYaw_R = 10;
+float k_speedYaw_Q = 1;
+float k_speedYaw_R = 1000;
+float k_dist_Q = 1;
+float k_dist_R = 10;
+float k_accel_Q = 1;
+float k_accel_R = 10;
+
 void GIMBAL_KalmanCreate(void)
 {
 	/* 卡尔曼滤波器初始化 */
@@ -669,7 +680,13 @@ void GIMBAL_KalmanCreate(void)
 	kalman_filter_init(&pitch_kalman_filter, &pitch_kalman_filter_para);
 	
 	/* ZX卡尔曼滤波器 */
-	KalmanCreate(&kalman_speedYaw, k_Zx_Yaw_Q, k_Zx_Yaw_R);
+	KalmanCreate(&kalman_visionYaw, k_visionYaw_Q, k_visionYaw_R);
+	KalmanCreate(&kalman_cloudYaw, k_cloudYaw_Q, k_cloudYaw_R);
+	KalmanCreate(&kalman_targetYaw, k_targetYaw_Q, k_targetYaw_R);
+	KalmanCreate(&kalman_speedYaw, k_speedYaw_Q, k_speedYaw_R);
+	KalmanCreate(&kalman_dist, k_dist_Q, k_dist_R);
+	KalmanCreate(&kalman_accel, k_accel_Q, k_accel_R);	
+	
 }
 
 /* #信息层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -898,7 +915,7 @@ void GIMBAL_GetSysInfo(System_t *sys, Gimbal_Info_t *gim)
 			{
 				// 刚进入打符模式
 				if(gim->State.mode != GIMBAL_MODE_SMALL_BUFF
-					|| gim->State.mode != GIMBAL_MODE_BIG_BUFF)
+					&& gim->State.mode != GIMBAL_MODE_BIG_BUFF)
 					Gimbal.Buff.FLAG_first_into_buff = true;
 				
 				if(sys->BranchAction == BCH_ACT_SMALL_BUFF) {
@@ -939,22 +956,24 @@ void GIMBAL_GetSysInfo(System_t *sys, Gimbal_Info_t *gim)
 void GIMBAL_GetJudgeInfo(Judge_Info_t *judge, Gimbal_Info_t *gim)
 {
 	/* 根据射速等级修改自瞄参数 */
-	switch(judge->GameRobotStatus.robot_level)
-	{
-		case 0:
-			k_level = K_LEVEL_0;	// 1/(12/30) = 2.5
-		case 1:	
-			k_level = K_LEVEL_1;	// 1/(15/30) = 2
-			break;
-		case 2:
-			k_level = K_LEVEL_2;	// 1/(18/30) = 1.67
-			break;
-		case 3:
-			k_level = K_LEVEL_3;	// 1/(30/30) = 1
-			break;
-		default:
-			break;
-	}
+//	switch(judge->GameRobotStatus.robot_level)
+//	{
+//		case 0:
+//			k_level = K_LEVEL_0;	// 1/(12/30) = 2.5
+//		case 1:	
+//			k_level = K_LEVEL_1;	// 1/(15/30) = 2
+//			break;
+//		case 2:
+//			k_level = K_LEVEL_2;	// 1/(18/30) = 1.67
+//			break;
+//		case 3:
+//			k_level = K_LEVEL_3;	// 1/(30/30) = 1
+//			break;
+//		default:
+//			break;
+//	}
+	
+	k_level = 1;
 }
 
 
@@ -1076,6 +1095,12 @@ void KEY_SetGimbalTurn(void)
 			
 			/* 扭头就跑标志位 */
 			Flag.Chassis.GoHome = true;
+			if(Flag.Chassis.GoHome == true) {
+				/* 保持底盘状态
+					 屏蔽底盘跟随
+					 修改底盘逻辑 */
+				CHASSIS_LogicRevert();// 修改底盘逻辑
+			}
 			
 			if(keyVLockFlag == false) {
 				if(IF_KEY_PRESSED_A) {
@@ -1236,7 +1261,7 @@ void GIMBAL_Reset(void)
 	/* 云台复位完成 */
 	else if(Flag.Gimbal.ResetOk == true) {
 		Flag.Gimbal.ResetOk = false;	// 清除状态标志位
-		BM_Reset(BitMask.System.BM_Reset, BM_RESET_GIMBAL);
+		BM_Reset(BitMask.System.Reset, BM_RESET_GIMBAL);
 	}	
 }
 
@@ -1469,7 +1494,7 @@ void GIMBAL_VISION_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR
 	gimbal->Auto.Time[PREV] = gimbal->Auto.Time[NOW];
 }
 
-#define AUTO_CTRL_WAY	2
+#define AUTO_CTRL_WAY	1
 
 /**
  *	@brief	自瞄模式电控预测版
@@ -2050,67 +2075,67 @@ void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 		vision_yaw = VISION_GYRO_GetYawFeedback();
 
 		
-//		/*当视觉数据更新后进来*/	
-//		if(last_identify_flag != vision_identify_target)	/*识别的状态发生了切换*/
-//		{
-//			/*若发生了掉帧或刚识别到目标或丢失了目标，则进到这里*/ 
-//			
-//			ramp_cnt = RAMP_MAX_CNT;	/*切换后斜坡过渡*/
-//			/*这里原本的ramp_cnt为0.现在赋值为不为0的数，表示要对数据进行斜坡处理*/ 
-//			
-//			judge_flag = true;			/*进入判定过程*/
-//			/*触发识别状态的判定条件，即当出现识别模式的切换时，开始进入判断过程，判断是否真的跟丢或者只是掉帧或者刚识别到目标*/ 
-//			
+		/*当视觉数据更新后进来*/	
+		if(last_identify_flag != vision_identify_target)	/*识别的状态发生了切换*/
+		{
+			/*若发生了掉帧或刚识别到目标或丢失了目标，则进到这里*/ 
+			
+			ramp_cnt = RAMP_MAX_CNT;	/*切换后斜坡过渡*/
+			/*这里原本的ramp_cnt为0.现在赋值为不为0的数，表示要对数据进行斜坡处理*/ 
+			
+			judge_flag = true;			/*进入判定过程*/
+			/*触发识别状态的判定条件，即当出现识别模式的切换时，开始进入判断过程，判断是否真的跟丢或者只是掉帧或者刚识别到目标*/ 
+			
 
-//			//掉帧后重新判断识别状态
-//		}		
+			//掉帧后重新判断识别状态
+		}		
 
-//		if(judge_flag == true)		/*识别的状态发生了切换*/
-//		{
-//			/*
-//				这里的内容是哨兵侦察和识别之间的切换代码，实际上其他兵种可以不看，根据需要写上自己的切换过程代码。不过也可以看一下 参考一下思路，你细细品。 
-//			*/ 
-//			
-//			if(vision_identify_target == 1)		/*表示为发生了掉帧重新进入状态判定过程--这里不影响继续跟踪识别-因为模式没有改变*/
-//			{
-//				active_cnt++; 	/*活跃计数*/
-//				
-//				lost_cnt = 0;
-//				
-//				if(active_cnt >= ACTIVE_MAX_CNT) /*达到阈值，认定为识别到*/
-//				{
-//					judge_flag = false;
-//					
-//					//gimbal_mode = ATTACK;
-//				
-//					predict_delay = PREDICT_DELAY_CNT;  /*用于延迟超前角的加入时间*/
-//					
-//					active_cnt = 0;
-//					
-//					/*重新确认进来的判断*/
-//				}	
-//			}
-//			else
-//			{
-//				lost_cnt++;	 		/*丢失计数*/
-//				
-//				active_cnt = 0;
+		if(judge_flag == true)		/*识别的状态发生了切换*/
+		{
+			/*
+				这里的内容是哨兵侦察和识别之间的切换代码，实际上其他兵种可以不看，根据需要写上自己的切换过程代码。不过也可以看一下 参考一下思路，你细细品。 
+			*/ 
+			
+			if(vision_identify_target == 1)		/*表示为发生了掉帧重新进入状态判定过程--这里不影响继续跟踪识别-因为模式没有改变*/
+			{
+				active_cnt++; 	/*活跃计数*/
+				
+				lost_cnt = 0;
+				
+				if(active_cnt >= ACTIVE_MAX_CNT) /*达到阈值，认定为识别到*/
+				{
+					judge_flag = false;
+					
+					//gimbal_mode = ATTACK;
+				
+					predict_delay = PREDICT_DELAY_CNT;  /*用于延迟超前角的加入时间*/
+					
+					active_cnt = 0;
+					
+					/*重新确认进来的判断*/
+				}	
+			}
+			else
+			{
+				lost_cnt++;	 		/*丢失计数*/
+				
+				active_cnt = 0;
 
-//				if(lost_cnt >= LOST_MAX_CNT) /*达到阈值，认定为丢失*/
-//				{
-//					judge_flag = false;
-//					
-//					//gimbal_mode = SCOUT; 	
-//					
-//					
-//					lost_cnt = 0;					
-//					/*侦察模式的切换*/
-//				}
-//			}
-//			/*进入判定后不侦察*/	
-//			 
-//			/*到这里是侦察和识别的切换*/ 
-//		}	
+				if(lost_cnt >= LOST_MAX_CNT) /*达到阈值，认定为丢失*/
+				{
+					judge_flag = false;
+					
+					//gimbal_mode = SCOUT; 	
+					
+					
+					lost_cnt = 0;					
+					/*侦察模式的切换*/
+				}
+			}
+			/*进入判定后不侦察*/	
+			 
+			/*到这里是侦察和识别的切换*/ 
+		}	
 
 		/*↑↑↑ 模式判定过程 ↑↑↑*/
 		
@@ -2118,13 +2143,13 @@ void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 			下面就是斜坡的过程了
 			如果发生了切换的情况，则这里会进入斜坡并持续一小段时间，来缓和由于掉帧带来的冲击。具体的根据实际情况采用，可不用， 
 		*/ 
-//		if(ramp_cnt > 0)
-//		{
-//			/*斜坡过渡*/
-//			now_vision_yaw = RampFloat(vision_yaw, now_vision_yaw, abs(vision_yaw - now_vision_yaw)/ramp_cnt);
-//			ramp_cnt--;
-//		}
-//		else
+		if(ramp_cnt > 0)
+		{
+			/*斜坡过渡*/
+			now_vision_yaw = RampFloat(vision_yaw, now_vision_yaw, abs(vision_yaw - now_vision_yaw)/ramp_cnt);
+			ramp_cnt--;
+		}
+		else
 			now_vision_yaw = vision_yaw;                          
 		
 		vision_degree = now_vision_yaw / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
@@ -2162,7 +2187,7 @@ void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 	}
 	/*↑↑↑数据更新的处理↑↑↑*/
 		
-	target_yaw_raw = -vision_yaw_kf*k_scale_vision + cloud_yaw_kf;		/*对目标的期望角度*/
+	target_yaw_raw = vision_yaw_kf*k_scale_vision + cloud_yaw_kf;		/*对目标的期望角度*/
 	/*目标的位置的yaw角度预测，这里的符号是因为器件安装包括云台和摄像头的安装之间的关系。具体看自己的安装关系。*/ 
 
 
@@ -2377,57 +2402,57 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
  */
 void GIMBAL_CalPredictInfo(void)
 {
-//	/* 非自瞄模式下也更新 */
-//	if(!GIMBAL_IfAutoMode()) {
-//		/* 更新二阶卡尔曼速度先验估计值 */
-//		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][YAW_205].Angle.feedback);	
-//		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][PITCH_206].Angle.feedback);
+	/* 非自瞄模式下也更新 */
+	if(!GIMBAL_IfAutoMode()) {
+		/* 更新二阶卡尔曼速度先验估计值 */
+		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][YAW_205].Angle.feedback);	
+		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][PITCH_206].Angle.feedback);
 
-//		/* 对角度和速度进行二阶卡尔曼滤波融合,0位置,1速度 */
-//		yaw_kf_result = kalman_filter_calc(&yaw_kalman_filter, Gimbal_PID[GYRO][YAW_205].Angle.feedback, 0);		// 识别不到时认为目标速度为0
-//		pitch_kf_result = kalman_filter_calc(&pitch_kalman_filter, Gimbal_PID[GYRO][PITCH_206].Angle.feedback, 0);	// 识别不到时认为目标速度为0
+		/* 对角度和速度进行二阶卡尔曼滤波融合,0位置,1速度 */
+		yaw_kf_result = kalman_filter_calc(&yaw_kalman_filter, Gimbal_PID[GYRO][YAW_205].Angle.feedback, 0);		// 识别不到时认为目标速度为0
+		pitch_kf_result = kalman_filter_calc(&pitch_kalman_filter, Gimbal_PID[GYRO][PITCH_206].Angle.feedback, 0);	// 识别不到时认为目标速度为0
 
-//		js_yaw_speed = yaw_kf_result[KF_SPEED];
-//		js_yaw_angle = yaw_kf_result[KF_ANGLE];
-//	}
+		js_yaw_speed = yaw_kf_result[KF_SPEED];
+		js_yaw_angle = yaw_kf_result[KF_ANGLE];
+	}
 
 	
-	if( !GIMBAL_IfAutoMode() ) 
-	{
-		now_gyro_yaw = Gimbal_PID[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
-		/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
+//	if( !GIMBAL_IfAutoMode() ) 
+//	{
+//		now_gyro_yaw = Gimbal_PID[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
+//		/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
 
-		delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
-		/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
-		
-		cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
-		/*这里是为了将差值进行卡尔曼滤波*/
-		 
-		last_gyro_yaw = now_gyro_yaw; /*记录上一次的角度值*/
-		/*更新记录上一次采样的陀螺仪角度*/ 
+//		delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
+//		/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
+//		
+//		cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
+//		/*这里是为了将差值进行卡尔曼滤波*/
+//		 
+//		last_gyro_yaw = now_gyro_yaw; /*记录上一次的角度值*/
+//		/*更新记录上一次采样的陀螺仪角度*/ 
 
-		cloud_yaw_kf = KalmanFilter(&kalman_cloudYaw,cloud_yaw_raw)+start_gyro_yaw;	/*滤波*/       
-		
-		cloud_degree = cloud_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
-		/*这里是将前后两次采样的差值进行卡尔曼滤波后再加上起始角度，来作为滤波后的云台陀螺仪角度*/ 
-		
-		target_speed_raw = Get_Target_Speed(queue_speed_length,now_cal_yaw)*k_speed; 	/*计算出对目标速度的预测*/
-		/*开始对目标的速度进行预测，这个函数直接参考我给的代码。k_speed是缩放系数，因为得到的速度数据比较小，因此放大后放到卡尔曼比较合适*/ 
-		
-		target_speed_kf = KalmanFilter(&kalman_speedYaw,0);			
-		
-		/*参考去年的做法。*/ 
-		
-		
-		target_accel_raw = Get_Target_Accel(queue_accel_length,target_speed_kf);	 /*获取加速度*/
-		
-		target_accel_raw = myDeathZoom(0,0.1,target_accel_raw);		/*死区处理 - 滤除0点附近的噪声*/
-		
-		target_accel_kf = KalmanFilter(&kalman_accel,target_accel_raw);		/*卡尔曼滤波*/
+//		cloud_yaw_kf = KalmanFilter(&kalman_cloudYaw,cloud_yaw_raw)+start_gyro_yaw;	/*滤波*/       
+//		
+//		cloud_degree = cloud_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
+//		/*这里是将前后两次采样的差值进行卡尔曼滤波后再加上起始角度，来作为滤波后的云台陀螺仪角度*/ 
+//		
+//		target_speed_raw = Get_Target_Speed(queue_speed_length,0)*k_speed; 	/*计算出对目标速度的预测*/
+//		/*开始对目标的速度进行预测，这个函数直接参考我给的代码。k_speed是缩放系数，因为得到的速度数据比较小，因此放大后放到卡尔曼比较合适*/ 
+//		
+//		target_speed_kf = KalmanFilter(&kalman_speedYaw,target_speed_raw);			
+//		
+//		/*参考去年的做法。*/ 
+//		
+//		
+//		target_accel_raw = Get_Target_Accel(queue_accel_length,target_speed_kf);	 /*获取加速度*/
+//		
+//		target_accel_raw = myDeathZoom(0,0.1,target_accel_raw);		/*死区处理 - 滤除0点附近的噪声*/
+//		
+//		target_accel_kf = KalmanFilter(&kalman_accel,target_accel_raw);		/*卡尔曼滤波*/
 
-		/*上面三行是解算加速度的数据，跟速度的解算原理一样，不多做解释*/		
-		
-	}
+//		/*上面三行是解算加速度的数据，跟速度的解算原理一样，不多做解释*/		
+//		
+//	}
 }
 
 /**
@@ -2739,7 +2764,7 @@ void GIMBAL_Ctrl(void)
 	/*----信息读入----*/
 	GIMBAL_GetInfo();
 	/*----期望修改----*/
-	if(BM_IfSet(BitMask.System.BM_Reset, BM_RESET_GIMBAL)) {	// 复位状态
+	if(BM_IfSet(BitMask.System.Reset, BM_RESET_GIMBAL)) {	// 复位状态
 		GIMBAL_Reset(); // 云台复位
 	} 
 	else {

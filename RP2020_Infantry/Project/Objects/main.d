@@ -56,6 +56,7 @@
 .\objects\main.o: ..\SYSTEM\delay.h
 .\objects\main.o: ..\APP\crc.h
 .\objects\main.o: ..\APP\imu.h
+.\objects\main.o: ..\APP\supercap.h
 .\objects\main.o: ..\BSP\led.h
 .\objects\main.o: ..\BSP\laser.h
 .\objects\main.o: ..\BSP\can.h

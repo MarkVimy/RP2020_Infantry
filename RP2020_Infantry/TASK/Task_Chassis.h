@@ -127,6 +127,7 @@ bool CHASSIS_IfTwistOpen(void);
 bool CHASSIS_IfLogicRevert(void);
 	
 /* #”¶”√≤„# ---------------------------------------------------------------------------------------------------------------------------------------*/
+void REMOTE_SetTopGyro(void);
 void CHASSIS_Init(void);
 float CHASSIS_TwistTargetCalc(int16_t maxTarget, int16_t rampTarget);
 //void CHASSIS_PowerLimit(Chassis_Power_t *power, Chassis_PID_t *pid, Judge_Info_t *judge_info);

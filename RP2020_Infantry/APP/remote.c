@@ -453,7 +453,7 @@ void REMOTE_RcLostProcess(System_t *sys)
 			/* 外部遥控通道已复位 */
 			if(REMOTE_IsRcChannelReset(&Remote)) 
 			{
-				BM_Set(BitMask.System.BM_Reset, BM_RESET_GIMBAL);	// 启动云台复位
+				BM_Set(BitMask.System.Reset, BM_RESET_GIMBAL);	// 启动云台复位
 				Flag.Gimbal.AngleRecordStart = true;
 				
 				/* 系统参数复位(sw2归中时的参数) */
@@ -745,7 +745,7 @@ void REMOTE_Ctrl(void)
 	/* 遥控正常 */
 	else {	
 		/* 云台复位完成后允许切换 */
-		if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_GIMBAL))
+		if(BM_IfReset(BitMask.System.Reset, BM_RESET_GIMBAL))
 			REMOTE_RcCorrectProcess(&System, &Remote);
 	}
 	

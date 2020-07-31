@@ -23,6 +23,7 @@
 #include "ultra.h"
 #include "crc.h"
 #include "imu.h"
+#include "supercap.h"
 /* Includes HARDWARE Header Files ----------------------------------- */
 #include "led.h"
 #include "laser.h"

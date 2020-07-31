@@ -104,9 +104,9 @@ void IMU_Init(void)
  */
 void IMU_Task(void)
 {
-	uint32_t now_time = 0;
+//	uint32_t now_time = 0;
 	/* 读取MPU6050传感器数据 */
-	now_time = xTaskGetTickCount();
+//	now_time = xTaskGetTickCount();
 	mpu_dmp_get_data( &Mpu_Info.roll, &Mpu_Info.pitch, &Mpu_Info.yaw);
 	MPU_Get_Gyroscope( &Mpu_Info.ratePitch, &Mpu_Info.rateRoll, &Mpu_Info.rateYaw);
 //	RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, xTaskGetTickCount() - now_time, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);

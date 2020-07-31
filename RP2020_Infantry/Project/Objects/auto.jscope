@@ -19,16 +19,22 @@
         </Windows>
         <SelectedSymbols>
             <Symbol>
-                <Options Name="identify_target" Address="0x2000007C" Type="uchar" TypeID="6" Size="1" GraphColorRed="255" GraphColorGreen="0" GraphColorBlue="0" YMinSampled="0" YMaxSampled="1" YAvgSampled="0" Offset="4" ShowInGraph="1" ACCoupling="0" YOffset="300" IsAutoConfig="0" YResolution="1" MaxValue="2" File="..\AppInfo\vision.c" Scope="0" DrawStyle="0" />
+                <Options Name="identify_target" Address="0x20000D90" Type="uchar" TypeID="6" Size="1" GraphColorRed="255" GraphColorGreen="0" GraphColorBlue="0" YMinSampled="0" YMaxSampled="0" YAvgSampled="0" Offset="4" ShowInGraph="1" ACCoupling="0" YOffset="300" IsAutoConfig="0" YResolution="1" MaxValue="2" File="..\AppInfo\vision.c" Scope="0" DrawStyle="0" />
             </Symbol>
             <Symbol>
-                <Options Name="yaw_angle_predict" Address="0x20000B18" Type="float" TypeID="1" Size="4" GraphColorRed="0" GraphColorGreen="191" GraphColorBlue="255" YMinSampled="-116" YMaxSampled="128" YAvgSampled="-1" Offset="5" ShowInGraph="1" ACCoupling="0" YOffset="190" IsAutoConfig="0" YResolution="50" MaxValue="20" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
+                <Options Name="yaw_angle_predict" Address="0x20000AC0" Type="float" TypeID="1" Size="4" GraphColorRed="0" GraphColorGreen="191" GraphColorBlue="255" YMinSampled="0" YMaxSampled="0" YAvgSampled="0" Offset="5" ShowInGraph="1" ACCoupling="0" YOffset="190" IsAutoConfig="0" YResolution="50" MaxValue="20" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
             </Symbol>
             <Symbol>
-                <Options Name="target" Address="0x20000C40" Type="float" TypeID="1" Size="4" GraphColorRed="102" GraphColorGreen="102" GraphColorBlue="178" YMinSampled="0" YMaxSampled="29" YAvgSampled="0" Offset="9" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="0" YResolution="500" MaxValue="2" File="..\TASK\Task_Revolver.c" Scope="0" DrawStyle="0" />
+                <Options Name="target" Address="0x20000BF4" Type="float" TypeID="1" Size="4" GraphColorRed="102" GraphColorGreen="102" GraphColorBlue="178" YMinSampled="0" YMaxSampled="0" YAvgSampled="0" Offset="9" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="0" YResolution="500" MaxValue="2" File="..\TASK\Task_Revolver.c" Scope="0" DrawStyle="0" />
             </Symbol>
             <Symbol>
-                <Options Name="js_yaw_angle" Address="0x20000B54" Type="float" TypeID="1" Size="4" GraphColorRed="160" GraphColorGreen="32" GraphColorBlue="240" YMinSampled="-72" YMaxSampled="548" YAvgSampled="-54" Offset="13" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="500" MaxValue="1000" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
+                <Options Name="js_yaw_angle" Address="0x20000AFC" Type="float" TypeID="1" Size="4" GraphColorRed="160" GraphColorGreen="32" GraphColorBlue="240" YMinSampled="0" YMaxSampled="0" YAvgSampled="0" Offset="13" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="500" MaxValue="1000" File="..\TASK\Task_Gimbal.c" Scope="0" DrawStyle="0" />
+            </Symbol>
+            <Symbol>
+                <Options Name="pitch_angle" Address="0x20000D83" Type="float" TypeID="1" Size="4" GraphColorRed="255" GraphColorGreen="0" GraphColorBlue="0" YMinSampled="0" YMaxSampled="0" YAvgSampled="0" Offset="17" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="1" MaxValue="2" File="..\AppInfo\vision.c" Scope="0" DrawStyle="0" />
+            </Symbol>
+            <Symbol>
+                <Options Name="yaw_angle" Address="0x20000D87" Type="float" TypeID="1" Size="4" GraphColorRed="0" GraphColorGreen="191" GraphColorBlue="255" YMinSampled="0" YMaxSampled="0" YAvgSampled="0" Offset="21" ShowInGraph="1" ACCoupling="0" YOffset="200" IsAutoConfig="1" YResolution="1" MaxValue="2" File="..\AppInfo\vision.c" Scope="0" DrawStyle="0" />
             </Symbol>
         </SelectedSymbols>
     </Project>

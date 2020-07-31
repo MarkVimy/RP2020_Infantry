@@ -57,6 +57,7 @@
 .\objects\scheduler.o: ..\SYSTEM\delay.h
 .\objects\scheduler.o: ..\APP\crc.h
 .\objects\scheduler.o: ..\APP\imu.h
+.\objects\scheduler.o: ..\APP\supercap.h
 .\objects\scheduler.o: ..\BSP\led.h
 .\objects\scheduler.o: ..\BSP\laser.h
 .\objects\scheduler.o: ..\BSP\can.h

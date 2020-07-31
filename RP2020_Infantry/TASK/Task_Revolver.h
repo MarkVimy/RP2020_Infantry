@@ -7,13 +7,13 @@
 
 /* Global macro --------------------------------------------------------------*/
 #define REVOLVER_ID					0x207
-#define REVOLVER_BM_RX_REPORT		BM_RX_REPORT_207
+#define REVOLVER_BM_CAN_REPORT		BM_CAN_REPORT_207
 
 #define REVOLVER_SPEED_RATIO		2160		// 1秒转一圈(= 60rpm*36(减速比) => 1rps)
 #define REVOLVER_SPEED_GRID			12.0f		// 拨盘12格
 #define SPEED_AN_BULLET_PER_SECOND	(REVOLVER_SPEED_RATIO/REVOLVER_SPEED_GRID)	// 1发/s 的期望速度
 #define ANGLE_AN_BULLET				24576.0f	// 8192*36/12 = 24576.0f
-#define ANGLE_AN_BULLET_RAMP		(ANGLE_AN_BULLET/20)	// 最快20ms转一格(一定不能超过50ms)
+#define ANGLE_AN_BULLET_RAMP		ANGLE_AN_BULLET/20	//(ANGLE_AN_BULLET/20)	// 最快20ms转一格(一定不能超过50ms)
 
 #define HEAT_AN_BULLET				10	// 打一颗弹丸的热量增加(RM2020固定为10)
 
@@ -65,8 +65,9 @@ typedef struct {
 typedef struct {
 	uint16_t 	total_count;	// 总发弹量
 	uint32_t 	real_time;		// 单点实时时间(用来测试射击延迟)
+	uint16_t	real_ping;		// 单点实时响应(射击延迟)
 	uint16_t	freq;			// 射频
-	uint16_t	interval;		// 发射时间间隔
+	uint16_t	interval;		// 发射时间间隔(与射频相关)
 	uint16_t	num;			// 需要发射的子弹数(发射指令数)
 	uint16_t	num_buffer; 	// 允许发射的子弹数
 	uint16_t	heat_cooling_rate; // 17mm枪口每秒冷却值
@@ -103,6 +104,7 @@ void REVOLVER_AddShootCount(void);
 
 /* info -> out */
 uint32_t REVOLVER_GetRealShootTime(void);
+uint16_t REVOLVER_CalcRealShootPing(uint32_t feedback_time);
 
 /* in <- info */
 void REVOLVER_GetSysInfo(System_t *sys, Revolver_Info_t *revo);

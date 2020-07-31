@@ -1,5 +1,5 @@
 .\objects\friction.o: ..\APP\friction.c
-.\objects\friction.o: ..\BSP\pwm.h
+.\objects\friction.o: ..\APP\friction.h
 .\objects\friction.o: ..\SYSTEM\sys.h
 .\objects\friction.o: ..\Libraries\cmsis\stm32f4xx.h
 .\objects\friction.o: ..\Libraries\cmsis\Include\core_cm4.h
@@ -36,7 +36,7 @@
 .\objects\friction.o: ..\FreeRTOS\include\task.h
 .\objects\friction.o: ..\FreeRTOS\include\list.h
 .\objects\friction.o: ..\SYSTEM\my_include.h
-.\objects\friction.o: ..\APP\friction.h
+.\objects\friction.o: ..\BSP\pwm.h
 .\objects\friction.o: ..\APP\remote.h
 .\objects\friction.o: ..\TASK\my_task.h
 .\objects\friction.o: ..\TASK\Task_Chassis.h

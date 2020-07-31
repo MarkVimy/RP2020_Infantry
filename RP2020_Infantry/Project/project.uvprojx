@@ -483,6 +483,11 @@
               <FileType>1</FileType>
               <FilePath>..\APP\anoc.c</FilePath>
             </File>
+            <File>
+              <FileName>supercap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\supercap.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -547,6 +552,11 @@
               <FileName>rng.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\rng.c</FilePath>
+            </File>
+            <File>
+              <FileName>adda.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\adda.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -627,6 +637,11 @@
               <FileName>stm32f4xx_rng.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Libraries\src\stm32f4xx_rng.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_dac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\src\stm32f4xx_dac.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -80,29 +80,29 @@ typedef struct {
 /* Bit Mask Asset Structure */
 typedef struct {
 	struct {
-		uint16_t	BM_Reset;		// 系统复位任务位掩膜
+		uint16_t	Reset;		// 系统复位任务位掩膜
 	}System;
 	struct {
-		uint8_t		BM_rxReport;	// 底盘电机接收报文位掩膜
+		uint8_t		CanReport;	// 底盘电机接收报文位掩膜
 	}Chassis;
 	struct {
-		uint8_t 	BM_rxReport;	// 云台电机接收报文位掩膜
+		uint8_t 	CanReport;	// 云台电机接收报文位掩膜
 	}Gimbal;
 	struct {
-		uint8_t 	BM_rxReport;	// 拨弹电机接收报文位掩膜
+		uint8_t 	CanReport;	// 拨弹电机接收报文位掩膜
 	}Revolver;
 }BitMask_t;
 
 /* Bit Mask Can Report Enum */
 typedef enum {
-	BM_RX_REPORT_201 = 0x01,
-	BM_RX_REPORT_202 = 0x02,
-	BM_RX_REPORT_203 = 0x04,
-	BM_RX_REPORT_204 = 0x08,
-	BM_RX_REPORT_205 = 0x10,
-	BM_RX_REPORT_206 = 0x20,
-	BM_RX_REPORT_207 = 0x40,
-	BM_RX_REPORT_208 = 0x80,
+	BM_CAN_REPORT_201 = 0x01,
+	BM_CAN_REPORT_202 = 0x02,
+	BM_CAN_REPORT_203 = 0x04,
+	BM_CAN_REPORT_204 = 0x08,
+	BM_CAN_REPORT_205 = 0x10,
+	BM_CAN_REPORT_206 = 0x20,
+	BM_CAN_REPORT_207 = 0x40,
+	BM_CAN_REPORT_208 = 0x80,
 }BM_Rx_Report_t;
 
 /* Bit Mask Reset Enum */

@@ -532,7 +532,7 @@ void CHASSIS_InitParams(void)
 	k_Gyro_Chas_Twist = -4.8;
 	
 	/* 小陀螺转速步长 */
-	Chas_Top_Gyro_Step = 10;
+	Chas_Top_Gyro_Step = 8;
 	
 	/* 扭腰旋转步长 */
 	Chas_Twist_Step = 4;
@@ -768,6 +768,8 @@ void CHASSIS_Angle_PidCalc(Chassis_PID_t *pid, Chassis_Motor_Names MOTORx)
  *			将当前YAW机械角和中值YAW机械角的差值作为误差送进 Z_PID控制器。
  *			反馈期望的角速度 tar_spd_z
  */
+uint16_t chas_stuck_cnt = 0;
+uint8_t chas_stuck_flag = 0;
 float CHASSIS_Z_Angle_PidCalc(PID_Object_t *pid, float kp)
 {
 	pid->kp = kp;
@@ -777,29 +779,38 @@ float CHASSIS_Z_Angle_PidCalc(PID_Object_t *pid, float kp)
 	
 	/*
 	
-		0 - 8191 
+		0 <-> 8191 
 
 		误差=期望-反馈
 	
 		误差大于4096
 	
-		反馈落后于期望 -> 确定期望的方向 0->8191 --》 反馈大于期望
+		反馈落后于期望 -> 确定期望的方向 8191->0 --》 反馈大于期望
 	
 		实际误差 = -（8191 - 期望 + 反馈） = -8191 + 误差
 	
 		误差小于-4096
 	
-		反馈落后于期望 -> 确定期望方向 8191->0  --》 期望大于反馈
+		反馈落后于期望 -> 确定期望方向 0-8191  --》 期望大于反馈
 	
 		实际误差 = 8191 + 期望 -反馈 = 8191 + (期望 - 反馈) = 8191 + 误差 
 	*/
 	
-	
+	/*
+	 TODO:可以在这里设置一个计数器，如果连续计数超过一定值则认为小陀螺卡住了
+	 因为小陀螺正常运行的过程中，通常越过零点的时间比较短，不可能会得到一个较大的
+	 连续计数值
+	*/
 	if(pid->erro >= 4096) {
 		pid->erro = -8192 + pid->erro;
+		chas_stuck_cnt++;
 	} 
 	else if(pid->erro <= -4096) {
 		pid->erro = 8192 + pid->erro;
+		chas_stuck_cnt++;
+	}
+	else {
+		chas_stuck_cnt = 0;
 	}
 	
 	pid->erro = KalmanFilter(&Chassis_Kalman_Error, pid->erro);
@@ -885,25 +896,25 @@ void CHASSIS_PidOut(Chassis_PID_t *pid)
 {
 	int16_t pidOut[4];
 	
-	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_201) {
+	if(BitMask.Chassis.CanReport & BM_CAN_REPORT_201) {
 		pidOut[LEFT_FRON_201] = (int16_t)pid[LEFT_FRON_201].Out;
 	} else {
 		pidOut[LEFT_FRON_201] = 0;	// 失联后卸力
 	}
 	
-	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_202) {
+	if(BitMask.Chassis.CanReport & BM_CAN_REPORT_202) {
 		pidOut[RIGH_FRON_202] = (int16_t)pid[RIGH_FRON_202].Out;
 	} else {
 		pidOut[LEFT_FRON_201] = 0;	// 失联后卸力
 	}
 	
-	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_203) {
+	if(BitMask.Chassis.CanReport & BM_CAN_REPORT_203) {
 		pidOut[LEFT_BACK_203] = (int16_t)pid[LEFT_BACK_203].Out;
 	} else {
 		pidOut[LEFT_BACK_203] = 0;	// 失联后卸力
 	}
 	
-	if(BitMask.Chassis.BM_rxReport & BM_RX_REPORT_204) {
+	if(BitMask.Chassis.CanReport & BM_CAN_REPORT_204) {
 		pidOut[RIGH_BACK_204] = (int16_t)pid[RIGH_BACK_204].Out;
 	} else {
 		pidOut[RIGH_BACK_204] = 0;	// 失联后卸力
@@ -1134,11 +1145,29 @@ void CHASSIS_GetJudgeInfo(Judge_Info_t *judge, Chassis_Info_t *chas)
 /**
  *	@brief	底盘读取IMU数据
  */
+float js_rotate_speed = 0;
+static int16_t ecd_yaw[TIME_STATE_COUNT];
+static float yaw[TIME_STATE_COUNT];
 void CHASSIS_GetImuInfo(Chassis_Z_PID_t *zpid)
 {
-	static float yaw[TIME_STATE_COUNT];
+	static portTickType rotate_speed_time[TIME_STATE_COUNT];	
+
+	// Time
+	rotate_speed_time[NOW] = xTaskGetTickCount();
+	rotate_speed_time[DELTA] = rotate_speed_time[NOW] - rotate_speed_time[PREV];
+	rotate_speed_time[PREV] = rotate_speed_time[NOW];
 	
-	/* # Yaw # */
+	// ECD Yaw
+	ecd_yaw[NOW] = g_Gimbal_Motor_Info[YAW_205].angle;
+	ecd_yaw[DELTA] = ecd_yaw[NOW] - ecd_yaw[PREV];
+	if(ecd_yaw[DELTA] > 4096) {
+		ecd_yaw[DELTA] = 8192 - ecd_yaw[DELTA];
+	} else if(ecd_yaw[DELTA] < -4096) {
+		ecd_yaw[DELTA] = -8192 - ecd_yaw[DELTA];
+	}
+	ecd_yaw[PREV] = ecd_yaw[NOW];
+	
+	// Yaw
 	yaw[NOW] = Mpu_Info.yaw;
 	yaw[DELTA] = yaw[NOW] - yaw[PREV];
 	if(yaw[DELTA] > +180.f) {
@@ -1148,11 +1177,15 @@ void CHASSIS_GetImuInfo(Chassis_Z_PID_t *zpid)
 	}
 	yaw[PREV] = yaw[NOW]; 
 
+	// Rotate Speed °/s (计算时用陀螺仪角度来抵消云台转动所带来的机械角度反馈变化)
+	js_rotate_speed = 1000*(ecd_yaw[DELTA]/8192.f*360 - yaw[DELTA])/rotate_speed_time[DELTA];
+	
 	/* 利用陀螺仪数据作扭头补偿(使得云台与底盘独立运动) */
 	if(CHASSIS_IfTopGyroOpen() == true) {
 		zpid->Angle.target = CHASSIS_MECH_YawBoundaryProc(&Chassis_Z_PID, 		
 												yaw[DELTA] * 8192 / 360.f);
 	}	
+	
 }
 
 /**
@@ -1168,7 +1201,8 @@ void CHASSIS_GetTopGyroInfo(void)
 	if(CHASSIS_IfTopGyroOpen() == true) {
 		// -7.5sin(2pi*t/T)+22.5
 //		Chas_Top_Gyro_Step = -7.5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 22.5;	// 正弦小陀螺
-		Chas_Top_Gyro_Step = -5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 10;	// 正弦小陀螺
+//		Chas_Top_Gyro_Step = -5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 10;	// 正弦小陀螺
+//		Chas_Top_Gyro_Step = 4;	// 匀速小陀螺
 	}
 }
 
@@ -1232,8 +1266,8 @@ void CHASSIS_GetSelfAttitude(void)
 								+g_Chassis_Motor_Info[RIGH_BACK_204].angle_sum/R4);
 	js_agl_z = RADIAN_COEF * js_rad_z;	// 弧度转换成角度
 	// 记录反馈值
-	Chas_Locate_PID[ X ].feedback = js_pos_x * 0.70f;
-	Chas_Locate_PID[ Y ].feedback = js_pos_y * 0.88f;
+	Chas_Locate_PID[ X ].feedback = js_pos_x * 0.70f;	// 系数为补偿值(根据测试情况调节)
+	Chas_Locate_PID[ Y ].feedback = js_pos_y * 0.88f;	// 系数为补偿值(根据测试情况调节)
 	Chas_Locate_PID[ Z ].feedback = js_agl_z;
 }
 
@@ -1379,8 +1413,10 @@ int8_t twist_dir = 0;
 void REMOTE_TOP_SetChassisSpeed(void)
 {
 	float k_rc_z;
+	float k_rc_xy;
 	float target_speed_x;
 	float target_speed_y;
+	float target_speed_xy;
 	
 	/* 机械模式 */
 	if(CHASSIS_IfMechMode() == true) {
@@ -1404,9 +1440,36 @@ void REMOTE_TOP_SetChassisSpeed(void)
 		Chas_Target_Speed[ Y ] = RC_LEFT_CH_UD_VALUE * kRc_Gyro_Chas_Standard;
 		Chas_Target_Speed[ Y ] = constrain(Chas_Target_Speed[ Y ], -Chas_Standard_Move_Max, Chas_Standard_Move_Max);
 		
+		/* 陀螺仪模式下的坐标系转换 */
+		// 计算偏差机械中值的角度差
+		delta_angle = GIMBAL_GetTopGyroAngleOffset() * MECH_2_ANGLE_RADIAN;	//  (8192.f-GIMBAL_GetTopGyroAngleOffset()) * MECH_2_ANGLE_RADIAN
+		target_speed_x = Chas_Target_Speed[ X ];
+		target_speed_y = Chas_Target_Speed[ Y ];
+		// 旋转矩阵 将云台坐标系的期望速度 转换到 底盘坐标系的期望速度
+		Chas_Target_Speed[ X ] = cos(delta_angle) * target_speed_x - sin(delta_angle) * target_speed_y;
+		Chas_Target_Speed[ Y ] = sin(delta_angle) * target_speed_x + cos(delta_angle) * target_speed_y;		
+		
 		/* 开启了小陀螺 */
 		if(CHASSIS_IfTopGyroOpen() == true) {
 
+			k_rc_z = 1.f;
+			/* xy方向的速度和 */
+			target_speed_xy = (abs(Chas_Target_Speed[ X ]) + abs(Chas_Target_Speed[ Y ]))/2;
+			/* 计算平移因子(通过调整进入条件来设置旋转和平移的分配比例) */
+			if(target_speed_xy > 800) {
+				k_rc_xy = ((Chas_Standard_Move_Max - (target_speed_xy - 800)) * (Chas_Standard_Move_Max - (target_speed_xy - 800)))
+									/ (Chas_Standard_Move_Max * Chas_Standard_Move_Max);	// 理论计算范围 (0.008, 1)
+				
+				k_rc_xy = constrain(k_rc_xy, 0.f, 1.f);
+				Chas_Top_Gyro_Step = 8 * k_rc_xy;
+			} else {
+				k_rc_xy = 1.f;
+				Chas_Top_Gyro_Step = 8;
+			}
+			
+//			/* 根据平移量重新分配旋转速度期望值 */
+//			Chas_Target_Speed[ Z ] = Chas_Target_Speed[ Z ] * k_rc_xy;			
+			
 			// 外环期望斜坡变化
 			Chassis_Z_PID.Angle.target = CHASSIS_MECH_YawBoundaryProc(&Chassis_Z_PID, top_gyro_dir * Chas_Top_Gyro_Step);
 			// Z方向速度pid计算
@@ -1427,33 +1490,23 @@ void REMOTE_TOP_SetChassisSpeed(void)
 		Chas_Target_Speed[ Z ] = constrain(Chas_Target_Speed[ Z ], -Chas_Spin_Move_Max, Chas_Spin_Move_Max);
 	}
 	
-	/* 陀螺仪模式下的坐标系转换 */
-	if(CHASSIS_IfGyroMode() == true) {
+	if(CHASSIS_IfTopGyroOpen() == false) {
+		k_rc_xy = 1.f;
+		/* 计算旋转因子(通过调整进入条件来设置旋转和平移的分配比例) */
+		if(abs(Chas_Target_Speed[ Z ]) > 800) {	
+			// 扭头速度越快，平移速度越慢
+			k_rc_z = ((Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)) * (Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)))
+								/ (Chas_Spin_Move_Max * Chas_Spin_Move_Max);	// 理论计算范围 (0.008, 1)
+			
+			k_rc_z = constrain(k_rc_z, 0.f, 1.f);
+		} else {
+			k_rc_z = 1.f;
+		}		
 		
-		// 计算偏差机械中值的角度差
-		delta_angle = GIMBAL_GetTopGyroAngleOffset() * MECH_2_ANGLE_RADIAN;	//  (8192.f-GIMBAL_GetTopGyroAngleOffset()) * MECH_2_ANGLE_RADIAN
-		target_speed_x = Chas_Target_Speed[ X ];
-		target_speed_y = Chas_Target_Speed[ Y ];
-		// 旋转矩阵 将云台坐标系的期望速度 转换到 底盘坐标系的期望速度
-		Chas_Target_Speed[ X ] = cos(delta_angle) * target_speed_x - sin(delta_angle) * target_speed_y;
-		Chas_Target_Speed[ Y ] = sin(delta_angle) * target_speed_x + cos(delta_angle) * target_speed_y;
-		
+		/* 根据旋转量重新分配平移速度期望值 */
+		Chas_Target_Speed[ X ] = Chas_Target_Speed[ X ] * k_rc_z;
+		Chas_Target_Speed[ Y ] = Chas_Target_Speed[ Y ] * k_rc_z;	
 	}
-	
-	/* 计算旋转因子(通过调整进入条件来设置旋转和平移的分配比例) */
-	if(abs(Chas_Target_Speed[ Z ]) > 800) {	
-		// 扭头速度越快，平移速度越慢
-		k_rc_z = ((Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)) * (Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)))
-							/ (Chas_Spin_Move_Max * Chas_Spin_Move_Max);	// 理论计算范围 (0.008, 1)
-		
-		k_rc_z = constrain(k_rc_z, 0.f, 1.f);
-	} else {
-		k_rc_z = 1.f;
-	}		
-	
-	/* 根据旋转量重新分配速度期望值 */
-	Chas_Target_Speed[ X ] = Chas_Target_Speed[ X ] * k_rc_z;
-	Chas_Target_Speed[ Y ] = Chas_Target_Speed[ Y ] * k_rc_z;
 	
 	/* 计算当前总期望速度 */
 	Chas_Target_Speed[ ALL ] = abs(Chas_Target_Speed[ X ]) + abs(Chas_Target_Speed[ Y ]) + abs(Chas_Target_Speed[ Z ]);
@@ -1613,13 +1666,6 @@ void KEY_SetChasSpinSpeed(int16_t sSpinMax)
 		}
 		/* 没开小陀螺/扭腰 */
 		else {
-			if(Flag.Chassis.GoHome == true) {
-				/* 保持底盘状态
-					 屏蔽底盘跟随
-					 修改底盘逻辑 */
-				CHASSIS_LogicRevert();// 修改底盘逻辑
-			}
-			
 			/* 设置底盘跟随逻辑 */
 			Chassis_Z_PID.Angle.target = CHASSIS_GetMiddleAngle();
 			
@@ -1959,9 +2005,9 @@ float CHASSIS_MECH_YawBoundaryProc(Chassis_Z_PID_t *pid, float delta_target)
 	target = pid->Angle.target + delta_target;
 
 	if(target > 8191.f) {
-		target = (target - 8191.f);
+		target = (target - 8192.f);
 	} else if(target < 0.f) {
-		target = (target + 8191.f);
+		target = (target + 8192.f);
 	}
 	
 	return target;
@@ -2479,6 +2525,10 @@ void CHASSIS_Ctrl(void)
 {
 	/*----信息读入----*/
 	CHASSIS_GetInfo();
+	/*----信息输出----*/
+	// 不能在这里发送，不然云台会抖动？
+//	RP_SendToPc(0, 0, js_rotate_speed, 0, 0, 0);
+//	RP_SendToPc2(0, chas_stuck_cnt, 0, 0, 0);
 	/*----期望修改----*/
 	if(Chassis.RemoteMode == RC) {
 		CHASSIS_RcCtrlTask();

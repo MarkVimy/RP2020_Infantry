@@ -764,7 +764,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[LEFT_FRON_201].speed = CAN_GetMotorSpeed(&rxMsg);
 			Chassis_PID[LEFT_FRON_201].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 			
-			bm |= BM_RX_REPORT_201;
+			bm |= BM_CAN_REPORT_201;
 		}
 		
 		if(rxMsg.StdId == 0x202) {	// 右前
@@ -780,7 +780,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[RIGH_FRON_202].speed = CAN_GetMotorSpeed(&rxMsg);
 			Chassis_PID[RIGH_FRON_202].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 			
-			bm |= BM_RX_REPORT_202;
+			bm |= BM_CAN_REPORT_202;
 		}
 		
 		if(rxMsg.StdId == 0x203) {	// 左后
@@ -796,7 +796,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[LEFT_BACK_203].speed = CAN_GetMotorSpeed(&rxMsg);
 			Chassis_PID[LEFT_BACK_203].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 			
-			bm |= BM_RX_REPORT_203;
+			bm |= BM_CAN_REPORT_203;
 		}
 		
 		if(rxMsg.StdId == 0x204) {	// 右后
@@ -812,7 +812,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Chassis_Motor_Info[RIGH_BACK_204].speed = CAN_GetMotorSpeed(&rxMsg);
 			Chassis_PID[RIGH_BACK_204].Speed.feedback = CAN_GetMotorSpeed(&rxMsg);
 
-			bm |= BM_RX_REPORT_204;
+			bm |= BM_CAN_REPORT_204;
 		}
 		
 		if(rxMsg.StdId == 0x205) {	// Yaw轴云台电机
@@ -828,7 +828,7 @@ void CAN1_RX0_IRQHandler(void)
 			Gimbal_PID[MECH][YAW_205].Angle.feedback = CAN_GetMotorAngle(&rxMsg);	// 机械模式 YAW 
 			Chassis_Z_PID.Angle.feedback = CAN_GetMotorAngle(&rxMsg);
 			
-			bm |= BM_RX_REPORT_205;
+			bm |= BM_CAN_REPORT_205;
 		}
 		
 		if(rxMsg.StdId == 0x206) {	// Pitch轴云台电机
@@ -843,7 +843,7 @@ void CAN1_RX0_IRQHandler(void)
 			g_Gimbal_Motor_Info[PITCH_206].angle = CAN_GetMotorAngle(&rxMsg);
 			Gimbal_PID[MECH][PITCH_206].Angle.feedback = CAN_GetMotorAngle(&rxMsg);			
 			
-			bm |= BM_RX_REPORT_206;
+			bm |= BM_CAN_REPORT_206;
 		}
 
 		/* 
@@ -853,8 +853,8 @@ void CAN1_RX0_IRQHandler(void)
 		cnt++;
 		if(cnt > 200) {
 			cnt = 0;
-			BitMask.Chassis.BM_rxReport = bm & (BM_RX_REPORT_201 | BM_RX_REPORT_202 | BM_RX_REPORT_203 | BM_RX_REPORT_204);
-			BitMask.Gimbal.BM_rxReport  = bm & (BM_RX_REPORT_205 | BM_RX_REPORT_206);
+			BitMask.Chassis.CanReport = bm & (BM_CAN_REPORT_201 | BM_CAN_REPORT_202 | BM_CAN_REPORT_203 | BM_CAN_REPORT_204);
+			BitMask.Gimbal.CanReport  = bm & (BM_CAN_REPORT_205 | BM_CAN_REPORT_206);
 			bm = 0;
 		}
 	}
@@ -885,13 +885,13 @@ void CAN2_RX0_IRQHandler(void)
 			g_Revolver_Motor_Info.angle_prev = g_Revolver_Motor_Info.angle;
 			Revolver_PID.Angle.feedback = g_Revolver_Motor_Info.angle_sum;
 			
-			bm |= REVOLVER_BM_RX_REPORT;
+			bm |= REVOLVER_BM_CAN_REPORT;
 		}
 		
 		cnt++;
 		if(cnt > 100) {
 			cnt = 0;
-			BitMask.Revolver.BM_rxReport = bm & REVOLVER_BM_RX_REPORT;
+			BitMask.Revolver.CanReport = bm & REVOLVER_BM_CAN_REPORT;
 			bm = 0;
 		}
 	}		

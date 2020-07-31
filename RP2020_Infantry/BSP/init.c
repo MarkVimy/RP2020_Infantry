@@ -23,12 +23,6 @@ static void my_hardware_init(void)
 	TIM1_Init();	// 弹仓定时器1初始化
 	TIM3_Init();	// 摩擦轮定时器3初始化	
 	USART1_Init();
-
-	//	ULTRA_Config();
-//	while(1) {
-//		ULTRA_Detect();
-//		delay_ms(2);
-//	}
 	
 	IMU_Init();		// 祖传IMU初始化
 //	while(1) {
@@ -42,14 +36,14 @@ static void my_hardware_init(void)
 ////		delay_ms(2);
 //	}
 
-	JUDGE_SendToClient();
-	while(1) {	
-//		JUDGE_SendToTeammate(0x0103);
-//		JUDGE_SendToClient();
-		delay_ms(1000);
-//		JUDGE_SendToTeammate(0x0103);
-//		delay_ms(500);
-	}
+//	JUDGE_SendToClient();
+//	while(1) {	
+////		JUDGE_SendToTeammate(0x0103);
+////		JUDGE_SendToClient();
+//		delay_ms(1000);
+////		JUDGE_SendToTeammate(0x0103);
+////		delay_ms(500);
+//	}
 }
 
 static void my_system_init(void)

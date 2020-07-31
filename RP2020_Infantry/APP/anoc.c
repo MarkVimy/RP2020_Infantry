@@ -185,28 +185,34 @@ void RP_SendToPc(float yaw, float pitch, float roll, int16_t rateYaw, int16_t ra
 	}
 }
 
-void RP_SendToPc2(uint16_t pwm, float speed, uint16_t heat, float power)
+void RP_SendToPc2(uint8_t shoot_freq, uint16_t shoot_ping, uint16_t shoot_heat, uint16_t shoot_pwm, float shoot_speed)
 {
 	uint8_t i;
 	uint16_t check_sum = 0;
-	uint8_t data_to_pc[17];	
+	uint8_t data_to_pc[16];	
 	
 	data_to_pc[0] = 0xAA;
 	data_to_pc[1] = 0xAA;
 	data_to_pc[2] = 0x02;
-	data_to_pc[3] = 12;	
+	data_to_pc[3] = 11;	
 	
-	memcpy(&data_to_pc[4], (uint8_t*)&pwm, 2);
-	memcpy(&data_to_pc[6], (uint8_t*)&speed, 4);
-	memcpy(&data_to_pc[10], (uint8_t*)&heat, 2);
-	memcpy(&data_to_pc[12], (uint8_t*)&power, 4);
+	memcpy(&data_to_pc[4], (uint8_t*)&shoot_freq, 1);
+	memcpy(&data_to_pc[5], (uint8_t*)&shoot_ping, 2);
+	memcpy(&data_to_pc[7], (uint8_t*)&shoot_heat, 2);
+	memcpy(&data_to_pc[9], (uint8_t*)&shoot_pwm, 2);
+	memcpy(&data_to_pc[11], (uint8_t*)&shoot_speed, 4);
 	
-	for(i = 0; i < 16; i++) {
+	for(i = 0; i < 15; i++) {
 		check_sum += data_to_pc[i];
 	}
-	data_to_pc[16] = check_sum & 0xff;	
+	data_to_pc[15] = check_sum & 0xff;	
 	
-	for(i = 0; i < 17; i++) {
+	for(i = 0; i < 16; i++) {
 		USART1_SendChar(data_to_pc[i]);
 	}
+}
+
+void RP_SendToPc3(void)
+{
+	
 }

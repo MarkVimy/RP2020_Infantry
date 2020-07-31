@@ -256,6 +256,7 @@ bool JUDGE_ReadData(uint8_t *rxBuf)
 					
 					case ID_POWER_HEAT_DATA: {
 							memcpy(&Judge.PowerHeatData, (rxBuf+DATA_SEG), LEN_POWER_HEAT_DATA);
+							Judge.power_heat_update = true;
 						}break;
 					
 					case ID_GAME_ROBOT_POS: {
@@ -278,6 +279,7 @@ bool JUDGE_ReadData(uint8_t *rxBuf)
 					case ID_SHOOT_DATA: {
 							memcpy(&Judge.ShootData, (rxBuf+DATA_SEG), LEN_SHOOT_DATA);
 							JUDGE_ShootNumCount();	// 计算发弹量
+							Judge.shoot_update = true;
 						}break;
 					
 					case ID_BULLET_REMAINING: {
@@ -491,22 +493,20 @@ float JUDGE_fGetShooterYaw(void)
   * @retval void
   * @attention  中断中调用，不适用于双枪管(不准)
   */
-portTickType shoot_ping;//计算出的最终发弹延迟
-float Shoot_Speed_Now = 0;
-float Shoot_Speed_Last = 0;
 void JUDGE_ShootNumCount(void)
 {
-	portTickType shoot_time;//发射延时测试
+	static float Shoot_Speed_Now = 0;
+	static float Shoot_Speed_Last = 0;
 
 	Shoot_Speed_Now = JUDGE_fGetBulletSpeed17();
-	if(Shoot_Speed_Last != Shoot_Speed_Now)//因为是float型，几乎不可能完全相等,所以速度不等时说明发射了一颗弹
+	/* 因为是float型，几乎不可能完全相等,所以速度不等时说明发射了一颗弹 */
+	if(Shoot_Speed_Last != Shoot_Speed_Now)
 	{
-		REVOLVER_AddShootCount();
 		Shoot_Speed_Last = Shoot_Speed_Now;
-		RP_SendToPc2(Friction.SpeedFeedback, Shoot_Speed_Now, Judge.PowerHeatData.shooter_heat0, Judge.PowerHeatData.chassis_power);
+		REVOLVER_AddShootCount();
+		REVOLVER_CalcRealShootPing(xTaskGetTickCount());
+//		RP_SendToPc2(Judge.ShootData.bullet_freq, shoot_ping, Judge.PowerHeatData.shooter_heat0, Friction.SpeedFeedback, Shoot_Speed_Now);
 	}
-	shoot_time = xTaskGetTickCount();//获取弹丸发射时的系统时间
-	shoot_ping = shoot_time - REVOLVER_GetRealShootTime();//计算延迟
 }
 
 /* 
@@ -543,6 +543,7 @@ void JUDGE_DetermineClientId(void)
 uint8_t txClientBuf[CLIENT_FRAME_LEN];
 void JUDGE_SendToClient(void)
 {
+	static bool init = false;
 	uint8_t frame_length;
 	
 	JUDGE_DetermineClientId();
@@ -561,7 +562,7 @@ void JUDGE_SendToClient(void)
 	Judge_Client.CmdId = ID_COMMUNICATION;
 	
 	// 发送1个图形
-	Judge_Client.DataFrameHeader.data_cmd_id = INTERACT_ID_draw_one_graphic;
+	Judge_Client.DataFrameHeader.data_cmd_id = INTERACT_ID_draw_char_graphic;
 	
 	// 发送者ID
 	Judge_Client.DataFrameHeader.send_ID = Judge.GameRobotStatus.robot_id;
@@ -570,8 +571,18 @@ void JUDGE_SendToClient(void)
 	
 	/*----数据段内容----*/
 	//...调用画图函数
-//	Draw_Float(&Judge_Client.ClientData.grapic_data_struct, "PWR", 0, RED_BLUE, 180, 3, 50, 256, 256, Judge.PowerHeatData.chassis_power);
-	Draw_Circle(&Judge_Client.ClientData.grapic_data_struct, "RED", 1, RED_BLUE, 2, 960, 540, 100);
+	if(init == false) {
+		Draw_Float(&Judge_Client.ClientData.grapic_data_struct, "PWR", 0, YELLOW, 20, 2, 2, 1600, 540, Judge.PowerHeatData.chassis_power);
+//		Draw_Int(&Judge_Client.ClientData.grapic_data_struct, "CKK", 1, WHITE, 20, 2,960, 540, 1234);
+//		Draw_ARC(&Judge_Client.ClientData.grapic_data_struct, "ARC", 1, PINK, 270, 90, 2, 1600, 540, 50, 100);
+//		Draw_Oval(&Judge_Client.ClientData.grapic_data_struct, "ARC", 1, PINK, 2, 1600, 540, 50, 100);
+//		Draw_Char(&Judge_Client.ClientData, "CHR", 2, ORANGE, 20, 10, 2, 1600, 540, "RPInfantry");
+		init = true;
+	} else {
+//		Modify_Graphic(&Judge_Client.ClientData.grapic_data_struct, "PWR", 0, FLOAT, WHITE, 20, 2, 2, 1440, 540, Judge.PowerHeatData.chassis_power);//(num_tmp_u>>22)&0x3ff,(num_tmp_u>>11)&0x7ff,num_tmp_u&0x7ff
+		Modify_Float(&Judge_Client.ClientData.grapic_data_struct, Judge.PowerHeatData.chassis_power);
+	}
+//	Draw_Circle(&Judge_Client.ClientData.grapic_data_struct, "RED", 1, RED_BLUE, 2, 960, 540, 100);
 	
 	// 数据填充
 	memcpy(	
@@ -824,7 +835,7 @@ void Draw_Float(graphic_data_struct_t* graphic,
 	float num_tmp_f = number;
 	uint32_t num_tmp_u=0x00;
 	memcpy(&num_tmp_u,&num_tmp_f,4);
-	Add_Graphic(graphic,name,layer,FLOAT,color,font_size,accuracy,width,start_x,start_y,(num_tmp_u>>22)&0x3ff,(num_tmp_u>>11)&0x7ff,num_tmp_u&0x7ff);
+	Add_Graphic(graphic,name,layer,FLOAT,color,font_size,accuracy,width,start_x,start_y,num_tmp_u&0x3ff,(num_tmp_u>>10)&0x7ff,(num_tmp_u>>21)&0x7ff);
 
 }
 
@@ -854,7 +865,7 @@ void Draw_Int(graphic_data_struct_t* graphic,
 	int32_t num_tmp_i = number;
 	uint32_t num_tmp_u=0x00;
 	memcpy(&num_tmp_u,&num_tmp_i,4);
-	Add_Graphic(graphic,name,layer,INT,color,font_size,0,width,start_x,start_y,(num_tmp_i>>22)&0x3ff,(num_tmp_i>>11)&0x7ff,num_tmp_i&0x7ff);
+	Add_Graphic(graphic,name,layer,INT,color,font_size,0,width,start_x,start_y,num_tmp_u&0x3ff,(num_tmp_u>>10)&0x7ff,(num_tmp_u>>21)&0x7ff);
 }
 
 
@@ -1117,7 +1128,7 @@ void Modify_Float(graphic_data_struct_t* graphic,float number)
 	float num_tmp_f = number;
 	uint32_t num_tmp_u=0x00;
 	memcpy(&num_tmp_u,&num_tmp_f,4);
-	Modify_Graphic(graphic,graphic->graphic_name,graphic->layer,FLOAT,graphic->color,graphic->start_angle,graphic->end_angle,graphic->width,graphic->start_x,graphic->start_y,(num_tmp_u>>22)&0x3ff,(num_tmp_u>>11)&0x7ff,num_tmp_u&0x7ff);
+	Modify_Graphic(graphic,graphic->graphic_name,graphic->layer,FLOAT,graphic->color,graphic->start_angle,graphic->end_angle,graphic->width,graphic->start_x,graphic->start_y,num_tmp_u&0x3ff,(num_tmp_u>>10)&0x7ff,(num_tmp_u>>21)&0x7ff);
 
 }
 
@@ -1132,7 +1143,7 @@ void Modify_Int(graphic_data_struct_t* graphic,int32_t number)
 	int32_t num_tmp_i = number;
 	uint32_t num_tmp_u=0x00;
 	memcpy(&num_tmp_u,&num_tmp_i,4);
-	Modify_Graphic(graphic,graphic->graphic_name,graphic->layer,INT,graphic->color,graphic->start_angle,graphic->end_angle,graphic->width,graphic->start_x,graphic->start_y,(num_tmp_u>>22)&0x3ff,(num_tmp_u>>11)&0x7ff,num_tmp_u&0x7ff);
+	Modify_Graphic(graphic,graphic->graphic_name,graphic->layer,INT,graphic->color,graphic->start_angle,graphic->end_angle,graphic->width,graphic->start_x,graphic->start_y,num_tmp_u&0x3ff,(num_tmp_u>>10)&0x7ff,(num_tmp_u>>21)&0x7ff);
 }
 
 

@@ -36,13 +36,13 @@ Cnt_t	Cnt = {
 
 BitMask_t	BitMask = {
 	/* System */
-	.System.BM_Reset = BM_RESET_GIMBAL | BM_RESET_FRIC,
+	.System.Reset = BM_RESET_GIMBAL | BM_RESET_FRIC,
 	/* Chassis */
-	.Chassis.BM_rxReport = 0,
+	.Chassis.CanReport = 0,
 	/* Gimbal */
-	.Gimbal.BM_rxReport = 0,
+	.Gimbal.CanReport = 0,
 	/* Revolver */
-	.Revolver.BM_rxReport = 0,
+	.Revolver.CanReport = 0,
 };
 
 Mpu_Info_t Mpu_Info = {
@@ -157,13 +157,13 @@ void start_task(void *pvParameters)
 							(void*				)NULL,						// 传递给任务函数的参数
 							(UBaseType_t		)DUTY_TASK_PRIO,			// 任务优先级
 							(TaskHandle_t*		)&DutyTask_Handler);		// 任务句柄
-//	/* 创建视觉任务 */
-//	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
-//							(const char*		)"vision_task",				// 任务名称
-//							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
-//							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
+	/* 创建视觉任务 */
+	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
+							(const char*		)"vision_task",				// 任务名称
+							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
+							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
 	/* 创建IMU任务 */
 	xTaskCreate((TaskFunction_t		)imu_task,								// 任务函数
 							(const char*		)"imu_task",				// 任务名称
@@ -212,14 +212,16 @@ void chassis_task(void *p_arg)
 		switch(System.State)
 		{												
 			case SYSTEM_STATE_NORMAL:
+//				SuperCAP_Ctrl();
 				/* 刚上电时等待云台归中后才允许控制*/
-				if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_GIMBAL)) {
+				if(BM_IfReset(BitMask.System.Reset, BM_RESET_GIMBAL)) {
 					CHASSIS_Ctrl();
 				}
 				break;
 			case SYSTEM_STATE_RCERR:
 			case SYSTEM_STATE_RCLOST:
 				CHASSIS_SelfProtect();
+//				SuperCAP_SelfProtect();
 				break;
 		}
 		
@@ -274,6 +276,8 @@ void revolver_task(void *p_arg)
  *	@note 
  *		Loop time:	10ms
  */
+extern float js_rotate_speed;
+extern uint16_t chas_stuck_cnt;
 void duty_task(void *p_arg)
 {	
 	while(1) {		
@@ -293,6 +297,7 @@ void duty_task(void *p_arg)
 				break;
 			}
 		}
+//		RP_SendToPc(js_rotate_speed, 0, 0, chas_stuck_cnt, 0, 0);
 		vTaskDelay(10);	// 10ms
 	}
 }
@@ -314,19 +319,32 @@ void vision_task(void *p_arg)
  *	@note 
  *		Loop time:	loop forever
  */
-	portTickType ulCurrentTime;
-	portTickType ulRespondTime;
+//	portTickType ulCurrentTime;
+//	portTickType ulRespondTime;
+
 void imu_task(void *p_arg)
 {
 	while(1) {
-		ulCurrentTime = xTaskGetTickCount();
 		/* IMU读取任务 */
 		IMU_Task();		
-		ulRespondTime = xTaskGetTickCount() - ulCurrentTime;
+//		RP_SendToPc2(BitMask.Chassis.CanReport, BitMask.Gimbal.CanReport, 0, 0, 0);
 //		ANOC_SendToPc(js_pos_x*100, js_pos_y*100, js_agl_z*100, 	
 //		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, Mpu_Info.roll, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
 //		RP_SendToPc(js_pos_x, js_pos_y, js_agl_z, js_v_x, js_v_y, js_w_z);
 //		RP_SendToPc2(Friction.SpeedFeedback, JUDGE_fGetBulletSpeed17(), Judge.PowerHeatData.shooter_heat0, Judge.PowerHeatData.chassis_power);
+		
+//		if(Judge.power_heat_update) {
+//			Judge.power_heat_update = false;
+//			RP_SendToPc(Judge.GameRobotPos.yaw, 0, 0, Judge.PowerHeatData.shooter_heat0, Judge.PowerHeatData.shooter_heat1, Judge.PowerHeatData.mobile_shooter_heat2);
+//		}
+//		
+
+		
+//		if(Judge.shoot_update) {
+//			Judge.shoot_update = false;
+//			RP_SendToPc2(Judge.ShootData.bullet_freq, Revolver.Shoot.real_ping, Judge.PowerHeatData.shooter_heat0, Friction.SpeedFeedback, Judge.ShootData.bullet_speed);
+//		}
+		
 		vTaskDelay(1);	// 1ms，注释后进不了空闲任务
 	}
 }

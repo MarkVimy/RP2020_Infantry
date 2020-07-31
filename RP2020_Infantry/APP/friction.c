@@ -1,5 +1,3 @@
-#include "pwm.h"
-
 /**
  * @file        pwm.c
  * @author      MaWeiming
@@ -41,7 +39,7 @@ Friction_Info_t Friction = {
 	.SpeedFeedback = 0,
 };
 
-uint16_t Friction_Pwm_Output[FRIC_SPEED_COUNT] = {0, 460, 505, 563, 695, 685};	// 0, 460, 505, 583, 695, 685
+uint16_t Friction_Pwm_Output[FRIC_SPEED_COUNT] = {0, 450, 450, 625, 695, 685};	// 0, 460, 505, 583, 695, 685
 												// 关闭  低速  中速  高速  狂暴  哨兵
 uint16_t Friction_Pwm_Speed[FRIC_SPEED_COUNT] = {0, 0, 2190, 2510, 2850, 2800};
 
@@ -224,12 +222,12 @@ void REMOTE_SetFrictionState(RC_Ctl_t *remote)
 	sw1 = RC_SW1_VALUE;
 	sw2 = RC_SW2_VALUE;
 	
-	if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_FRIC)) {	// 摩擦轮复位完成
+	if(BM_IfReset(BitMask.System.Reset, BM_RESET_FRIC)) {	// 摩擦轮复位完成
 		if((sw1 == RC_SW_UP && prev_sw1 != RC_SW_UP) && (sw2 == RC_SW_DOWN)) {
 			if(Friction.State == FRIC_STATE_OFF) {
 				Friction.State = FRIC_STATE_ON;			// 打开摩擦轮
-				Friction.SpeedLevel = FRIC_SPEED_HIGH;	// 高射速
-				Friction.SpeedTarget = test_speed;//Friction_Pwm_Output[Friction.SpeedLevel];
+				Friction.SpeedLevel = FRIC_SPEED_MID;	// 高射速
+				Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
 				LASER_ON();
 			} else if(Friction.State == FRIC_STATE_ON){
 				Friction.State = FRIC_STATE_OFF;		// 关闭摩擦轮
@@ -249,7 +247,7 @@ void REMOTE_SetFrictionState(RC_Ctl_t *remote)
  */
 void KEY_SetFrictionState(RC_Ctl_t *remote)
 {
-	if(BM_IfReset(BitMask.System.BM_Reset, BM_RESET_FRIC)) {	// 摩擦轮复位完成
+	if(BM_IfReset(BitMask.System.Reset, BM_RESET_FRIC)) {	// 摩擦轮复位完成
 		if(Friction.State == FRIC_STATE_OFF && IF_MOUSE_PRESSED_LEFT) {
 			Friction.State = FRIC_STATE_ON;			// 打开摩擦轮
 			Friction.SpeedLevel = FRIC_SPEED_HIGH;	// 高射速
@@ -268,7 +266,7 @@ void FRICTION_Reset(void)
 	if(Friction.SpeedFeedback != 0) {
 		FRICTION_Stop(&Friction);
 	} else {
-		BM_Reset(BitMask.System.BM_Reset, BM_RESET_FRIC);	// 复位完成
+		BM_Reset(BitMask.System.Reset, BM_RESET_FRIC);	// 复位完成
 	}	
 }
 
@@ -348,7 +346,7 @@ void FRICTION_Ctrl(void)
 	FRICTION_GetInfo();
 	
 	/*----期望修改----*/
-	if(BM_IfSet(BitMask.System.BM_Reset, BM_RESET_FRIC)) {	// 复位状态
+	if(BM_IfSet(BitMask.System.Reset, BM_RESET_FRIC)) {	// 复位状态
 		FRICTION_Reset(); // 摩擦轮复位
 	} else {
 		if(Friction.RemoteMode == RC) {
