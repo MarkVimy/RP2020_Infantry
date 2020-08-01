@@ -25,6 +25,8 @@ static void my_hardware_init(void)
 	USART1_Init();
 	
 	IMU_Init();		// ×æ´«IMU³õÊ¼»¯
+	SuperCAP_Init();
+
 //	while(1) {
 ////		now_time = millis();
 //		IMU_Task();

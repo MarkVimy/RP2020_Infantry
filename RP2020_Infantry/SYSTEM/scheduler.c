@@ -130,40 +130,40 @@ void start_task(void *pvParameters)
 							(UBaseType_t		)SYSTEM_STATE_TASK_PRIO,	// 任务优先级
 							(TaskHandle_t*		)&SystemStateTask_Handler);	// 任务句柄
 	/* 创建底盘任务 */
-//	xTaskCreate((TaskFunction_t		)chassis_task,							// 任务函数
-//							(const char*		)"chassis_task",			// 任务名称
-//							(uint16_t			)CHASSIS_STK_SIZE,			// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)CHASSIS_TASK_PRIO,			// 任务优先级
-//							(TaskHandle_t*		)&ChassisTask_Handler);		// 任务句柄
+	xTaskCreate((TaskFunction_t		)chassis_task,							// 任务函数
+							(const char*		)"chassis_task",			// 任务名称
+							(uint16_t			)CHASSIS_STK_SIZE,			// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)CHASSIS_TASK_PRIO,			// 任务优先级
+							(TaskHandle_t*		)&ChassisTask_Handler);		// 任务句柄
 	/* 创建云台任务 */
-	xTaskCreate((TaskFunction_t		)gimbal_task,							// 任务函数
-							(const char*		)"gimbal_task",				// 任务名称
-							(uint16_t			)GIMBAL_STK_SIZE,			// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)GIMBAL_TASK_PRIO,			// 任务优先级
-							(TaskHandle_t*		)&GimbalTask_Handler);		// 任务句柄							
-	/* 创建拨盘电机任务 */
-	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
-							(const char*		)"revovler_task",			// 任务名称
-							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
-							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
-	/* 创建常规任务 */
-	xTaskCreate((TaskFunction_t		)duty_task,								// 任务函数
-							(const char*		)"duty_task",				// 任务名称
-							(uint16_t			)DUTY_STK_SIZE,				// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)DUTY_TASK_PRIO,			// 任务优先级
-							(TaskHandle_t*		)&DutyTask_Handler);		// 任务句柄
-	/* 创建视觉任务 */
-	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
-							(const char*		)"vision_task",				// 任务名称
-							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
-							(void*				)NULL,						// 传递给任务函数的参数
-							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
-							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
+//	xTaskCreate((TaskFunction_t		)gimbal_task,							// 任务函数
+//							(const char*		)"gimbal_task",				// 任务名称
+//							(uint16_t			)GIMBAL_STK_SIZE,			// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)GIMBAL_TASK_PRIO,			// 任务优先级
+//							(TaskHandle_t*		)&GimbalTask_Handler);		// 任务句柄							
+//	/* 创建拨盘电机任务 */
+//	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
+//							(const char*		)"revovler_task",			// 任务名称
+//							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
+//							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
+//	/* 创建常规任务 */
+//	xTaskCreate((TaskFunction_t		)duty_task,								// 任务函数
+//							(const char*		)"duty_task",				// 任务名称
+//							(uint16_t			)DUTY_STK_SIZE,				// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)DUTY_TASK_PRIO,			// 任务优先级
+//							(TaskHandle_t*		)&DutyTask_Handler);		// 任务句柄
+//	/* 创建视觉任务 */
+//	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
+//							(const char*		)"vision_task",				// 任务名称
+//							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
+//							(void*				)NULL,						// 传递给任务函数的参数
+//							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
+//							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
 	/* 创建IMU任务 */
 	xTaskCreate((TaskFunction_t		)imu_task,								// 任务函数
 							(const char*		)"imu_task",				// 任务名称
@@ -212,7 +212,7 @@ void chassis_task(void *p_arg)
 		switch(System.State)
 		{												
 			case SYSTEM_STATE_NORMAL:
-//				SuperCAP_Ctrl();
+				SuperCAP_Ctrl();
 				/* 刚上电时等待云台归中后才允许控制*/
 				if(BM_IfReset(BitMask.System.Reset, BM_RESET_GIMBAL)) {
 					CHASSIS_Ctrl();
@@ -221,7 +221,7 @@ void chassis_task(void *p_arg)
 			case SYSTEM_STATE_RCERR:
 			case SYSTEM_STATE_RCLOST:
 				CHASSIS_SelfProtect();
-//				SuperCAP_SelfProtect();
+				SuperCAP_SelfProtect();
 				break;
 		}
 		

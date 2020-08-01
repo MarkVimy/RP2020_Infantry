@@ -34,7 +34,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 // ADC测量电容电压的分压比例
-float MEASURE_DIV_RATE=1;//#define MEASURE_DIV_RATE	1
+float MEASURE_DIV_RATE=11;//#define MEASURE_DIV_RATE	1
 float DISCHARGE_LOWEST_VOL = 12;
 float CHARGE_HIGHEST_VOL = 24;
 float MAX_POWER = 50;
@@ -62,16 +62,20 @@ static void SuperCAP_GPIO_Init(void)
 {
 	GPIO_InitTypeDef	GPIO_InitStructure;
 	
-	// 使能 GPIOA
+	// 使能 GPIOA C
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	
-	// 初始化 充电控制引脚 - PA2 放电控制引脚 - PA5
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5|GPIO_Pin_2;
+	// 初始化 充电控制引脚 - PC3 放电控制引脚 - PA5
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+	
 	// 初始时不充电也不放电
 	Charge_Off();
 	DisCharge_Off();
@@ -118,7 +122,7 @@ void SuperCAP_PidCalc(SuperCap_Ctrl_t *cap_ctrl)
 	cap_ctrl->iout = constrain(cap_ctrl->iout, -cap_ctrl->iout_max, cap_ctrl->iout_max);
 	// Out
 	cap_ctrl->out = cap_ctrl->pout + cap_ctrl->iout;
-	cap_ctrl->out = constrain(cap_ctrl->out, 2400, 2900);
+	cap_ctrl->out = constrain(cap_ctrl->out, 2400, 2500);
 
 }
 
@@ -273,7 +277,7 @@ void SuperCAP_PidCtrlTask(SuperCap_t *cap)
 		cap->ctrl->out = 0;
 	}
 	// 设置充电电压
-//	SuperCAP_DAC_SetChargeVol(cap->ctrl->out);
+	SuperCAP_DAC_SetChargeVol(cap->ctrl->out);
 	
 
 }
