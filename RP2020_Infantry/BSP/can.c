@@ -742,7 +742,7 @@ float js_201_power = 0;
 void CAN1_RX0_IRQHandler(void)
 {
 	static uint8_t bm = 0;
-	static uint8_t cnt = 0;
+	static uint16_t cnt = 0;
 	CanRxMsg	rxMsg;
 	
 	if(CAN_GetITStatus(CAN1, CAN_IT_FMP0) != RESET) {
@@ -851,7 +851,7 @@ void CAN1_RX0_IRQHandler(void)
 		   2020/04/26 设定为100次的时候会发现yaw轴电机会出现失联情况，从而导致电机卸力
 		*/
 		cnt++;
-		if(cnt > 200) {
+		if(cnt > 500) {
 			cnt = 0;
 			BitMask.Chassis.CanReport = bm & (BM_CAN_REPORT_201 | BM_CAN_REPORT_202 | BM_CAN_REPORT_203 | BM_CAN_REPORT_204);
 			BitMask.Gimbal.CanReport  = bm & (BM_CAN_REPORT_205 | BM_CAN_REPORT_206);

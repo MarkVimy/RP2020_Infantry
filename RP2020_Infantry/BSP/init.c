@@ -46,6 +46,7 @@ static void my_hardware_init(void)
 ////		JUDGE_SendToTeammate(0x0103);
 ////		delay_ms(500);
 //	}
+
 }
 
 static void my_system_init(void)

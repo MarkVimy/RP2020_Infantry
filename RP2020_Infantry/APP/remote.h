@@ -14,13 +14,13 @@
 /* ----------------------- RC & KEY Operation Definition-------------------------- */
 #define    RC_GIMBAL_MECH_YAW_SENSITIVY			0.0092f
 #define    RC_GIMBAL_MECH_PITCH_SENSITIVY		0.0175f
-#define	   RC_GIMBAL_GYRO_YAW_SENSITIVY			0.0205f//0.0245f
+#define	   RC_GIMBAL_GYRO_YAW_SENSITIVY			0.0165f//0.0245f
 #define    RC_GIMBAL_GYRO_PITCH_SENSITIVY		RC_GIMBAL_MECH_PITCH_SENSITIVY	//0.0050f
 #define    RC_CHASSIS_SPEED_RATE				14
 #define	   RC_CHASSIS_Z_SPEED_SENSITIVY			1.0f
 
-#define	   KEY_GIMBAL_GYRO_YAW_SENSITIVY		0.35f
-#define    KEY_GIMBAL_GYRO_PITCH_SENSITIVY		0.30f
+#define	   KEY_GIMBAL_GYRO_YAW_SENSITIVY		0.05f
+#define    KEY_GIMBAL_GYRO_PITCH_SENSITIVY		0.06f
 
 
 /* ----------------------- RC Channel Definition---------------------------- */

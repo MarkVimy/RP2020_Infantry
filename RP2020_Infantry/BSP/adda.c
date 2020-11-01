@@ -96,9 +96,11 @@ void SuperCAP_ADC_Init(void)
 void SuperCAP_DAC_Init(void)
 {
 	DAC_InitTypeDef   DAC_InitStructure;
-	
+		
 	// 通道GPIO口初始化
 	DAC_GPIO_Init();
+	// 使能DAC时钟
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE);
 	// 配置DAC
 	DAC_InitStructure.DAC_Trigger = DAC_Trigger_None;	// 不使用触发功能(TEN1=0)
 	DAC_InitStructure.DAC_WaveGeneration = DAC_WaveGeneration_None;	// 不适用波形发生

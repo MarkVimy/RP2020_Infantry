@@ -504,6 +504,9 @@ void JUDGE_ShootNumCount(void)
 	{
 		Shoot_Speed_Last = Shoot_Speed_Now;
 		REVOLVER_AddShootCount();
+		if(Revolver.Buff.change_armor_4) {
+			VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+		}
 		REVOLVER_CalcRealShootPing(xTaskGetTickCount());
 //		RP_SendToPc2(Judge.ShootData.bullet_freq, shoot_ping, Judge.PowerHeatData.shooter_heat0, Friction.SpeedFeedback, Shoot_Speed_Now);
 	}

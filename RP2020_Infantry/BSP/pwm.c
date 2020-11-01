@@ -116,8 +116,8 @@ void TIM3_Init(void)
 		PWM1 = 1000;	// ½âËøÄ¦²ÁÂÖ(>1000)
 		PWM2 = 1000;
 	} else {
-		PWM1 = 2500;
-		PWM2 = 2500;
+		PWM1 = 2000;
+		PWM2 = 2000;
 		delay_ms(1000);
 		delay_ms(1000);
 		delay_ms(1000);

@@ -109,7 +109,7 @@ void USART3_Init( void )
 	xGpioInit.GPIO_Pin = GPIO_PIN_RX;
 	GPIO_Init( GPIO_RX, &xGpioInit );
 
-	xUsartInit.USART_BaudRate            = 9600;   
+	xUsartInit.USART_BaudRate            = 115200;   
 	xUsartInit.USART_WordLength          = USART_WordLength_8b;
 	xUsartInit.USART_StopBits            = USART_StopBits_1;
 	xUsartInit.USART_Parity              = USART_Parity_No;

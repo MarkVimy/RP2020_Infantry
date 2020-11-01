@@ -8,7 +8,6 @@
  
 /**
  *	# m2006 P36 拨盘电机
- *	反馈的最大转速大概在20800左右
  */
  
 /* Includes ------------------------------------------------------------------*/
@@ -40,7 +39,7 @@
 /* ## Global variables ## ----------------------------------------------------*/
 Revolver_PID_t Revolver_PID = {
 	/* 速度环 */
-	.Speed.kp = 9.2,		
+	.Speed.kp = 12.f,		
 	.Speed.ki = 0,
 	.Speed.kd = 0,	
 	.Speed.target = 0,
@@ -53,7 +52,7 @@ Revolver_PID_t Revolver_PID = {
 	.Speed.dout = 0,
 	.Speed.out = 0,
 	/* 位置环 */
-	.Angle.kp = 0.26,		
+	.Angle.kp = 0.45,		
 	.Angle.ki = 0,
 	.Angle.kd = 0,
 	.Angle.target = 0,	
@@ -95,6 +94,13 @@ Revolver_Info_t Revolver = {
 
 /* 枪口热量上限 */
 uint16_t REVO_HEAT_LIMIT[LEVEL_COUNT] = {180, 240, 300};
+
+
+
+
+/* 一次性标志位（需退出打符重新进入刷新） */
+uint8_t table = 0;
+
 
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
@@ -361,6 +367,9 @@ void REVOLVER_GetSysInfo(System_t *sys, Revolver_Info_t *revo)
 			}break;
 		case SYS_ACT_BUFF:
 			{
+				if(revo->Action != SHOOT_BUFF) {
+					table = 0;
+				}
 				revo->Action = SHOOT_BUFF;	// 常闭
 			}break;
 		case SYS_ACT_PARK:
@@ -411,7 +420,7 @@ void REVOLVER_GetJudgeInfo(Judge_Info_t *judge, Revolver_Info_t *revo)
  *	@note	防止出错
  */
 static uint8_t prev_sw1 = RC_SW_DOWN;
-static uint16_t MouseLockTime_L = 0;
+uint16_t MouseLockTime_L = 0;
 
 void REVOLVER_GetRemoteInfo(System_t *sys, RC_Ctl_t *remote, Revolver_Info_t *revo)
 {
@@ -598,13 +607,8 @@ uint8_t REVOLVER_HeatLimit(Revolver_Info_t *revo, uint8_t target_num)
 	remain_heat = revo->Shoot.heat_limit - revo->Shoot.heat_real;
 	allow_num = remain_heat / HEAT_AN_BULLET;	// 当前热量下允许的最大发弹量
 	if(allow_num > 0) {
-		while(target_num) {
-			if(allow_num >= target_num) {
-				allow_num = target_num;
-				break;
-			}
-			target_num--;
-		}
+		if(allow_num >= target_num)
+			allow_num = target_num;
 	}
 	return allow_num;
 }
@@ -622,34 +626,65 @@ void REVOLVER_NormalCtrl(Revolver_Info_t *revo)
 			MouseLockTime_L++;
 	}
 
-	/* 短按 */
-	if( !IF_MOUSE_PRESSED_LEFT
-			&& (MouseLockTime_L > TIME_STAMP_10MS)
-			&& (MouseLockTime_L < TRIPLE_SHOOT_PRESSED_TIME) ) 
+	if(IF_MOUSE_PRESSED_LEFT)
 	{
-		/* 点射 */
-		REVOLVER_SingleShootCtrl(revo);
+		if(MouseLockTime_L >= TRIPLE_SHOOT_PRESSED_TIME)
+		{
+			/* 连射 */
+			REVOLVER_TripleShootCtrl(revo);
+		}
 	}
-	/* 长按 */
-	else if( 
-			(MouseLockTime_L >= TRIPLE_SHOOT_PRESSED_TIME) )
-	{
-		/* 连射 */
-		REVOLVER_TripleShootCtrl(revo);
-	}
-	/* 松开 */
 	else
 	{
-		MouseLockTime_L = 0;
-		/* 防止出错 */
-		/* 速度环切位置环 */
-		if(revo->PidMode == REVO_SPEED_MODE) {
-			Revolver_PID.Angle.target = Revolver_PID.Angle.feedback;	// 防止切换模式的时候动一下
-			Revolver_PID.AngleRampBuffer = Revolver_PID.Angle.target;
+		if((MouseLockTime_L > TIME_STAMP_10MS) &&
+			(MouseLockTime_L < TRIPLE_SHOOT_PRESSED_TIME))
+		{
+			/* 点射 */
+			REVOLVER_SingleShootCtrl(revo);			
 		}
-		revo->PidMode = REVO_POSI_MODE;
-		revo->State = REVO_STATE_OFF;		// 停止拨盘旋转
-	}	
+		else
+		{
+			MouseLockTime_L = 0;
+			/* 防止出错 */
+			/* 速度环切位置环 */
+			if(revo->PidMode == REVO_SPEED_MODE) {
+				Revolver_PID.Angle.target = Revolver_PID.Angle.feedback;	// 防止切换模式的时候动一下
+				Revolver_PID.AngleRampBuffer = Revolver_PID.Angle.target;
+			}
+			revo->PidMode = REVO_POSI_MODE;
+			revo->State = REVO_STATE_OFF;		// 停止拨盘旋转			
+		}
+	}
+	
+	
+//	/* 短按 */
+//	if( (!IF_MOUSE_PRESSED_LEFT)
+//			&& (MouseLockTime_L > TIME_STAMP_10MS)
+//			&& (MouseLockTime_L < TRIPLE_SHOOT_PRESSED_TIME) ) 
+//	{
+//		/* 点射 */
+//		REVOLVER_SingleShootCtrl(revo);
+//	}
+//	/* 长按 */
+//	else if( (IF_MOUSE_PRESSED_LEFT) &&
+//			(MouseLockTime_L >= TRIPLE_SHOOT_PRESSED_TIME) )
+//	{
+//		/* 连射 */
+//		REVOLVER_TripleShootCtrl(revo);
+//	}
+//	/* 松开 */
+//	else
+//	{
+//		MouseLockTime_L = 0;
+//		/* 防止出错 */
+//		/* 速度环切位置环 */
+//		if(revo->PidMode == REVO_SPEED_MODE) {
+//			Revolver_PID.Angle.target = Revolver_PID.Angle.feedback;	// 防止切换模式的时候动一下
+//			Revolver_PID.AngleRampBuffer = Revolver_PID.Angle.target;
+//		}
+//		revo->PidMode = REVO_POSI_MODE;
+//		revo->State = REVO_STATE_OFF;		// 停止拨盘旋转
+//	}	
 }
 
 /**
@@ -769,13 +804,210 @@ void REVOLVER_ComboShootCtrl(Revolver_Info_t *revo)
 uint8_t test_buff_bullet = 1;
 portTickType first_into_armor_4 = 0;
 uint32_t	 respond_into_armor_4 = 0;
-void REVOLVER_BuffShootCtrl(Revolver_Info_t *revo)
+uint8_t test_clear_flag;
+uint8_t change_armor_4 = 0;
+
+ void REVOLVER_BuffShootCtrl(Revolver_Info_t *revo)
 {
+//	portTickType  current_time = 0;
+//	static uint32_t  respond_time = 0;	// 响应间隔计时
+//	static uint16_t manual_pressed_left = 0;	// 手动打弹左键响应
+//		
+//	/* #位置环 */
+//	revo->PidMode = REVO_POSI_MODE;
+//	revo->State = REVO_STATE_OFF;
+//	
+//	current_time = xTaskGetTickCount();
+
+//	/* 是否更换装甲板 */
+//	if(VISION_GetFlagStatus(VISION_FLAG_CHANGE_ARMOR) == true) {
+//		revo->Buff.change_armor = true;
+//	}
+//	
+//	/* 是否切换到第四块装甲板 */
+//	change_armor_4 = VISION_GetFlagStatus(VISION_FLAG_CHANGE_ARMOR_4);
+////	revo->Buff.change_armor_4 = VISION_GetFlagStatus(VISION_FLAG_CHANGE_ARMOR_4);
+//	
+//	if(test_buff_bullet == 0)
+//	{
+//		/* 松开右键自动打弹 */
+//		if(!IF_MOUSE_PRESSED_RIGH)
+//		{
+//			manual_pressed_left = 0;
+//			/* 未识别到符 */
+//			if(VISION_GetFlagStatus(VISION_FLAG_LOCK_BUFF) == false)
+//			{
+//				revo->Buff.lost_time++;
+//				if(revo->Buff.lost_time > revo->Buff.lost_time_boundary) {
+//					revo->Buff.fire = false;
+//					revo->Buff.lock_time = 0;
+//				}
+//				
+//	//			if(revo->Buff.change_armor == true)
+//	//			{
+//	//				revo->Buff.lock_time = 0;
+//	//				revo->Buff.lost_time = 0;
+//	//			}
+//			}
+//			/* 识别到符 */
+//			else
+//			{
+//				revo->Buff.lost_time = 0;
+//				
+//				/* 刚切换了装甲板稳定一段时间不打弹 */
+//				if(revo->Buff.change_armor_delay > 0)
+//				{
+//					revo->Buff.change_armor_delay--;
+//				}
+
+//				if(revo->Buff.change_armor_delay == 0)		
+//				{					
+//					/* 刚切换了装甲板 */
+//					if(revo->Buff.change_armor == true)
+//					{
+//						revo->Buff.change_armor = false;
+//						revo->Buff.fire = false;	// 禁止射击
+//						revo->Buff.lock_time = 0;	// 跟踪装甲板时间清零
+//						respond_time = current_time-1;// 刷新射击时间
+//						revo->Buff.change_armor_delay = revo->Buff.change_armor_delay_boundary;	// 切换后先稳定一段时间
+//					} 
+//					/* 未切换装甲板 */
+//					else if(revo->Buff.change_armor == false)
+//					{
+//						/* 云台已跟上目标 */
+//						if(GIMBAL_BUFF_IfChaseReady()) 
+//						{
+//							revo->Buff.lock_time++;
+//							/* 云台稳定锁定装甲板 */
+//							if(revo->Buff.lock_time > revo->Buff.lock_time_boundary)
+//							{
+//								/* 可以开炮 */
+//								revo->Buff.fire = true;
+//							}
+//						}
+//						/* 云台落后目标 */
+//						else
+//						{
+//							/* 禁止开炮 */
+//							revo->Buff.lock_time = 0;
+//							revo->Buff.fire = false;
+//						}
+//					}
+//					
+//					/* 响应时间已到 & 可以开炮 & 非刚切换装甲板 & 上一颗子弹已打出去 */
+//					if((respond_time < current_time) &&
+//						revo->Buff.fire == true && 
+//						revo->Buff.change_armor == false &&
+//						revo->Shoot.num == 0) 
+//					{
+//						respond_time = current_time + revo->Buff.respond_interval;
+//						// 打符时由于有冷却加成，一般不会热量超限。这里是剔除热量影响打符打弹
+//						revo->Shoot.num += 1;	//revo->Shoot.num += REVOLVER_HeatLimit(&Revolver, 1);
+//					}
+//				}
+//			}
+//			
+//			/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
+//			if(change_armor_4 == true) {
+//				/* 刚识别到第四页装甲板 */
+//				if(revo->Buff.change_armor_4 == false) {
+//					first_into_armor_4 = Revolver.Shoot.total_count;
+//				}
+//				
+//				/* 检测到子弹射出 */
+//				if(first_into_armor_4 != Revolver.Shoot.total_count) {
+//					VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+//				}
+//			} else {
+//				VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+//			}
+//		}
+//		/* 按住右键接管打弹 */
+//		else
+//		{
+//			/* 防止手动切换成自动的时候马上打弹 */
+//			revo->Buff.fire = false;	// 禁止自动射击
+//			revo->Buff.lock_time = 0;	// 跟踪装甲板时间清零
+//			if(IF_MOUSE_PRESSED_LEFT) 
+//			{
+//				if(manual_pressed_left < TIME_STAMP_10S)	// 防止长时间按变量溢出
+//					manual_pressed_left++;
+//			}
+//			else
+//			{
+//				if(manual_pressed_left > TIME_STAMP_10MS) {	// 左键抬起后才打出
+//					// 打符时由于有冷却加成，一般不会有热量超限。这里是剔除热量影响打符打弹
+//					revo->Shoot.num += 1;	//revo->Shoot.num += REVOLVER_HeatLimit(&Revolver, 1);
+//				}
+//				
+//				/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
+//				if(change_armor_4 == true) {
+//					/* 刚识别到第四页装甲板 */
+//					if(revo->Buff.change_armor_4 == false) {
+//						first_into_armor_4 = Revolver.Shoot.total_count;
+//					}
+//					
+//					/* 检测到子弹射出 */
+//					if(first_into_armor_4 != Revolver.Shoot.total_count) {
+//						VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+//					}
+//				} else {
+//					VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+//				}
+//				
+//				manual_pressed_left = 0;
+//			}
+//		}
+//	}
+//	else
+//	{
+//		/* 防止手动切换成自动的时候马上打弹 */
+//		revo->Buff.fire = false;	// 禁止自动射击
+//		revo->Buff.lock_time = 0;	// 跟踪装甲板时间清零
+//		if(IF_MOUSE_PRESSED_LEFT) 
+//		{
+//			if(manual_pressed_left < TIME_STAMP_10S)	// 防止长时间按变量溢出
+//				manual_pressed_left++;
+//		}
+//		else
+//		{
+//			if(manual_pressed_left > TIME_STAMP_10MS) {	// 左键抬起后才打出
+//				revo->Shoot.num += REVOLVER_HeatLimit(&Revolver, 1);
+//			}
+//			
+//			/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
+//			if(change_armor_4 == true) {
+//				
+////				/* 刚识别到第四页装甲板 */
+////				if(revo->Buff.change_armor_4 == false) {
+////					first_into_armor_4 = Revolver.Shoot.total_count;
+////				}
+////				
+////				/* 检测到子弹射出 */
+////				if(first_into_armor_4 != Revolver.Shoot.total_count) {
+////					VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+////				}
+//			} else {
+//				VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+//			}
+//			
+//			if(test_clear_flag) {
+//				first_into_armor_4 = Revolver.Shoot.total_count;
+//				VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+//			}
+//			
+//			manual_pressed_left = 0;
+//		}		
+//	}
+//	
+//	/* 更新标志位 */
+//	revo->Buff.change_armor_4 = change_armor_4;
+
+	// # 临时测试四五页连发↓
 	portTickType  current_time = 0;
 	static uint32_t  respond_time = 0;	// 响应间隔计时
 	static uint16_t manual_pressed_left = 0;	// 手动打弹左键响应
-	static uint8_t change_armor_4 = 0;
-	
+		
 	/* #位置环 */
 	revo->PidMode = REVO_POSI_MODE;
 	revo->State = REVO_STATE_OFF;
@@ -788,141 +1020,19 @@ void REVOLVER_BuffShootCtrl(Revolver_Info_t *revo)
 	}
 	
 	/* 是否切换到第四块装甲板 */
-	change_armor_4 = VISION_GetFlagStatus(VISION_FLAG_CHANGE_ARMOR_4);
-//	revo->Buff.change_armor_4 = VISION_GetFlagStatus(VISION_FLAG_CHANGE_ARMOR_4);
+	revo->Buff.change_armor_4 = VISION_GetFlagStatus(VISION_FLAG_CHANGE_ARMOR_4);
 	
-	if(test_buff_bullet == 0)
-	{
-		/* 松开右键自动打弹 */
-		if(!IF_MOUSE_PRESSED_RIGH)
-		{
-			manual_pressed_left = 0;
-			/* 未识别到符 */
-			if(VISION_GetFlagStatus(VISION_FLAG_LOCK_BUFF) == false)
-			{
-				revo->Buff.lost_time++;
-				if(revo->Buff.lost_time > revo->Buff.lost_time_boundary) {
-					revo->Buff.fire = false;
-					revo->Buff.lock_time = 0;
-				}
-				
-	//			if(revo->Buff.change_armor == true)
-	//			{
-	//				revo->Buff.lock_time = 0;
-	//				revo->Buff.lost_time = 0;
-	//			}
-			}
-			/* 识别到符 */
-			else
-			{
-				revo->Buff.lost_time = 0;
-				
-				/* 刚切换了装甲板稳定一段时间不打弹 */
-				if(revo->Buff.change_armor_delay > 0)
-				{
-					revo->Buff.change_armor_delay--;
-				}
-
-				if(revo->Buff.change_armor_delay == 0)		
-				{					
-					/* 刚切换了装甲板 */
-					if(revo->Buff.change_armor == true)
-					{
-						revo->Buff.change_armor = false;
-						revo->Buff.fire = false;	// 禁止射击
-						revo->Buff.lock_time = 0;	// 跟踪装甲板时间清零
-						respond_time = current_time-1;// 刷新射击时间
-						revo->Buff.change_armor_delay = revo->Buff.change_armor_delay_boundary;	// 切换后先稳定一段时间
-					} 
-					/* 未切换装甲板 */
-					else if(revo->Buff.change_armor == false)
-					{
-						/* 云台已跟上目标 */
-						if(GIMBAL_BUFF_IfChaseReady()) 
-						{
-							revo->Buff.lock_time++;
-							/* 云台稳定锁定装甲板 */
-							if(revo->Buff.lock_time > revo->Buff.lock_time_boundary)
-							{
-								/* 可以开炮 */
-								revo->Buff.fire = true;
-							}
-						}
-						/* 云台落后目标 */
-						else
-						{
-							/* 禁止开炮 */
-							revo->Buff.lock_time = 0;
-							revo->Buff.fire = false;
-						}
-					}
-					
-					/* 响应时间已到 & 可以开炮 & 非刚切换装甲板 & 上一颗子弹已打出去 */
-					if((respond_time < current_time) &&
-						revo->Buff.fire == true && 
-						revo->Buff.change_armor == false &&
-						revo->Shoot.num == 0) 
-					{
-						respond_time = current_time + revo->Buff.respond_interval;
-						// 打符时由于有冷却加成，一般不会热量超限。这里是剔除热量影响打符打弹
-						revo->Shoot.num += 1;	//revo->Shoot.num += REVOLVER_HeatLimit(&Revolver, 1);
-					}
-				}
-			}
-			
-			/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
-			if(change_armor_4 == true) {
-				/* 刚识别到第四页装甲板 */
-				if(revo->Buff.change_armor_4 == false) {
-					first_into_armor_4 = Revolver.Shoot.total_count;
-				}
-				
-				/* 检测到子弹射出 */
-				if(first_into_armor_4 != Revolver.Shoot.total_count) {
-					VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-				}
-			} else {
-				VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-			}
-		}
-		/* 按住右键接管打弹 */
-		else
-		{
-			/* 防止手动切换成自动的时候马上打弹 */
-			revo->Buff.fire = false;	// 禁止自动射击
-			revo->Buff.lock_time = 0;	// 跟踪装甲板时间清零
-			if(IF_MOUSE_PRESSED_LEFT) 
-			{
-				if(manual_pressed_left < TIME_STAMP_10S)	// 防止长时间按变量溢出
-					manual_pressed_left++;
-			}
-			else
-			{
-				if(manual_pressed_left > TIME_STAMP_10MS) {	// 左键抬起后才打出
-					// 打符时由于有冷却加成，一般不会有热量超限。这里是剔除热量影响打符打弹
-					revo->Shoot.num += 1;	//revo->Shoot.num += REVOLVER_HeatLimit(&Revolver, 1);
-				}
-				
-				/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
-				if(change_armor_4 == true) {
-					/* 刚识别到第四页装甲板 */
-					if(revo->Buff.change_armor_4 == false) {
-						first_into_armor_4 = Revolver.Shoot.total_count;
-					}
-					
-					/* 检测到子弹射出 */
-					if(first_into_armor_4 != Revolver.Shoot.total_count) {
-						VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-					}
-				} else {
-					VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-				}
-				
-				manual_pressed_left = 0;
-			}
-		}
+	/* 一旦识别过第四次装甲板 */
+	if(revo->Buff.change_armor_4) {
+		table = 1;
 	}
-	else
+	
+	/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
+	if((revo->Buff.change_armor_4 == false) && (table == 0)) {
+		VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
+	}	
+	
+	if(test_buff_bullet)
 	{
 		/* 防止手动切换成自动的时候马上打弹 */
 		revo->Buff.fire = false;	// 禁止自动射击
@@ -938,28 +1048,9 @@ void REVOLVER_BuffShootCtrl(Revolver_Info_t *revo)
 				revo->Shoot.num += REVOLVER_HeatLimit(&Revolver, 1);
 			}
 			
-			/* # 测试的时候默认这里拨一个就打一颗出去(之后可以利用裁判系统的射速反馈来判断是否射出) */
-			if(change_armor_4 == true) {
-				/* 刚识别到第四页装甲板 */
-				if(revo->Buff.change_armor_4 == false) {
-					first_into_armor_4 = Revolver.Shoot.total_count;
-				}
-				
-				/* 检测到子弹射出 */
-				if(first_into_armor_4 != Revolver.Shoot.total_count) {
-					VISION_SetFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-				}
-			} else {
-				VISION_ClearFlagStatus(VISION_FLAG_SHOOT_ARMOR_4);
-			}
-			
-			
 			manual_pressed_left = 0;
 		}		
 	}
-	
-	/* 更新标志位 */
-	revo->Buff.change_armor_4 = change_armor_4;
 }
 
 /**
@@ -1086,7 +1177,7 @@ void REVOLVER_PidCtrlTask(void)
 				js_shoot_num++;
 				Revolver.Shoot.num--;
 				Revolver_PID.AngleRampBuffer += ANGLE_AN_BULLET;
-				Revolver.Shoot.real_time = xTaskGetTickCount();	// 
+				Revolver.Shoot.real_time = xTaskGetTickCount();	// 测试发射延迟
 			}
 			/* 位置环计算(让目标缓慢逼近最终目标) */
 			Revolver_PID.Angle.target = RampFloat(Revolver_PID.AngleRampBuffer, Revolver_PID.Angle.target, ANGLE_AN_BULLET_RAMP);

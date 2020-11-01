@@ -659,14 +659,14 @@
               <FilePath>..\SYSTEM\sys.c</FilePath>
             </File>
             <File>
-              <FileName>scheduler.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\SYSTEM\scheduler.c</FilePath>
-            </File>
-            <File>
               <FileName>delay.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\SYSTEM\delay.c</FilePath>
+            </File>
+            <File>
+              <FileName>scheduler.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\SYSTEM\scheduler.c</FilePath>
             </File>
             <File>
               <FileName>usart.c</FileName>

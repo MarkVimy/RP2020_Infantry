@@ -7,7 +7,7 @@
 /* Global macro --------------------------------------------------------------*/
 // [注] RP2019MC2.0.pdf中这两个引脚错位(已在代码中交换控制引脚)
 //      后续若重新打板，需注意调换引脚
-#define CHARGE_PIN		PCout(3)
+#define CHARGE_PIN		PCout(6)	// 原PC(3)
 #define DISCHARGE_PIN	PAout(5)
 
 /* Global TypeDef ------------------------------------------------------------*/
@@ -22,6 +22,7 @@ typedef struct {
 	float feedback;
 	float err;
 	float integrate;
+	float integrate_max;
 	float kp;
 	float ki;
 	float kd;
@@ -29,7 +30,6 @@ typedef struct {
 	float iout;
 	float dout;
 	float out;
-	float iout_max;
 	float out_max;
 }SuperCap_Ctrl_t;
 
@@ -49,6 +49,8 @@ typedef struct {
 	SuperCap_Info_t *info;
 }SuperCap_t;
 /* ## Global Variables Prototypes ## -----------------------------------------*/
+extern SuperCap_t SuperCap;
+
 /* API functions Prototypes --------------------------------------------------*/
 /* #驱动层# ---------------------------------------------------------------------------------------------------------------------------------------*/
 

@@ -12,7 +12,7 @@
 
 #define GIMBAL_MECH_YAW_MID_ANGLE			GIMBAL_TOP_YAW_MID_ANGLE	//(4104)	// 中间值
 
-#define GIMBAL_TOP_YAW_MID_ANGLE			(6325)	// 底盘正向逻辑机械中值	6325
+#define GIMBAL_TOP_YAW_MID_ANGLE			(6300)	// 底盘正向逻辑机械中值	6325
 #define GIMBAL_REVERT_YAW_MID_ANGLE			(2229)	// 底盘反向逻辑机械中值
 
 #define GIMBAL_MECH_PITCH_UP_ANGLE			(3410 + 150)	// 实测最小可达3312(不发力)
@@ -27,7 +27,7 @@
 
 #define GIMBAL_GYRO_ANGLE_ZOOM_INDEX		(20.0f)	// IMU角度的缩放系数(方便滤波和调参)
 
-#define GIMBAL_RAMP_BEGIN_YAW				2
+#define GIMBAL_RAMP_BEGIN_YAW				4
 #define GIMBAL_RAMP_BEGIN_PITCH				1
 
 /* Global TypeDef ------------------------------------------------------------*/

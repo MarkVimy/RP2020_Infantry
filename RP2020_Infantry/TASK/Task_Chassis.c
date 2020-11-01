@@ -22,6 +22,7 @@
 #include "kalman.h"
 #include "can.h"
 #include "rng.h"
+#include "supercap.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -110,7 +111,8 @@ float k_Gyro_Chas_Top;
 float k_Gyro_Chas_Twist;
 
 //小陀螺旋转转速步长
-float Chas_Top_Gyro_Step;
+float Chas_Top_Gyro_Step = 8;
+uint16_t max_top_gyro_speed = 20;
 uint16_t Chas_Top_Gyro_Period = 0;	// 单项赛规则(T为3~7s的随机数)
 
 //扭腰旋转步长
@@ -138,15 +140,16 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.erro = 0,
 		.Speed.last_erro = 0,
 		.Speed.integrate = 0,
+		.Speed.integrate_max = 18000,
 		.Speed.pout = 0,
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
 		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
-		.Angle.kp = 0,
+		.Angle.kp = 0.55,
 		.Angle.ki = 0,
-		.Angle.kd = 0,
+		.Angle.kd = 0.008,
 		.Angle.target = 0,
 		.Angle.feedback = 0,
 		.Angle.erro = 0,
@@ -155,7 +158,8 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Angle.pout = 0,
 		.Angle.iout = 0,
 		.Angle.dout = 0,
-		.Angle.out = 0,		
+		.Angle.out = 0,	
+		.Angle.out_max = 9000,		
 	},
 	{	// RIGH_FRON_202
 		/* 速度环 */
@@ -167,15 +171,16 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.erro = 0,
 		.Speed.last_erro = 0,
 		.Speed.integrate = 0,
+		.Speed.integrate_max = 18000,
 		.Speed.pout = 0,
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
 		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
-		.Angle.kp = 0,
+		.Angle.kp = 0.55,
 		.Angle.ki = 0,
-		.Angle.kd = 0,
+		.Angle.kd = 0.008,
 		.Angle.target = 0,
 		.Angle.feedback = 0,
 		.Angle.erro = 0,
@@ -184,7 +189,8 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Angle.pout = 0,
 		.Angle.iout = 0,
 		.Angle.dout = 0,
-		.Angle.out = 0,		
+		.Angle.out = 0,
+		.Angle.out_max = 9000,		
 	},
 	{	// LEFT_BACK_203
 		/* 速度环 */
@@ -196,15 +202,16 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.erro = 0,
 		.Speed.last_erro = 0,
 		.Speed.integrate = 0,
+		.Speed.integrate_max = 18000,
 		.Speed.pout = 0,
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
 		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
-		.Angle.kp = 1.172,		// 1.15					1.16				1.172		(这套参数适合大角度转动)
-		.Angle.ki = 0.7,			// 1						0.82					0.7
-		.Angle.kd = 0.0021,		// 0.002				0.0021			0.0021
+		.Angle.kp = 0.55,		//1.172,		// 1.15					1.16				1.172		(这套参数适合大角度转动)
+		.Angle.ki = 0,			//0.7,			// 1						0.82					0.7
+		.Angle.kd = 0.008,			//0.0021,		// 0.002				0.0021			0.0021
 		.Angle.target = 0,
 		.Angle.feedback = 0,
 		.Angle.erro = 0,
@@ -213,7 +220,8 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Angle.pout = 0,
 		.Angle.iout = 0,
 		.Angle.dout = 0,
-		.Angle.out = 0,		
+		.Angle.out = 0,	
+		.Angle.out_max = 9000,
 	},
 	{	// RIGH_BACK_204
 		/* 速度环 */
@@ -225,15 +233,16 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Speed.erro = 0,
 		.Speed.last_erro = 0,
 		.Speed.integrate = 0,
+		.Speed.integrate_max = 18000,
 		.Speed.pout = 0,
 		.Speed.iout = 0,
 		.Speed.dout = 0,
 		.Speed.out = 0,
 		.Speed.out_max = CHASSIS_PID_OUT_MAX,
 		/* 位置环 */
-		.Angle.kp = 0,
+		.Angle.kp = 0.55,
 		.Angle.ki = 0,
-		.Angle.kd = 0,
+		.Angle.kd = 0.008,
 		.Angle.target = 0,
 		.Angle.feedback = 0,
 		.Angle.erro = 0,
@@ -243,6 +252,7 @@ Chassis_PID_t Chassis_PID[CHASSIS_MOTOR_COUNT] = {
 		.Angle.iout = 0,
 		.Angle.dout = 0,
 		.Angle.out = 0,	
+		.Angle.out_max = 9000,
 	},
 };
 
@@ -535,7 +545,7 @@ void CHASSIS_InitParams(void)
 	Chas_Top_Gyro_Step = 8;
 	
 	/* 扭腰旋转步长 */
-	Chas_Twist_Step = 4;
+	Chas_Twist_Step = 8;
 }
 
 /**
@@ -813,6 +823,13 @@ float CHASSIS_Z_Angle_PidCalc(PID_Object_t *pid, float kp)
 		chas_stuck_cnt = 0;
 	}
 	
+	/* 判断条件太粗糙，陀螺移动和云台转动时同样会引起 */
+	if(chas_stuck_cnt > 100) {
+		chas_stuck_cnt = 0;
+		chas_stuck_flag = 1;
+//		Chas_Top_Gyro_Step = -Chas_Top_Gyro_Step;
+	}
+	
 	pid->erro = KalmanFilter(&Chassis_Kalman_Error, pid->erro);
 	
 	/* 底盘处于普通跟随模式 */
@@ -966,7 +983,7 @@ int16_t CHASSIS_GetMiddleAngleOffset(void)
  */
 bool CHASSIS_IfBackToMiddleAngle(void)
 {
-	return (CHASSIS_GetMiddleAngleOffset() < (CHASSIS_MIDDLE_ANGLE_DEATH+10))? true: false;	
+	return (CHASSIS_GetMiddleAngleOffset() < (CHASSIS_MIDDLE_ANGLE_DEATH+50))? true: false;	
 }
 
 /**
@@ -1199,10 +1216,16 @@ void CHASSIS_GetTopGyroInfo(void)
 	ulCurrentTime %= Chas_Top_Gyro_Period;
 	
 	if(CHASSIS_IfTopGyroOpen() == true) {
+		// 正弦小陀螺
 		// -7.5sin(2pi*t/T)+22.5
 //		Chas_Top_Gyro_Step = -7.5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 22.5;	// 正弦小陀螺
-//		Chas_Top_Gyro_Step = -5*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 10;	// 正弦小陀螺
-//		Chas_Top_Gyro_Step = 4;	// 匀速小陀螺
+//		Chas_Top_Gyro_Step = 4*sin(6.28f*(float)ulCurrentTime/Chas_Top_Gyro_Period) + 8;	
+		// 匀速小陀螺
+//		if(SuperCap.info->discharge_status == ON) {
+//			Chas_Top_Gyro_Step = 20;	
+//		} else {
+			Chas_Top_Gyro_Step = 8;	
+//		}
 	}
 }
 
@@ -1448,6 +1471,9 @@ void REMOTE_TOP_SetChassisSpeed(void)
 		// 旋转矩阵 将云台坐标系的期望速度 转换到 底盘坐标系的期望速度
 		Chas_Target_Speed[ X ] = cos(delta_angle) * target_speed_x - sin(delta_angle) * target_speed_y;
 		Chas_Target_Speed[ Y ] = sin(delta_angle) * target_speed_x + cos(delta_angle) * target_speed_y;		
+
+//		Chas_Target_Speed[ X ] = cos(delta_angle) * Chas_Target_Speed[ X ] - sin(delta_angle) * Chas_Target_Speed[ Y ];
+//		Chas_Target_Speed[ Y ] = sin(delta_angle) * Chas_Target_Speed[ X ] + cos(delta_angle) * Chas_Target_Speed[ Y ];		
 		
 		/* 开启了小陀螺 */
 		if(CHASSIS_IfTopGyroOpen() == true) {
@@ -1461,14 +1487,23 @@ void REMOTE_TOP_SetChassisSpeed(void)
 									/ (Chas_Standard_Move_Max * Chas_Standard_Move_Max);	// 理论计算范围 (0.008, 1)
 				
 				k_rc_xy = constrain(k_rc_xy, 0.f, 1.f);
-				Chas_Top_Gyro_Step = 8 * k_rc_xy;
+				Chas_Top_Gyro_Step *= k_rc_xy;
 			} else {
 				k_rc_xy = 1.f;
-				Chas_Top_Gyro_Step = 8;
 			}
 			
-//			/* 根据平移量重新分配旋转速度期望值 */
-//			Chas_Target_Speed[ Z ] = Chas_Target_Speed[ Z ] * k_rc_xy;			
+//			/* xy方向的速度和 */
+//			target_speed_xy = (abs(Chas_Target_Speed[ X ]) + abs(Chas_Target_Speed[ Y ]))/2;
+//			/* 计算平移因子(通过调整进入条件来设置旋转和平移的分配比例) */
+//			k_rc_xy = ((Chas_Standard_Move_Max - target_speed_xy) * (Chas_Standard_Move_Max - target_speed_xy))
+//								/ (Chas_Standard_Move_Max * Chas_Standard_Move_Max);
+//			
+//			k_rc_xy = constrain(k_rc_xy, 0.f, 1.f);
+//			Chas_Top_Gyro_Step *= k_rc_xy;
+			
+			
+			/* 根据平移量重新分配旋转速度期望值 */
+			Chas_Target_Speed[ Z ] = Chas_Target_Speed[ Z ] * k_rc_xy;			
 			
 			// 外环期望斜坡变化
 			Chassis_Z_PID.Angle.target = CHASSIS_MECH_YawBoundaryProc(&Chassis_Z_PID, top_gyro_dir * Chas_Top_Gyro_Step);
@@ -1685,8 +1720,8 @@ void KEY_SetChasSpinSpeed(int16_t sSpinMax)
  */
 void KEY_SetChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 {
-	float target_speed_x, target_speed_y;
-	float k_rc_z;
+	float target_speed_x, target_speed_y, target_speed_xy;
+	float k_rc_z, k_rc_xy;
 	
 	Chas_Standard_Move_Max = sMoveMax;
 	Time_Inc_Normal = sMoveRamp;
@@ -1732,20 +1767,52 @@ void KEY_SetChasMoveSpeed(int16_t sMoveMax, int16_t sMoveRamp)
 		Chas_Slope_Move_Righ = Chas_Standard_Move_Max * KEY_RampChasSpeed(IF_KEY_PRESSED_D, &time_righ_x, Time_Inc_Normal, TIME_DEC_NORMAL);
 	}
 	
-	/* 计算旋转因子(通过调整进入条件来设置旋转和平移的分配比例) */
-	if(abs(Chas_Target_Speed[ Z ]) > 800) {
-		// 扭头速度越快，平移速度越慢
-		k_rc_z = ((Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)) * (Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)))
-							/ (Chas_Spin_Move_Max * Chas_Spin_Move_Max);
-		
-		k_rc_z = constrain(k_rc_z, 0.f, 1.f);
-	} else {
-		k_rc_z = 1.f;
-	}		
-	
 	/* 期望速度计算 */
-	Chas_Target_Speed[ Y ] = (Chas_Slope_Move_Fron - Chas_Slope_Move_Back) * k_rc_z;	
-	Chas_Target_Speed[ X ] = (Chas_Slope_Move_Righ - Chas_Slope_Move_Left) * k_rc_z;
+	Chas_Target_Speed[ Y ] = (Chas_Slope_Move_Fron - Chas_Slope_Move_Back);	
+	Chas_Target_Speed[ X ] = (Chas_Slope_Move_Righ - Chas_Slope_Move_Left);	
+	
+	if(CHASSIS_IfTopGyroOpen())
+	{
+		k_rc_z = 1.f;
+		/* xy方向的速度和 */
+		target_speed_xy = (abs(Chas_Target_Speed[ X ]) + abs(Chas_Target_Speed[ Y ]))/2;
+		/* 计算平移因子(通过调整进入条件来设置旋转和平移的分配比例) */
+		if(target_speed_xy > 800) {
+			k_rc_xy = ((Chas_Standard_Move_Max - (target_speed_xy - 800)) * (Chas_Standard_Move_Max - (target_speed_xy - 800)))
+								/ (Chas_Standard_Move_Max * Chas_Standard_Move_Max);	// 理论计算范围 (0.008, 1)
+			
+			k_rc_xy = constrain(k_rc_xy, 0.f, 1.f);
+			Chas_Top_Gyro_Step *= k_rc_xy;
+		} else {
+			k_rc_xy = 1.f;
+		}
+		
+		/* 根据平移量重新分配旋转速度期望值 */
+		Chas_Target_Speed[ Z ] = Chas_Target_Speed[ Z ] * k_rc_xy;			
+		
+		// 外环期望斜坡变化
+		Chassis_Z_PID.Angle.target = CHASSIS_MECH_YawBoundaryProc(&Chassis_Z_PID, top_gyro_dir * Chas_Top_Gyro_Step);
+		// Z方向速度pid计算
+		Chas_Target_Speed[ Z ] = CHASSIS_Z_Angle_PidCalc(&Chassis_Z_PID.Angle, (YAW_DIR) * k_Gyro_Chas_Top);		
+	}
+	else
+	{
+		k_rc_xy = 1.f;
+		/* 计算旋转因子(通过调整进入条件来设置旋转和平移的分配比例) */
+		if(abs(Chas_Target_Speed[ Z ]) > 800) {
+			// 扭头速度越快，平移速度越慢
+			k_rc_z = ((Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)) * (Chas_Spin_Move_Max - (abs(Chas_Target_Speed[ Z ]) - 800)))
+								/ (Chas_Spin_Move_Max * Chas_Spin_Move_Max);
+			
+			k_rc_z = constrain(k_rc_z, 0.f, 1.f);
+		} else {
+			k_rc_z = 1.f;
+		}		
+		
+		/* 期望速度计算 */
+		Chas_Target_Speed[ Y ] = Chas_Target_Speed[ Y ] * k_rc_z;	
+		Chas_Target_Speed[ X ] = Chas_Target_Speed[ X ] * k_rc_z;
+	}
 	
 	/* 陀螺仪模式下的坐标系转换 */
 	if(CHASSIS_IfGyroMode() == true) {
@@ -2467,8 +2534,9 @@ void CHASSIS_PidCtrlTask(void)
 	CHASSIS_Speed_PidCalc(Chassis_PID, RIGH_FRON_202); 	// 右前 - 速度环
 	CHASSIS_Speed_PidCalc(Chassis_PID, LEFT_BACK_203); 	// 左后 - 速度环
 	CHASSIS_Speed_PidCalc(Chassis_PID, RIGH_BACK_204); 	// 右后 - 速度环
+	
 	/* 功率限制 */
-	CHASSIS_PowerLimit(&Chassis, Chassis_PID, &Judge);
+//	CHASSIS_PowerLimit(&Chassis, Chassis_PID, &Judge);
 	/* 最终输出 */
 	CHASSIS_PidOut(Chassis_PID);	
 }

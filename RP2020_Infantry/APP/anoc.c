@@ -17,6 +17,7 @@
 #include "anoc.h"
 
 #include "usart1.h"
+#include "usart3.h"
 
 /* Private typedef -----------------------------------------------------------*/
 //typedef struct {

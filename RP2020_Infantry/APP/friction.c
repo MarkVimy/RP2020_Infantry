@@ -33,15 +33,22 @@
 Friction_Info_t Friction = {
 	.RemoteMode = RC,
 	.State = FRIC_STATE_OFF,
-	.Speed = 0,
+	.BulletSpeed = 0,
 	.SpeedLevel = FRIC_SPEED_OFF,
 	.SpeedTarget = 0,
 	.SpeedFeedback = 0,
 };
 
-uint16_t Friction_Pwm_Output[FRIC_SPEED_COUNT] = {0, 450, 450, 625, 695, 685};	// 0, 460, 505, 583, 695, 685
+uint16_t Friction_Pwm_Output[FRIC_SPEED_COUNT] = 
+{ 
+	[FRIC_SPEED_OFF] = 0, 
+	[FRIC_SPEED_LOW] = 480,
+	[FRIC_SPEED_MID] = 525, 
+	[FRIC_SPEED_HIGH] = 625,
+	[FRIC_SPEED_VERYHIGH] = 695,
+};	// 0, 460, 505, 583, 695, 685
 												// 关闭  低速  中速  高速  狂暴  哨兵
-uint16_t Friction_Pwm_Speed[FRIC_SPEED_COUNT] = {0, 0, 2190, 2510, 2850, 2800};
+uint16_t Friction_Pwm_Speed[FRIC_SPEED_COUNT] = {0, 0, 2190, 2510, 2850};
 
 uint8_t test_fric_off = 0;
 
@@ -55,7 +62,7 @@ uint8_t test_fric_off = 0;
 void FRICTION_ParamsInit(Friction_Info_t *fric)
 {
 	fric->State = FRIC_STATE_OFF;
-	fric->SpeedLevel = FRIC_SPEED_OFF;
+	fric->SpeedLevel = FRIC_SPEED_OFF; 
 	fric->SpeedTarget = Friction_Pwm_Output[FRIC_SPEED_OFF];
 	//fric->SpeedFeedback = 0;
 }
@@ -65,8 +72,6 @@ void FRICTION_ParamsInit(Friction_Info_t *fric)
  */
 void FRICTION_Stop(Friction_Info_t *fric)
 {
-//	fric->SpeedLevel = FRIC_SPEED_OFF;
-//	fric->SpeedTarget = Friction_Pwm_Output[FRIC_SPEED_OFF];
 	FRICTION_ParamsInit(fric);
 	if(fric->SpeedFeedback > 0) {
 		fric->SpeedFeedback -= 5;
@@ -74,9 +79,7 @@ void FRICTION_Stop(Friction_Info_t *fric)
 		fric->SpeedFeedback  = 0;
 	}
 	
-	if(test_fric_off == 0) {
-		FRICTION_PwmOut(fric->SpeedFeedback, fric->SpeedFeedback);
-	}
+	FRICTION_PwmOut(fric->SpeedFeedback, fric->SpeedFeedback);
 }
 
 /**
@@ -106,8 +109,8 @@ void FRICTION_PwmCalc(Friction_Info_t *fric)
  */
 void FRICTION_SelfCalibrate(void)
 {
-	PWM1 = 1500;
-	PWM2 = 1500;
+	PWM1 = 2000;
+	PWM2 = 2000;
 	delay_ms(1000);
 	delay_ms(1000);
 	delay_ms(1000);
@@ -162,6 +165,9 @@ void FRICTION_GetJudgeInfo(Judge_Info_t *judge, Friction_Info_t *fric)
 {
 	uint8_t speed_limit = JUDGE_ucGetBulletLimitSpeed17();
 	
+	if(JUDGE_IfDataValid() == false)
+		speed_limit = 15;
+	
 	/* #根据最高射速限制调整摩擦轮的速度 */
 	switch(speed_limit)
 	{
@@ -181,9 +187,10 @@ void FRICTION_GetJudgeInfo(Judge_Info_t *judge, Friction_Info_t *fric)
 				Friction.SpeedLevel = FRIC_SPEED_VERYHIGH;
 			}break;
 		
-		default:
-			break;
-	}	
+		default: {
+				Friction.SpeedLevel = FRIC_SPEED_MID;
+			}break;
+	}
 }
 
 /**
@@ -226,13 +233,13 @@ void REMOTE_SetFrictionState(RC_Ctl_t *remote)
 		if((sw1 == RC_SW_UP && prev_sw1 != RC_SW_UP) && (sw2 == RC_SW_DOWN)) {
 			if(Friction.State == FRIC_STATE_OFF) {
 				Friction.State = FRIC_STATE_ON;			// 打开摩擦轮
-				Friction.SpeedLevel = FRIC_SPEED_MID;	// 高射速
-				Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
+				//Friction.SpeedLevel = FRIC_SPEED_HIGH;	// 高射速
+				//Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
 				LASER_ON();
 			} else if(Friction.State == FRIC_STATE_ON){
 				Friction.State = FRIC_STATE_OFF;		// 关闭摩擦轮
-				Friction.SpeedLevel = FRIC_SPEED_OFF;	// 零射速
-				Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
+				//Friction.SpeedLevel = FRIC_SPEED_OFF;	// 零射速
+				//Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
 				LASER_OFF();
 			}
 		}
@@ -250,10 +257,14 @@ void KEY_SetFrictionState(RC_Ctl_t *remote)
 	if(BM_IfReset(BitMask.System.Reset, BM_RESET_FRIC)) {	// 摩擦轮复位完成
 		if(Friction.State == FRIC_STATE_OFF && IF_MOUSE_PRESSED_LEFT) {
 			Friction.State = FRIC_STATE_ON;			// 打开摩擦轮
-			Friction.SpeedLevel = FRIC_SPEED_HIGH;	// 高射速
-			Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
+			//Friction.SpeedLevel = FRIC_SPEED_HIGH;	// 高射速
+			//Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
 			LASER_ON();
 		}
+		
+//		if(Friction.State == FRIC_STATE_ON) {
+//			Friction.SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
+//		}
 	}
 }
 
@@ -275,21 +286,27 @@ void FRICTION_Reset(void)
  */
 void FRICTION_SpeedSwitch(Friction_Info_t *fric)
 {
-	if(FRICTION_IfReady()) {
-		/* 判断在击打哨兵(抬头pitch减小) */
-		if(GIMBAL_IfAimSentry()) {
-			fric->SpeedLevel = FRIC_SPEED_SENTRY;
-		}
-		/* 打符的时候采用超高射速 */
-		else if(GIMBAL_IfBuffMode()) {
-			fric->SpeedLevel = FRIC_SPEED_VERYHIGH;
-		}
-		/* 正常模式下采用高射速 */
-		else if(GIMBAL_IfNormalMode()) {
-			fric->SpeedLevel = FRIC_SPEED_SENTRY;
-		}
-		fric->SpeedTarget =  Friction_Pwm_Output[Friction.SpeedLevel];
+	if(FRICTION_IfOpen()) {
+		fric->SpeedTarget = Friction_Pwm_Output[Friction.SpeedLevel];
+	} else {
+		fric->SpeedLevel = FRIC_SPEED_OFF;
+		fric->SpeedTarget = Friction_Pwm_Output[FRIC_SPEED_OFF];
 	}
+//	if(FRICTION_IfReady()) {
+//		/* 判断在击打哨兵(抬头pitch减小) */
+//		if(GIMBAL_IfAimSentry()) {
+//			fric->SpeedLevel = FRIC_SPEED_VERYHIGH;
+//		}
+//		/* 打符的时候采用超高射速 */
+//		else if(GIMBAL_IfBuffMode()) {
+//			fric->SpeedLevel = FRIC_SPEED_VERYHIGH;
+//		}
+//		/* 正常模式下采用高射速 */
+//		else if(GIMBAL_IfNormalMode()) {
+//			fric->SpeedLevel = FRIC_SPEED_HIGH;
+//		}
+//		fric->SpeedTarget =  Friction_Pwm_Output[Friction.SpeedLevel];
+//	}
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -306,7 +323,7 @@ void FRICTION_GetInfo(void)
 	// 获取遥控信息
 	FRICTION_GetRemoteInfo(&System, &Remote, &Friction);
 	// 根据pwm-射速表获取射速信息
-	Friction.Speed = Friction_Pwm_Speed[Friction.SpeedLevel];
+	Friction.BulletSpeed = Friction_Pwm_Speed[Friction.SpeedLevel];
 }
 
 /**
@@ -356,8 +373,8 @@ void FRICTION_Ctrl(void)
 		}	
 	}
 	
-	/* 根据云台模式切换摩擦轮参数 */
-	//FRICTION_SpeedSwitch(&Friction);	
+	/* 根据裁判系统切换摩擦轮射速 */
+	FRICTION_SpeedSwitch(&Friction);	
 	
 	/*----最终输出----*/
 	if(test_fric_off == 0) {

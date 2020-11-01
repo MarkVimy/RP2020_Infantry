@@ -58,3 +58,4 @@
 .\objects\task_chassis.o: ..\APP\kalman.h
 .\objects\task_chassis.o: ..\BSP\can.h
 .\objects\task_chassis.o: ..\BSP\rng.h
+.\objects\task_chassis.o: ..\APP\supercap.h

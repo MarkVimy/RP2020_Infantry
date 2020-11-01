@@ -35,7 +35,7 @@ void KalmanCreate(extKalman_t *p,float T_Q,float T_R)
     p->Q = T_Q;
     p->R = T_R;
     p->A = 1;
-		p->B = 0;
+	p->B = 0;
     p->H = 1;
     p->X_mid = p->X_last;
 }

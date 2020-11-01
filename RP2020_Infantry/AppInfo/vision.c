@@ -143,16 +143,17 @@ typedef struct {
 #define VISION_FRAME_HEADER		(0xA5)
 
 /*-------视觉分辨率预编译--------*/
-#define	VISION_1280P	0	// 1280(H)*720(V)	主要用于打符的时候利用像素点
-#define	VISION_640P		1	// 640(H)*480(V)
+/* #目前视觉无法切换分辨率，目前只能在调试的时候手动切换 */
+#define	VISION_960P_BUFF	0	// 960(H)*1024(V)	主要用于打符的时候利用像素点
+#define	VISION_1280P_AUTO	1	// 1280(H)*720(V)
 
-#define VISION_DPI		VISION_1280P
-#if VISION_DPI == VISION_1280P
-	#define VISION_MID_YAW		480
-	#define VISION_MID_PITCH	512
-#elif VISION_DPI == VISION_640P
-	#define	VISION_MID_YAW		320
-	#define	VISION_MID_PITCH	240
+#define VISION_DPI		VISION_1280P_AUTO
+#if VISION_DPI == VISION_960P_BUFF
+	#define VISION_MID_YAW		480		// 960
+	#define VISION_MID_PITCH	512		// 1024
+#elif VISION_DPI == VISION_1280P_AUTO
+	#define	VISION_MID_YAW		640		// 1280
+	#define	VISION_MID_PITCH	360		// 720
 #endif
 
 
@@ -160,10 +161,16 @@ typedef struct {
 QueueObj VisionQueue =
 {
 	.nowLength = 0,
-	.queueLength = 20,
+	.queueLength = 20,	// 最大支持20
 	.queue = {0}
 };
 
+QueueObj VisionQueueAccel =
+{
+	.nowLength = 0,
+	.queueLength = 20,	// 最大支持20
+	.queue = {0}
+};
 
 float visionYawMathExpect;
 //数学期望
@@ -192,7 +199,7 @@ extKalman_t Gimbal_Gyro_Auto_kalmanError[2];
 /**
  *	@brief	读取视觉通信数据
  *	@return false - 数据错误
- *					true  - 数据正确	
+ *			true  - 数据正确	
  *	@note	uart4.c中IRQ调用
  */
 bool VISION_ReadData(uint8_t *rxBuf)
@@ -517,7 +524,7 @@ void VISION_GetJudgeInfo(Judge_Info_t *judge, Vision_Info_t *vision)
  */
 void VISION_GetFrictionInfo(Friction_Info_t *fric, Vision_Info_t *vision)
 {
-	vision->TxPacket.TxData.fric_speed = fric->Speed;
+	vision->TxPacket.TxData.fric_speed = fric->BulletSpeed;
 }
 
 /* #应用层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -685,12 +692,14 @@ QueueObj target_speed=
 float Get_Target_Speed(uint8_t queue_len,float angle)
 {
 	float sum=0;
-	float tmp=0;
+	static float tmp=0;
+	static float last_tmp=0;
+	
+	last_tmp = tmp;
 	
 	if(queue_len>target_speed.queueLength)
 		queue_len=target_speed.queueLength;
 	//防止溢出
-	
 	
 	if(target_speed.nowLength<queue_len)
 	{
@@ -713,15 +722,15 @@ float Get_Target_Speed(uint8_t queue_len,float angle)
 	//更新完队列
 	
 	
-	for(uint16_t j=0;j<queue_len;j++)
+	for(uint16_t j=0;j<target_speed.nowLength;j++)
 	{
 		sum+=target_speed.queue[j];
 	}
-	tmp = sum/(queue_len/1.f);
+	tmp = sum/(target_speed.nowLength/1.f);
 	
-	tmp = (angle - tmp);	
+//	tmp = (angle - tmp);	
 	
-	return tmp;
+	return tmp - last_tmp;
 }
 
 
@@ -769,11 +778,11 @@ float Get_Target_Accel(uint8_t queue_len,float speed)
 	//更新完队列
 	
 	
-	for(uint16_t j=0;j<queue_len;j++)
+	for(uint16_t j=0;j<target_accel.nowLength;j++)
 	{
 		sum+=target_accel.queue[j];
 	}
-	tmp = sum/(queue_len/1.f);
+	tmp = sum/(target_accel.nowLength/1.f);
 	
 	tmp = (speed - tmp);	
 	

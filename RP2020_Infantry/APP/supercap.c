@@ -33,8 +33,8 @@
 #define DisCharge_Off()	(DISCHARGE_PIN=1)
 
 /* Private variables ---------------------------------------------------------*/
-// ADC测量电容电压的分压比例
-float MEASURE_DIV_RATE=11;//#define MEASURE_DIV_RATE	1
+// ADC测量电容电压的分压比例(通过10:1分压电阻获得)
+#define MEASURE_DIV_RATE	11
 float DISCHARGE_LOWEST_VOL = 12;
 float CHARGE_HIGHEST_VOL = 24;
 float MAX_POWER = 50;
@@ -42,8 +42,8 @@ float MAX_POWER = 50;
 /* ## Global variables ## ----------------------------------------------------*/
 SuperCap_Ctrl_t SuperCap_Ctrl = {
 	.kp = 40,
-	.ki = 10,
-	.iout_max = 2000,
+	.ki = 1,
+	.integrate_max = 2400,
 //	.out_max = 
 };
 
@@ -66,14 +66,14 @@ static void SuperCAP_GPIO_Init(void)
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 	
-	// 初始化 充电控制引脚 - PC3 放电控制引脚 - PA5
+	// 初始化 充电控制引脚 - PC6 放电控制引脚 - PA5
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
 	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;	
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
 	GPIO_Init(GPIOC, &GPIO_InitStructure);
 	
 	// 初始时不充电也不放电
@@ -112,18 +112,27 @@ static uint16_t SuperCAP_ADC_GetCapVol(void)
 /**
  *	@brief	超级电容充电PID控制算法
  */
+// 设置为1的时候为开环充电
+// 设置为0的时候为PID闭环充电
+uint16_t test_dac = 0;
+uint16_t test_dac_val = 2600;
 void SuperCAP_PidCalc(SuperCap_Ctrl_t *cap_ctrl)
 {
 	cap_ctrl->err = cap_ctrl->target - cap_ctrl->feedback;
+	cap_ctrl->integrate += cap_ctrl->err;
+	cap_ctrl->integrate = constrain(cap_ctrl->integrate, -cap_ctrl->integrate_max, cap_ctrl->integrate_max);
 	// Pout
 	cap_ctrl->pout = cap_ctrl->kp * cap_ctrl->err;
 	// Iout
-	cap_ctrl->iout += cap_ctrl->ki * cap_ctrl->err;
-	cap_ctrl->iout = constrain(cap_ctrl->iout, -cap_ctrl->iout_max, cap_ctrl->iout_max);
+	cap_ctrl->iout = cap_ctrl->ki * cap_ctrl->integrate;
 	// Out
 	cap_ctrl->out = cap_ctrl->pout + cap_ctrl->iout;
-	cap_ctrl->out = constrain(cap_ctrl->out, 2400, 2500);
-
+	// 测试DAC
+	if(test_dac) {
+		cap_ctrl->out = test_dac_val;
+	}
+	// 将充电电压(电流)控制在一定的范围内
+	cap_ctrl->out = constrain(cap_ctrl->out, 0, 2700);
 }
 
 /* API functions -------------------------------------------------------------*/
@@ -173,7 +182,7 @@ void SuperCAP_GetJudgeInfo(Judge_Info_t *judge, SuperCap_t *cap)
 	}
 	
 	// 保险起见，充电最大功率为最大功率限制-5
-	cap->ctrl->target = cap->info->max_power - 5;
+	cap->ctrl->target = cap->info->max_power - 2;
 	cap->ctrl->feedback = cap->info->real_power;
 }
 
@@ -182,7 +191,7 @@ void SuperCAP_GetJudgeInfo(Judge_Info_t *judge, SuperCap_t *cap)
  */
 void SuperCAP_GetVolInfo(SuperCap_Info_t *cap_info)
 {
-	float tmp;
+	float tmp = 0;
 	
 	// 多次测量取平均值
 	for(uint8_t i = 0; i < 5; i++) {
@@ -212,12 +221,26 @@ void SuperCAP_GetInfo(void)
 /**
  *	@brief	放电
  */
+uint8_t test_charge_cap = 0;
 void SuperCAP_Out(SuperCap_Info_t *cap_info)
 {
-	// 不充电
-	cap_info->charge_status = OFF;
+	if(test_charge_cap) {
+		// 边放电边充电
+		if(cap_info->real_vol < CHARGE_HIGHEST_VOL) {
+			cap_info->charge_status = ON;
+		} 
+		/* 已充满则不充电 */
+		else {
+			cap_info->charge_status = OFF;
+		}
+	}
+	else {
+		cap_info->charge_status = OFF;
+	}
+	
 	/* 未放完则继续放电 */
-	if(cap_info->real_vol > DISCHARGE_LOWEST_VOL && cap_info->real_power_buff >= 60) {
+//	if(cap_info->real_vol > DISCHARGE_LOWEST_VOL && cap_info->real_power_buff >= 60) {	
+	if(cap_info->real_vol > DISCHARGE_LOWEST_VOL) {
 		cap_info->discharge_status = ON;
 	}
 	/* 已放完则不放电 */
@@ -278,8 +301,6 @@ void SuperCAP_PidCtrlTask(SuperCap_t *cap)
 	}
 	// 设置充电电压
 	SuperCAP_DAC_SetChargeVol(cap->ctrl->out);
-	
-
 }
 
 /* #任务层# ---------------------------------------------------------------------------------------------------------------------------------------*/
@@ -288,7 +309,13 @@ void SuperCAP_PidCtrlTask(SuperCap_t *cap)
  */
 void SuperCAP_SelfProtect(void)
 {
+	// 更新信息
+	SuperCAP_GetInfo();
+	// 同步充放电标志位
 	SuperCAP_Off(&SuperCap_Info);
+	// 关闭放电
+	DisCharge_Off();
+	// 关闭充电
 	SuperCAP_DAC_SetChargeVol(0);
 }
 

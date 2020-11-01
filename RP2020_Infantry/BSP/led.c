@@ -18,3 +18,14 @@ void LED_Init(void)
 	LED_BLUE_OFF();
 	LED_ORANGE_OFF();
 }
+
+void System_Alive_Hint(void)
+{
+	static uint16_t green_twinkle_cnt = 0;
+	
+	green_twinkle_cnt++;
+	if(green_twinkle_cnt > 250) {
+		green_twinkle_cnt = 0;
+		LED_GREEN = !LED_GREEN;
+	}
+}

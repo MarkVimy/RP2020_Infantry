@@ -37,3 +37,4 @@
 .\objects\anoc.o: ..\FreeRTOS\include\list.h
 .\objects\anoc.o: ..\SYSTEM\my_include.h
 .\objects\anoc.o: ..\BSP\usart1.h
+.\objects\anoc.o: ..\BSP\usart3.h

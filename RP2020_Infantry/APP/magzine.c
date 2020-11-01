@@ -224,6 +224,7 @@ void KEY_SetMagzineState(Magzine_Handler_t *Magz)
 //		}
 //	}
 	
+	// #为了调试方便，暂时修改成如下
 	if(IF_KEY_PRESSED_R) {	// 按下R
 		if(KeyLockFlag_R == false) {
 			/* 关闭弹仓 -> 打开弹仓 */

@@ -137,33 +137,33 @@ void start_task(void *pvParameters)
 							(UBaseType_t		)CHASSIS_TASK_PRIO,			// 任务优先级
 							(TaskHandle_t*		)&ChassisTask_Handler);		// 任务句柄
 	/* 创建云台任务 */
-//	xTaskCreate((TaskFunction_t		)gimbal_task,							// 任务函数
-//							(const char*		)"gimbal_task",				// 任务名称
-//							(uint16_t			)GIMBAL_STK_SIZE,			// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)GIMBAL_TASK_PRIO,			// 任务优先级
-//							(TaskHandle_t*		)&GimbalTask_Handler);		// 任务句柄							
-//	/* 创建拨盘电机任务 */
-//	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
-//							(const char*		)"revovler_task",			// 任务名称
-//							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
-//							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
-//	/* 创建常规任务 */
-//	xTaskCreate((TaskFunction_t		)duty_task,								// 任务函数
-//							(const char*		)"duty_task",				// 任务名称
-//							(uint16_t			)DUTY_STK_SIZE,				// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)DUTY_TASK_PRIO,			// 任务优先级
-//							(TaskHandle_t*		)&DutyTask_Handler);		// 任务句柄
-//	/* 创建视觉任务 */
-//	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
-//							(const char*		)"vision_task",				// 任务名称
-//							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
-//							(void*				)NULL,						// 传递给任务函数的参数
-//							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
-//							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
+	xTaskCreate((TaskFunction_t		)gimbal_task,							// 任务函数
+							(const char*		)"gimbal_task",				// 任务名称
+							(uint16_t			)GIMBAL_STK_SIZE,			// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)GIMBAL_TASK_PRIO,			// 任务优先级
+							(TaskHandle_t*		)&GimbalTask_Handler);		// 任务句柄							
+	/* 创建拨盘电机任务 */
+	xTaskCreate((TaskFunction_t		)revolver_task,							// 任务函数
+							(const char*		)"revovler_task",			// 任务名称
+							(uint16_t			)REVOLVER_STK_SIZE,			// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)REVOLVER_TASK_PRIO,		// 任务优先级
+							(TaskHandle_t*		)&RevolverTask_Handler);	// 任务句柄							
+	/* 创建常规任务 */
+	xTaskCreate((TaskFunction_t		)duty_task,								// 任务函数
+							(const char*		)"duty_task",				// 任务名称
+							(uint16_t			)DUTY_STK_SIZE,				// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)DUTY_TASK_PRIO,			// 任务优先级
+							(TaskHandle_t*		)&DutyTask_Handler);		// 任务句柄
+	/* 创建视觉任务 */
+	xTaskCreate((TaskFunction_t		)vision_task,							// 任务函数
+							(const char*		)"vision_task",				// 任务名称
+							(uint16_t			)VISION_STK_SIZE,			// 任务堆栈大小
+							(void*				)NULL,						// 传递给任务函数的参数
+							(UBaseType_t		)VISION_TASK_PRIO,			// 任务优先级
+							(TaskHandle_t*		)&VisionTask_Handler);		// 任务句柄
 	/* 创建IMU任务 */
 	xTaskCreate((TaskFunction_t		)imu_task,								// 任务函数
 							(const char*		)"imu_task",				// 任务名称
@@ -182,17 +182,42 @@ void start_task(void *pvParameters)
  */
 void system_state_task(void *p_arg)	// 系统状态机
 {
+	static uint16_t blue_flash = 0;
 	while(1) {
 		/* 遥控任务 */
 		REMOTE_Ctrl();
 		
-		/* 系统状态灯 */
+		/* 系统正常 */
 		if(System.State == SYSTEM_STATE_NORMAL){
-			LED_ALL_OFF();
-			LED_GREEN_ON();
+			System_Alive_Hint();
+			
+			if(SuperCap.info->charge_status == ON) {
+				blue_flash++;
+				if(SuperCap.info->real_vol < 22) {
+					if(blue_flash >= 1000) {
+						blue_flash  = 0;
+						LED_BLUE = !LED_BLUE;
+					}
+				} else {
+					// 蓝灯常亮
+					LED_BLUE_ON();
+				}
+			} else {
+				blue_flash = 0;
+				// 蓝灯常灭
+				LED_BLUE_OFF();
+			}
+
 		}
-		else {
+		/* 遥控丢失 */
+		else if(System.State == SYSTEM_STATE_RCLOST){
 			LED_ALL_ON();
+		} 
+		/* 遥控出错 */
+		else {
+			//reset CPU
+			__set_FAULTMASK(1);	// 关闭所有中断(防止复位过程被打断)
+			NVIC_SystemReset();	// 复位	
 		}
 
 		vTaskDelay(TIME_STAMP_2MS);
@@ -212,7 +237,7 @@ void chassis_task(void *p_arg)
 		switch(System.State)
 		{												
 			case SYSTEM_STATE_NORMAL:
-				SuperCAP_Ctrl();
+//				SuperCAP_Ctrl();
 				/* 刚上电时等待云台归中后才允许控制*/
 				if(BM_IfReset(BitMask.System.Reset, BM_RESET_GIMBAL)) {
 					CHASSIS_Ctrl();
@@ -255,6 +280,7 @@ void gimbal_task(void *p_arg)
  *	@note 
  *		Loop time:	5ms
  */
+int16_t pidOut_test[4] = {0, 0, 0, 0};
 void revolver_task(void *p_arg)
 {
 	while(1) {
@@ -304,14 +330,15 @@ void duty_task(void *p_arg)
 
 /**	!# 6 - Vision Task #!
  *	@note 
- *		Loop time:	10ms
+ *		Loop time:	100ms
+ *		过快会导致视觉接收阻塞，反而需要很久才能更新数据
  */
 void vision_task(void *p_arg)
 {
 	VISION_Init();
 	while(1) {
 		VISION_Ctrl();
-		vTaskDelay(10);	// 10ms
+		vTaskDelay(100);	// 100ms
 	}
 }
 
@@ -321,28 +348,18 @@ void vision_task(void *p_arg)
  */
 //	portTickType ulCurrentTime;
 //	portTickType ulRespondTime;
-
+extern uint16_t chas_stuck_cnt;
 void imu_task(void *p_arg)
 {
+	static uint16_t cnt = 0;
 	while(1) {
 		/* IMU读取任务 */
 		IMU_Task();		
-//		RP_SendToPc2(BitMask.Chassis.CanReport, BitMask.Gimbal.CanReport, 0, 0, 0);
-//		ANOC_SendToPc(js_pos_x*100, js_pos_y*100, js_agl_z*100, 	
-//		RP_SendToPc(Mpu_Info.yaw, Mpu_Info.pitch, Mpu_Info.roll, Mpu_Info.rateYaw, Mpu_Info.ratePitch, Mpu_Info.rateRoll);
-//		RP_SendToPc(js_pos_x, js_pos_y, js_agl_z, js_v_x, js_v_y, js_w_z);
-//		RP_SendToPc2(Friction.SpeedFeedback, JUDGE_fGetBulletSpeed17(), Judge.PowerHeatData.shooter_heat0, Judge.PowerHeatData.chassis_power);
 		
-//		if(Judge.power_heat_update) {
-//			Judge.power_heat_update = false;
-//			RP_SendToPc(Judge.GameRobotPos.yaw, 0, 0, Judge.PowerHeatData.shooter_heat0, Judge.PowerHeatData.shooter_heat1, Judge.PowerHeatData.mobile_shooter_heat2);
-//		}
-//		
-
-		
-//		if(Judge.shoot_update) {
-//			Judge.shoot_update = false;
-//			RP_SendToPc2(Judge.ShootData.bullet_freq, Revolver.Shoot.real_ping, Judge.PowerHeatData.shooter_heat0, Friction.SpeedFeedback, Judge.ShootData.bullet_speed);
+//		cnt++;
+//		if(cnt >= 10) {
+//			cnt = 0;
+//			RP_SendToPc(js_v_y, js_v_x, g_Chassis_Motor_Info[0].current, g_Chassis_Motor_Info[1].current, g_Chassis_Motor_Info[2].current, g_Chassis_Motor_Info[3].current);
 //		}
 		
 		vTaskDelay(1);	// 1ms，注释后进不了空闲任务

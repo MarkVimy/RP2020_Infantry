@@ -10,6 +10,7 @@
  */
 
 /**
+ *	 单级PID	参考网址：https://www.cnblogs.com/viggogao/p/11218421.html
  *	 串级PID	参考网址：https://www.jianshu.com/p/4b0fa85cd353
  */
 
@@ -76,8 +77,8 @@ kalman_filter_init_t pitch_kalman_filter_para = {
 };//初始化pitch的部分kalman参数
 
 /* 打符参数 */
-float GIMBAL_BUFF_PITCH_COMPENSATION = 5;	// 0	5				325
-float GIMBAL_BUFF_YAW_COMPENSATION = -35;	// -175		-35				150
+float GIMBAL_BUFF_PITCH_COMPENSATION = -150;	// 0	5				325
+float GIMBAL_BUFF_YAW_COMPENSATION = -215;	// -175		-35				150
 float GIMBAL_BUFF_YAW_RAMP = 170;		// 185	160	185	180
 float GIMBAL_BUFF_PITCH_RAMP = 120;	// 130	105	120	140
 
@@ -353,7 +354,7 @@ float buff_pitch_angle_kp = 7.f;		// 3			6			5.85	(ramp 125)	6.55(ramp140)	5.85	
 float buff_pitch_speed_kp = 12.f;	// 13.5		13.65	12.65							13.45					13.45								14.5	12
 float buff_pitch_speed_ki = 250.f;	// 250.f	400		500								250						200								215		250
 
-float normal_mech_yaw_angle_kp = 12.05f;	// 		10.35	10.65			11.25		11.55		13.05	14.45
+float normal_mech_yaw_angle_kp = 11.85f;	// 12.05f的时候上电归中会抖(超调)		10.35	10.65			11.25		11.55		13.05	14.45
 float normal_mech_yaw_speed_kp = 28.5f;	// 34.32	18.75	26.5			27.5		28.5	33.5	33.5
 float normal_mech_yaw_speed_ki = 350.f;	// 38.10	32.5	90				225			200		550	
 
@@ -427,23 +428,23 @@ void GIMBAL_PidParamsSwitch(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COU
 				pid[GYRO][PITCH_206].Angle.kd = 0;
 							
 			}
-			else	// 未锁定目标则正常移动云台
-			{
-				pid[GYRO][YAW_205].Speed.kp = normal_gyro_yaw_speed_kp;		
-				pid[GYRO][YAW_205].Speed.ki = normal_gyro_yaw_speed_ki;		
-				pid[GYRO][YAW_205].Speed.kd = 0;
-				pid[GYRO][YAW_205].Angle.kp = normal_gyro_yaw_angle_kp;		
-				pid[GYRO][YAW_205].Angle.ki = 0;		
-				pid[GYRO][YAW_205].Angle.kd = 0;
+//			else	// 未锁定目标则正常移动云台
+//			{
+//				pid[GYRO][YAW_205].Speed.kp = normal_gyro_yaw_speed_kp;		
+//				pid[GYRO][YAW_205].Speed.ki = normal_gyro_yaw_speed_ki;		
+//				pid[GYRO][YAW_205].Speed.kd = 0;
+//				pid[GYRO][YAW_205].Angle.kp = normal_gyro_yaw_angle_kp;		
+//				pid[GYRO][YAW_205].Angle.ki = 0;		
+//				pid[GYRO][YAW_205].Angle.kd = 0;
 
-				pid[GYRO][PITCH_206].Speed.kp = normal_pitch_speed_kp;		
-				pid[GYRO][PITCH_206].Speed.ki = normal_pitch_speed_ki;		
-				pid[GYRO][PITCH_206].Speed.kd = 0;
-				pid[GYRO][PITCH_206].Angle.kp = normal_pitch_angle_kp;		
-				pid[GYRO][PITCH_206].Angle.ki = 0;		
-				pid[GYRO][PITCH_206].Angle.kd = 0;			
-				
-			}
+//				pid[GYRO][PITCH_206].Speed.kp = normal_pitch_speed_kp;		
+//				pid[GYRO][PITCH_206].Speed.ki = normal_pitch_speed_ki;		
+//				pid[GYRO][PITCH_206].Speed.kd = 0;
+//				pid[GYRO][PITCH_206].Angle.kp = normal_pitch_angle_kp;		
+//				pid[GYRO][PITCH_206].Angle.ki = 0;		
+//				pid[GYRO][PITCH_206].Angle.kd = 0;			
+//				
+//			}
 			
 			break;
 			
@@ -645,17 +646,17 @@ void GIMBAL_PidOut(Gimbal_PID_t *pid)
 float k_Auto_Yaw_R = 20;
 float k_Auto_Pitch_R = 10;
 float k_visionYaw_Q = 1;
-float k_visionYaw_R = 10;
+float k_visionYaw_R = 100;
 float k_cloudYaw_Q = 1;
-float k_cloudYaw_R = 10;
+float k_cloudYaw_R = 200;
 float k_targetYaw_Q = 1;
-float k_targetYaw_R = 10;
-float k_speedYaw_Q = 1;
-float k_speedYaw_R = 1000;
+float k_targetYaw_R = 800;
+float k_speedYaw_Q = 2;
+float k_speedYaw_R = 2500;
 float k_dist_Q = 1;
-float k_dist_R = 10;
-float k_accel_Q = 1;
-float k_accel_R = 10;
+float k_dist_R = 500;
+float k_accel_Q = 2;
+float k_accel_R = 3000;
 
 void GIMBAL_KalmanCreate(void)
 {
@@ -1545,14 +1546,28 @@ float js_pitch_angle = 0.f;
 float js_pitch_speed = 0.f;
 
 /* zx预测算法 */
-float visionYawAngleRaw=0,cloudYawAngleRaw=0,targetYawAngleRaw=0,targetYawSpeedRaw=0;
-float visionYawAngleKF=0,cloudYawAngleKF=0,targetYawAngleKF=0,targetYawSpeedKF=0;
+float visionYawAngleRaw=0,cloudYawAngleRaw=0,targetYawAngleRaw=0,targetYawSpeedRaw=0,targetYawAccelRaw=0;
+float visionYawAngleKF=0,cloudYawAngleKF=0,targetYawAngleKF=0,targetYawSpeedKF=0,targetYawAccelKF=0;
 float deathzoom = 0.f;
+float deathzoom_accel = 0.f;
 float ksc = 1.f;
-float use_zx = 350.f;
-
+float kacc = 4.f;
+float use_zx = 45.f;//350
+float klpf_speed = 1.f;
+float klpf_accel = 1.f;
+float zx_use_ff = 1.f;
+float zx_kff = 50.f;
+float zx_ff_angle = 0.f;
+float zx_ff_angle_limit = 60.f;	
+	
+float zx_r_speed_limit_max = 3.00f;
+float zx_r_accel_limit_max = 0.20f;
+float zx_r_speed_limit_min = 1.25f;
+float zx_r_accel_limit_min = 0.08f;
+	
 /* 队列算法 */
-uint8_t queue_num = 10;
+uint8_t speed_queue_num = 10;
+uint8_t accel_queue_num = 10;
 uint8_t lost_num = 8;
 
 /* 距离补偿 */
@@ -1582,15 +1597,24 @@ uint8_t vision_truly_lost = LOST;
 float kLost = 2.f;	// 掉帧补偿因子
 float last_distance = 0.f;
 float last_speed = 0.f;
+float last_accel = 0.f;
 float lost_compensation = 0.f;
 
 #if (AUTO_CTRL_WAY == 1)
+	float yaw_predict_temp, pitch_predict_temp;
 void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT], Gimbal_Info_t *gimbal)
 {
 	static float avrCalAngle,nowCalAngle=0;
+	static float avrCalSpeed,nowCalSpeed=0;
 	float none=0;
 	
-	float yaw_predict_temp, pitch_predict_temp;
+
+	
+	if(CHASSIS_IfTopGyroOpen() == true) {
+		mobpre_yaw_boundary = 1.0f*GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
+	} else {
+		mobpre_yaw_boundary = 0.5f*GIMBAL_GYRO_ANGLE_ZOOM_INDEX;
+	}
 	
 	/* 首次进入自瞄 */
 	if(gimbal->Auto.FLAG_first_into_auto == true) {
@@ -1657,17 +1681,37 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 		
 		/* ↓ ZX预测速度 ↓ */
 		nowCalAngle = yaw_kf_result[KF_ANGLE];	// gimbal->Auto.Yaw.target
-		
-		VISION_UpdateInfo(nowCalAngle, queue_num, &VisionQueue, &avrCalAngle, &none);
-		
+		// 角度进入队列求平均
+		VISION_UpdateInfo(nowCalAngle, speed_queue_num, &VisionQueue, &avrCalAngle, &none);
+		// 当前速度 - 队列平均值 -> 速度信息
 		targetYawSpeedRaw = (nowCalAngle - avrCalAngle)*ksc;
-		
+		// 滤除0点附近的噪声
 		if(abs(targetYawSpeedRaw) < deathzoom)
 			targetYawSpeedRaw = 0.f;
-		
+		// 速度卡尔曼滤波
 		targetYawSpeedKF = KalmanFilter(&kalman_speedYaw, targetYawSpeedRaw);
-		/* ↑ ZX预测速度 ↑ */
+		// 低通滤波
+		targetYawSpeedKF = klpf_speed*targetYawSpeedKF + (1-klpf_speed)*last_speed;		
+		/* ----↑ ZX预测速度 ↑---- */
+		
+		/* ----↓ ZX预测加速度---- */
+		// 更新速度
+		nowCalSpeed = targetYawSpeedKF;
+		// 速度进入队列求平均
+		VISION_UpdateInfo(nowCalSpeed, accel_queue_num, &VisionQueueAccel, &avrCalSpeed, &none);
+		// 当前速度 - 队列平均值 -> 加速度信息
+		targetYawAccelRaw = (nowCalSpeed - avrCalSpeed)*kacc;
+		// 滤除0点附近的噪声
+		if(abs(targetYawAccelRaw) < deathzoom_accel)
+			targetYawAccelRaw = 0.f;
+		// 加速度卡尔曼滤波
+		targetYawAccelKF = KalmanFilter(&kalman_accel, targetYawAccelRaw);
+		// 低通滤波
+		targetYawAccelKF = klpf_accel*targetYawAccelKF + (1-klpf_accel)*last_accel;
+		/* ----↑ ZX预测加速度---- */
+		
 		last_speed = targetYawSpeedKF;
+		last_accel = targetYawAccelKF;
 		last_distance = VISION_GetDistance()/1000.f;	//换算成(m)
 	} 
 	/* 未识别到目标 */
@@ -1683,7 +1727,7 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 		/* ↓ ZX预测速度 ↓ */
 		nowCalAngle = yaw_kf_result[KF_ANGLE];	// gimbal->Auto.Yaw.target
 		
-		VISION_UpdateInfo(nowCalAngle, queue_num, &VisionQueue, &avrCalAngle, &none);
+		VISION_UpdateInfo(nowCalAngle, speed_queue_num, &VisionQueue, &avrCalAngle, &none);
 		
 		targetYawSpeedRaw = (nowCalAngle - avrCalAngle)*ksc;
 		
@@ -1692,6 +1736,14 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 		
 		targetYawSpeedKF = KalmanFilter(&kalman_speedYaw,0);
 		/* ↑ ZX预测速度 ↑ */
+		
+		/* ↓ ZX预测加速度 ↓ */
+		targetYawAccelKF = KalmanFilter(&kalman_accel, 0);
+		/* ↑ ZX预测加速度 ↑ */
+		
+		last_speed = targetYawSpeedKF;
+		last_accel = targetYawAccelKF;
+		last_distance = VISION_GetDistance()/1000.f;	//换算成(m)
 	}
 	
 	js_yaw_speed = yaw_kf_result[KF_SPEED];
@@ -1734,11 +1786,28 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 					yaw_predict_temp = use_zx*(targetYawSpeedKF - auto_yaw_speed_predict_low) + dis_compensation; // 时间常数2ms归入预测系数中
 				}
 				
+				/* 加速度与速度同向 -> 加速*/
+				if((targetYawSpeedKF * targetYawAccelKF) >= 0)
+					zx_kff = abs(zx_kff);
+				/* 加速度与速度反向 -> 减速 */
+				else
+					zx_kff = -abs(zx_kff);
+				// 前馈角计算
+				zx_ff_angle = zx_kff * targetYawAccelKF ;
+				zx_ff_angle = constrain(zx_ff_angle, -zx_ff_angle_limit, zx_ff_angle_limit);
+				// 根据加速度加入前馈角
+				yaw_predict_temp += zx_use_ff*zx_ff_angle;
+				
 				/* 预测量缓慢变化 */
 				if(test_ramp_step == 0)
 					yaw_angle_predict = RampFloat(yaw_predict_temp, yaw_angle_predict, auto_yaw_angle_predict_ramp);	// StepFloat();
-				else 
-					yaw_angle_predict = StepFloat(yaw_predict_temp, step, &step_cnt, step_death);
+				else {
+//					yaw_angle_predict = StepFloat(yaw_predict_temp, step, &step_cnt, step_death);	// use_zx 350
+					yaw_angle_predict = RampFloat(yaw_predict_temp, yaw_angle_predict, abs(yaw_angle_predict - yaw_predict_temp)/step);	// use_zx 50
+				}
+				
+//				yaw_angle_predict += zx_ff_angle;
+				
 				/* 预测量限幅 */
 				yaw_angle_predict = constrain(yaw_angle_predict, -auto_yaw_angle_predict_limit, auto_yaw_angle_predict_limit);
 				
@@ -1752,11 +1821,23 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 				{
 					mobpre_yaw_left_delay = 0;	// 向左预测开火延时重置
 					
-					mobpre_yaw_right_delay++;	// 累加向右移动预测
-					if(mobpre_yaw_right_delay > 0) {
-						Mobi_Pre_Yaw_Fire = true;
-					} else {
+					// TODO：加入对加速度的判断，目标反向运动的时候不打弹
+					if((targetYawSpeedKF * targetYawAccelKF < 0) &&
+						(targetYawSpeedKF > -zx_r_speed_limit_min) && 
+						(targetYawAccelKF > +zx_r_accel_limit_max))
+					{
+
+						mobpre_yaw_right_delay = 0;
 						Mobi_Pre_Yaw_Fire = false;
+					}
+					else 
+					{
+						mobpre_yaw_right_delay++;	// 累加向右移动预测
+						if(mobpre_yaw_right_delay > 0) {
+							Mobi_Pre_Yaw_Fire = true;
+						} else {
+							Mobi_Pre_Yaw_Fire = false;
+						}
 					}
 				}
 				/* 目标左移而且视觉误差表明目标在右边(表示已超前) */
@@ -1764,13 +1845,24 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 					&& (gimbal->Auto.Yaw.erro - GIMBAL_AUTO_YAW_COMPENSATION) < -mobpre_yaw_boundary)
 				{
 					mobpre_yaw_right_delay = 0;	// 向右预测开火延时重置
+					// TODO：加入对加速度的判断，目标反向运动的时候不打弹
 					
-					mobpre_yaw_left_delay++;		// 累加向左移动预测
-					if(mobpre_yaw_left_delay > 0) {
-						Mobi_Pre_Yaw_Fire = true;
-					} else {
+					if((targetYawSpeedKF * targetYawAccelKF < 0) && 
+						(targetYawSpeedKF < +zx_r_speed_limit_min) && 
+						(targetYawAccelKF < -zx_r_accel_limit_max)) 
+					{
+						mobpre_yaw_left_delay = 0;
 						Mobi_Pre_Yaw_Fire = false;
-					}		
+					}
+					else 
+					{
+						mobpre_yaw_left_delay++;		// 累加向左移动预测
+						if(mobpre_yaw_left_delay > 0) {
+							Mobi_Pre_Yaw_Fire = true;
+						} else {
+							Mobi_Pre_Yaw_Fire = false;
+						}	
+					}						
 				}
 				/* 预测未到位 */
 				else {
@@ -1979,14 +2071,14 @@ float vision_yaw_kf;
 float vision_dis_raw;
 float vision_dis_kf;
 float target_yaw_raw;
-float k_scale_vision;
+float k_scale_vision = 0.95f;
 float target_yaw_kf;
 float now_cal_yaw;
 float target_speed_raw;
 float target_degree;
 uint8_t queue_speed_length = 10;
 uint8_t queue_accel_length = 10;
-float k_speed;
+float k_speed = 1.f;
 float target_speed_kf;
 float target_accel_raw;
 float target_accel_kf;
@@ -2033,16 +2125,16 @@ void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 //		//初始化过程
 //	}	
 	
-	if(Gimbal.Auto.FLAG_first_into_auto == true)
-	{
-		//start_gyro_yaw = pid[GYRO][YAW_205].Angle.feedback;
-		//last_gyro_yaw = start_gyro_yaw;
-		//delta_gyro_yaw = 0;
-		last_identify_flag = 0;
-		predict_delay = PREDICT_DELAY_CNT;	/*刚进自瞄的时候延时预测超前，防止云台晃动*/
-		Gimbal.Auto.FLAG_first_into_auto = false;
-		//初始化过程		
-	}
+//	if(Gimbal.Auto.FLAG_first_into_auto == true)
+//	{
+//		//start_gyro_yaw = pid[GYRO][YAW_205].Angle.feedback;
+//		//last_gyro_yaw = start_gyro_yaw;
+//		//delta_gyro_yaw = 0;
+//		last_identify_flag = 0;
+//		predict_delay = PREDICT_DELAY_CNT;	/*刚进自瞄的时候延时预测超前，防止云台晃动*/
+//		Gimbal.Auto.FLAG_first_into_auto = false;
+//		//初始化过程		
+//	}
 	
 	now_gyro_yaw = pid[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
 	/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
@@ -2050,6 +2142,12 @@ void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 	delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
 	/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
 	
+	if(Gimbal.Auto.FLAG_first_into_auto == true)
+	{
+		delta_gyro_yaw = 0;
+		Gimbal.Auto.FLAG_first_into_auto = false;
+		//初始化过程		
+	}	
 	
 	cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
 	/*这里是为了将差值进行卡尔曼滤波*/
@@ -2197,7 +2295,7 @@ void VISION_AUTO_Predict(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 	/*对目标角度进行滤波*/ 
 	
 	
-	now_cal_yaw = -vision_yaw_raw*k_scale_vision + update_cloud_yaw;	 /*目标的角度 -- 用于计算目标速度*/
+	now_cal_yaw = vision_yaw_raw*k_scale_vision + update_cloud_yaw;	 /*目标的角度 -- 用于计算目标速度*/
 	/*开始预测速度，这里的k_scale_vision是摄像头角度变化的转化系数。
 	
 		举个例子，摄像头的视觉数据变化了10°，但是实际上云台转过了15°，那这个时候就需要给视觉的数据乘上一个1.5，此时的k_scale_vision就为1.5 
@@ -2321,6 +2419,8 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 	{
 		pid[GYRO][YAW_205].Angle.target = target_yaw_kf + predict_angle;
 		
+//		pid[GYRO][YAW_205].Angle.target = cloud_yaw_kf;	// 先不让云台跟踪
+		
 		//pid[GYRO][PITCH_206].Angle.target = target_pitch_kf;
 		
 		/*----预测到位判断----*/
@@ -2371,6 +2471,8 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 		else {
 			pid[GYRO][YAW_205].Angle.target = target_yaw_kf;//RampFloat(gimbal->Auto.Yaw.target, pid[GYRO][YAW_205].Angle.feedback, auto_yaw_ramp);
 			
+//			pid[GYRO][YAW_205].Angle.target = cloud_yaw_kf;	// 先不让云台跟踪
+			
 			Mobi_Pre_Yaw = false;	// 标记未开启移动预测
 			mobpre_yaw_left_delay = 0;
 			mobpre_yaw_right_delay = 0;
@@ -2392,7 +2494,7 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
 		mobpre_yaw_right_delay = 0;		// 重置右预测开火延迟
 		mobpre_yaw_stop_delay = 0;		// 重置停止预测开火延迟
 		
-		KEY_SetGimbalAngle();		
+//		KEY_SetGimbalAngle();		
 	}
 }
 #endif
@@ -2402,57 +2504,57 @@ void GIMBAL_AUTO_PidCalc(Gimbal_PID_t pid[GIMBAL_MODE_COUNT][GIMBAL_MOTOR_COUNT]
  */
 void GIMBAL_CalPredictInfo(void)
 {
-	/* 非自瞄模式下也更新 */
-	if(!GIMBAL_IfAutoMode()) {
-		/* 更新二阶卡尔曼速度先验估计值 */
-		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][YAW_205].Angle.feedback);	
-		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][PITCH_206].Angle.feedback);
+//	/* 非自瞄模式下也更新 */
+//	if(!GIMBAL_IfAutoMode()) {
+//		/* 更新二阶卡尔曼速度先验估计值 */
+//		yaw_angle_speed = speed_calculate(&yaw_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][YAW_205].Angle.feedback);	
+//		pitch_angle_speed = speed_calculate(&pitch_angle_speed_struct, xTaskGetTickCount(), Gimbal_PID[GYRO][PITCH_206].Angle.feedback);
 
-		/* 对角度和速度进行二阶卡尔曼滤波融合,0位置,1速度 */
-		yaw_kf_result = kalman_filter_calc(&yaw_kalman_filter, Gimbal_PID[GYRO][YAW_205].Angle.feedback, 0);		// 识别不到时认为目标速度为0
-		pitch_kf_result = kalman_filter_calc(&pitch_kalman_filter, Gimbal_PID[GYRO][PITCH_206].Angle.feedback, 0);	// 识别不到时认为目标速度为0
+//		/* 对角度和速度进行二阶卡尔曼滤波融合,0位置,1速度 */
+//		yaw_kf_result = kalman_filter_calc(&yaw_kalman_filter, Gimbal_PID[GYRO][YAW_205].Angle.feedback, 0);		// 识别不到时认为目标速度为0
+//		pitch_kf_result = kalman_filter_calc(&pitch_kalman_filter, Gimbal_PID[GYRO][PITCH_206].Angle.feedback, 0);	// 识别不到时认为目标速度为0
 
-		js_yaw_speed = yaw_kf_result[KF_SPEED];
-		js_yaw_angle = yaw_kf_result[KF_ANGLE];
-	}
+//		js_yaw_speed = yaw_kf_result[KF_SPEED];
+//		js_yaw_angle = yaw_kf_result[KF_ANGLE];
+//	}
 
 	
-//	if( !GIMBAL_IfAutoMode() ) 
-//	{
-//		now_gyro_yaw = Gimbal_PID[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
-//		/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
+	if( !GIMBAL_IfAutoMode() ) 
+	{
+		now_gyro_yaw = Gimbal_PID[GYRO][YAW_205].Angle.feedback; /*当前的yaw轴陀螺仪角度值*/
+		/*这里的pid是云台Yaw轴陀螺仪的结构体，这里主要是为了更新yaw轴云台电机的陀螺仪角度*/ 
 
-//		delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
-//		/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
-//		
-//		cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
-//		/*这里是为了将差值进行卡尔曼滤波*/
-//		 
-//		last_gyro_yaw = now_gyro_yaw; /*记录上一次的角度值*/
-//		/*更新记录上一次采样的陀螺仪角度*/ 
+		delta_gyro_yaw += now_gyro_yaw - last_gyro_yaw; 	/*计算两次采样的陀螺仪角度差值*/
+		/*这里是计算两次采样的陀螺仪角度之间的差值*/ 
+		
+		cloud_yaw_raw = delta_gyro_yaw;  /*进入卡尔曼滤波*/
+		/*这里是为了将差值进行卡尔曼滤波*/
+		 
+		last_gyro_yaw = now_gyro_yaw; /*记录上一次的角度值*/
+		/*更新记录上一次采样的陀螺仪角度*/ 
 
-//		cloud_yaw_kf = KalmanFilter(&kalman_cloudYaw,cloud_yaw_raw)+start_gyro_yaw;	/*滤波*/       
-//		
-//		cloud_degree = cloud_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
-//		/*这里是将前后两次采样的差值进行卡尔曼滤波后再加上起始角度，来作为滤波后的云台陀螺仪角度*/ 
-//		
-//		target_speed_raw = Get_Target_Speed(queue_speed_length,0)*k_speed; 	/*计算出对目标速度的预测*/
-//		/*开始对目标的速度进行预测，这个函数直接参考我给的代码。k_speed是缩放系数，因为得到的速度数据比较小，因此放大后放到卡尔曼比较合适*/ 
-//		
-//		target_speed_kf = KalmanFilter(&kalman_speedYaw,target_speed_raw);			
-//		
-//		/*参考去年的做法。*/ 
-//		
-//		
-//		target_accel_raw = Get_Target_Accel(queue_accel_length,target_speed_kf);	 /*获取加速度*/
-//		
-//		target_accel_raw = myDeathZoom(0,0.1,target_accel_raw);		/*死区处理 - 滤除0点附近的噪声*/
-//		
-//		target_accel_kf = KalmanFilter(&kalman_accel,target_accel_raw);		/*卡尔曼滤波*/
+		cloud_yaw_kf = KalmanFilter(&kalman_cloudYaw,cloud_yaw_raw)+start_gyro_yaw;	/*滤波*/       
+		
+		cloud_degree = cloud_yaw_kf / GIMBAL_GYRO_ANGLE_ZOOM_INDEX;  
+		/*这里是将前后两次采样的差值进行卡尔曼滤波后再加上起始角度，来作为滤波后的云台陀螺仪角度*/ 
+		
+		target_speed_raw = Get_Target_Speed(queue_speed_length,0)*k_speed; 	/*计算出对目标速度的预测*/
+		/*开始对目标的速度进行预测，这个函数直接参考我给的代码。k_speed是缩放系数，因为得到的速度数据比较小，因此放大后放到卡尔曼比较合适*/ 
+		
+		target_speed_kf = KalmanFilter(&kalman_speedYaw,target_speed_raw);			
+		
+		/*参考去年的做法。*/ 
+		
+		
+		target_accel_raw = Get_Target_Accel(queue_accel_length,target_speed_kf);	 /*获取加速度*/
+		
+		target_accel_raw = myDeathZoom(0,0.1,target_accel_raw);		/*死区处理 - 滤除0点附近的噪声*/
+		
+		target_accel_kf = KalmanFilter(&kalman_accel,target_accel_raw);		/*卡尔曼滤波*/
 
-//		/*上面三行是解算加速度的数据，跟速度的解算原理一样，不多做解释*/		
-//		
-//	}
+		/*上面三行是解算加速度的数据，跟速度的解算原理一样，不多做解释*/		
+		
+	}
 }
 
 /**
@@ -2715,7 +2817,7 @@ void GIMBAL_PidCtrlTask(void)
 void GIMBAL_RcCtrlTask(void)
 {
 	REMOTE_SetGimbalAngle();	
-	REMOTE_SetTopGyro();
+	//REMOTE_SetTopGyro();
 }
 
 /**

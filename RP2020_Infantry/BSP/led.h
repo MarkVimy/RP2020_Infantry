@@ -25,6 +25,7 @@
 #define LED_ALL_OFF()		{LED_GREEN_OFF();LED_RED_OFF();LED_BLUE_OFF();LED_ORANGE_OFF();}
 
 void LED_Init(void);
+void System_Alive_Hint(void);
 
 #endif
 

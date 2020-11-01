@@ -8,12 +8,11 @@
 /* Global TypeDef ------------------------------------------------------------*/
 typedef enum {
 	FRIC_SPEED_OFF = 0,			// 关闭
-	FRIC_SPEED_LOW = 1,			// 低速
-	FRIC_SPEED_MID = 2,			// 中速
-	FRIC_SPEED_HIGH = 3,		// 高速
-	FRIC_SPEED_VERYHIGH = 4,	// 超高速
-	FRIC_SPEED_SENTRY = 5, 		// 打哨兵
-	FRIC_SPEED_COUNT = 6,
+	FRIC_SPEED_LOW = 1,			// 低速(12m/s)
+	FRIC_SPEED_MID = 2,			// 中速(15m/s)
+	FRIC_SPEED_HIGH = 3,		// 高速(18m/s)
+	FRIC_SPEED_VERYHIGH = 4,	// 超高速(30m/s)
+	FRIC_SPEED_COUNT = 5,
 }Friction_Speed_Names_t;
 
 typedef enum {
@@ -25,7 +24,7 @@ typedef enum {
 typedef struct {
 	Remote_Mode_Names_t		RemoteMode;
 	Friction_State_Names_t 	State;
-	uint16_t				Speed;
+	uint16_t				BulletSpeed;
 	Friction_Speed_Names_t 	SpeedLevel;
 	int16_t					SpeedTarget;
 	int16_t					SpeedFeedback;	

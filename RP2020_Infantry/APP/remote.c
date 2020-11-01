@@ -1,10 +1,10 @@
-/*
+/**
  * @file        remote.c
  * @author      MaWeiming
  * @Version     V1.0
  * @date        24-September-2019
  * @brief       This file includes the DJI remote controller's external functions 
- * 							(based on ST Peripherals Libaray Keil.STM32F4xx_DFP.2.13.0)
+ * 				(based on ST Peripherals Libaray Keil.STM32F4xx_DFP.2.13.0)
  */
 
 /**
@@ -565,7 +565,7 @@ void REMOTE_SysCtrlModeSwitch(System_t *sys, RC_Ctl_t *remote)
 /**
  *	@brief	根据遥控器切换系统行为
  */
-uint8_t test_auto_pid = 0;	// 调试自瞄
+uint8_t test_auto_pid = 1;	// 调试自瞄
 
 void REMOTE_SysActSwitch(System_t *sys, RC_Ctl_t *remote)
 {	

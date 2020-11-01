@@ -7,7 +7,7 @@
 /* Global Macro --------------------------------------------------------------*/
 #define PWM1  	TIM3->CCR1
 #define PWM2  	TIM3->CCR2
-#define SERVO		TIM1->CCR2
+#define SERVO	TIM1->CCR2
 
 /* Global TypeDef ------------------------------------------------------------*/
 /* ## Global Variables Prototypes ## -----------------------------------------*/
